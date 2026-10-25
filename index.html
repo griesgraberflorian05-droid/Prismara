@@ -51,10 +51,10 @@
         const canvas = document.getElementById('prismara-mystic-animation');
         const ctx = canvas.getContext('2d');
         const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const stars = Array.from({ length: 280 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + .25, phase: Math.random() * 6.28, hue: Math.random() * 300 + 170 }));
+        const stars = Array.from({ length: 150 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + .25, phase: Math.random() * 6.28, hue: Math.random() * 300 + 170 }));
         let frame = 0;
         const resize = () => {
-          const ratio = Math.min(devicePixelRatio || 1, 1.5);
+          const ratio = Math.min(devicePixelRatio || 1, innerWidth < 700 ? 1 : 1.25);
           canvas.width = Math.round(innerWidth * ratio);
           canvas.height = Math.round(innerHeight * ratio);
           ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -84,22 +84,23 @@
             const aura = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.8);
             aura.addColorStop(0, `rgba(255,255,255,${.2 * fade})`); aura.addColorStop(.16, `rgba(126,106,255,${.24 * fade})`); aura.addColorStop(.48, `rgba(68,222,255,${.12 * fade})`); aura.addColorStop(1, 'rgba(68,222,255,0)');
             ctx.fillStyle = aura; ctx.fillRect(cx - radius * 2, cy - radius * 2, radius * 4, radius * 4);
-            for (let ring = 0; ring < 7; ring++) {
-              const ringProgress = (progress * 1.15 + ring / 7) % 1;
+            for (let ring = 0; ring < 5; ring++) {
+              const ringProgress = (progress * 1.15 + ring / 5) % 1;
               const rx = (32 + ringProgress * Math.min(w, h) * .58) * scale;
               ctx.beginPath(); ctx.ellipse(cx, cy, rx, rx * (.42 + ring * .018), now * .00018 * (ring % 2 ? -1 : 1) + ring * .7, 0, 6.28);
-              ctx.strokeStyle = `hsla(${180 + ring * 37 + now * .012},100%,${72 + ring % 2 * 10}%,${(.48 - ring * .035) * fade * (1 - ringProgress * .5)})`; ctx.lineWidth = (ring % 3 ? 1 : 2.2) * scale; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 24 * scale; ctx.stroke();
+              ctx.strokeStyle = `hsla(${180 + ring * 37 + now * .012},100%,${72 + ring % 2 * 10}%,${(.48 - ring * .035) * fade * (1 - ringProgress * .5)})`; ctx.lineWidth = (ring % 3 ? 1 : 2.2) * scale; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 14 * scale; ctx.stroke();
             }
-            for (let i = 0; i < 112; i++) {
-              const angle = i * Math.PI / 56 + now * .00012 * (i % 2 ? 1 : -1), inner = (18 + (i % 9) * 4) * scale, outer = (70 + bloom * Math.min(w, h) * .48 + (i % 7) * 22) * scale;
+            for (let i = 0; i < 64; i++) {
+              const angle = i * Math.PI / 32 + now * .00012 * (i % 2 ? 1 : -1), inner = (18 + (i % 9) * 4) * scale, outer = (70 + bloom * Math.min(w, h) * .48 + (i % 7) * 22) * scale;
               ctx.beginPath(); ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner); ctx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
-              ctx.strokeStyle = `hsla(${(i * 13 + now * .025) % 360},100%,${70 + i % 3 * 8}%,${(.07 + bloom * .34) * fade})`; ctx.lineWidth = (i % 8 ? .7 : 2.4) * scale; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 18 * scale; ctx.stroke();
+              ctx.strokeStyle = `hsla(${(i * 13 + now * .025) % 360},100%,${70 + i % 3 * 8}%,${(.07 + bloom * .34) * fade})`; ctx.lineWidth = (i % 8 ? .7 : 2.4) * scale; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 10 * scale; ctx.stroke();
             }
-            for (let i = 0; i < 180; i++) {
-              const t = (progress * 1.4 + i / 180) % 1, a = i * 2.399 + now * .0005, r = (25 + t * Math.min(w, h) * .45) * scale;
+            ctx.shadowBlur = 0;
+            for (let i = 0; i < 96; i++) {
+              const t = (progress * 1.4 + i / 96) % 1, a = i * 2.399 + now * .0005, r = (25 + t * Math.min(w, h) * .45) * scale;
               const px = cx + Math.cos(a + t * 8) * r, py = cy + Math.sin(a + t * 8) * r * .58;
               ctx.beginPath(); ctx.arc(px, py, (1 + (i % 4) * .55) * scale, 0, 6.28);
-              ctx.fillStyle = `hsla(${(190 + i * 7 + now * .035) % 360},100%,${70 + i % 4 * 6}%,${(.16 + .58 * (1 - t)) * fade})`; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 12 * scale; ctx.fill();
+              ctx.fillStyle = `hsla(${(190 + i * 7 + now * .035) % 360},100%,${70 + i % 4 * 6}%,${(.16 + .58 * (1 - t)) * fade})`; ctx.fill();
             }
             ctx.translate(cx, cy); ctx.rotate(now * .00033);
             for (let shard = 0; shard < 3; shard++) {
