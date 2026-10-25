@@ -256,6 +256,8 @@ a.level-tile:hover, a.level-tile:focus-visible { transform: translateY(-2px); bo
 .map-card { display: flex; flex-direction: column; padding: 0; overflow: hidden; min-height: 520px; }
 .map-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .map-toolbar h2 { margin: 0; }
+.map-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.map-view-switch .seg-btn { min-width: 76px; }
 .map-tools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .map-tools input {
   background: rgba(0, 0, 0, 0.3); border: 1px solid var(--line); color: var(--text);
@@ -372,6 +374,19 @@ a.level-tile:hover, a.level-tile:focus-visible, .level-tile.next { border-color:
 .map-choice select:hover, .map-choice select:focus-visible { border-color: #aaa; }
 .map-choice option { color: #eee; background: #111; }
 .map-card .map-wrap { margin-right: 0 !important; }
+.map-node-list { position: absolute; inset: 0; overflow: auto; padding: 12px; background: #080808; }
+.node-list-row { display: grid; grid-template-columns: 20px minmax(150px, 1.5fr) minmax(110px, 1fr) 28px minmax(95px, .7fr); align-items: center; gap: 10px; width: 100%; min-height: 42px; padding: 7px 10px; border: 0; border-bottom: 1px solid #292929; color: #ddd; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.node-list-row:hover, .node-list-row:focus-visible, .node-list-row[aria-pressed="true"] { outline: none; color: #fff; background: #202020; }
+.node-list-row .lg-shape { justify-self: center; width: 12px; height: 12px; }
+.node-list-name { font-weight: 650; }
+.node-list-type, .node-list-status { color: #999; font-size: .78rem; }
+.node-list-level { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 1px solid #555; border-radius: 50%; color: #ddd; font-size: .72rem; }
+.node-list-empty { margin: 24px; color: #aaa; text-align: center; }
+.view-list .map-wrap { min-height: 420px; }
+@media (max-width: 680px) {
+  .node-list-row { grid-template-columns: 18px minmax(0, 1fr) 26px; gap: 7px; }
+  .node-list-type, .node-list-status { display: none; }
+}
 .importance-controls { display: flex; align-items: center; gap: 10px 16px; width: 100%; flex-wrap: wrap; padding-top: 2px; }
 .importance-heading { display: flex; align-items: baseline; gap: 8px; }
 .importance-heading strong { color: #eee; font-size: .8rem; }
