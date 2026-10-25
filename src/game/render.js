@@ -72,11 +72,11 @@ export class BoardRenderer {
       const ang = ph * Math.PI * 2;
       const cx = bx + bw / 2, cy = by + bh / 2, R = Math.max(bw, bh);
       const g = ctx.createLinearGradient(cx + Math.cos(ang) * R, cy + Math.sin(ang) * R, cx - Math.cos(ang) * R, cy - Math.sin(ang) * R);
-      g.addColorStop(0, '#ff4fd8'); g.addColorStop(0.5, '#a07bff'); g.addColorStop(1, '#4ff0ff');
+      g.addColorStop(0, '#f2f2f2'); g.addColorStop(0.5, '#999'); g.addColorStop(1, '#555');
       ctx.save();
-      ctx.fillStyle = 'rgba(20,12,60,0.55)';
+      ctx.fillStyle = 'rgba(18,18,18,0.8)';
       ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, s * 0.25); ctx.fill();
-      ctx.shadowColor = '#c084ff'; ctx.shadowBlur = 24;
+      ctx.shadowColor = '#bbb'; ctx.shadowBlur = 18;
       ctx.strokeStyle = g; ctx.lineWidth = 3;
       ctx.stroke();
       ctx.restore();
@@ -89,10 +89,10 @@ export class BoardRenderer {
         const px = this.ox + x * s, py = this.oy + y * s;
         if (c.type === 'wall') {
           const g = ctx.createLinearGradient(px, py, px, py + s);
-          g.addColorStop(0, '#5a43cf'); g.addColorStop(1, '#33248f');
+          g.addColorStop(0, '#555'); g.addColorStop(1, '#262626');
           ctx.fillStyle = g;
           ctx.beginPath(); ctx.roundRect(px + 1, py + 1, s - 2, s - 2, s * 0.14); ctx.fill();
-          ctx.strokeStyle = 'rgba(255,140,240,0.35)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1;
           ctx.stroke();
           ctx.fillStyle = 'rgba(255,255,255,0.16)';
           ctx.fillRect(px + s * 0.14, py + 3, s * 0.72, 2);
@@ -100,21 +100,21 @@ export class BoardRenderer {
         }
         const buildable = c.type === 'empty' && c.build;
         const noBuild = c.type === 'empty' && c.build === false;
-        ctx.fillStyle = noBuild ? '#1f1850' : '#2b2170';
+        ctx.fillStyle = noBuild ? '#101010' : '#191919';
         ctx.beginPath(); ctx.roundRect(px + 2, py + 2, s - 4, s - 4, s * 0.12); ctx.fill();
-        ctx.strokeStyle = 'rgba(160,140,255,0.16)'; ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
         ctx.stroke();
         if (c.ice) {
           // Eis: hellblau mit Glanzstreifen
           const g = ctx.createLinearGradient(px, py, px + s, py + s);
-          g.addColorStop(0, 'rgba(150,215,255,0.32)'); g.addColorStop(1, 'rgba(90,150,230,0.18)');
+          g.addColorStop(0, 'rgba(235,235,235,0.28)'); g.addColorStop(1, 'rgba(120,120,120,0.14)');
           ctx.fillStyle = g;
           ctx.beginPath(); ctx.roundRect(px + 2, py + 2, s - 4, s - 4, s * 0.12); ctx.fill();
-          ctx.strokeStyle = 'rgba(230,248,255,0.45)'; ctx.lineWidth = 1.5;
+          ctx.strokeStyle = 'rgba(245,245,245,0.4)'; ctx.lineWidth = 1.5;
           ctx.beginPath(); ctx.moveTo(px + s * 0.2, py + s * 0.45); ctx.lineTo(px + s * 0.45, py + s * 0.2);
           ctx.moveTo(px + s * 0.35, py + s * 0.75); ctx.lineTo(px + s * 0.75, py + s * 0.35); ctx.stroke();
         } else if (buildable) {
-          ctx.fillStyle = 'rgba(160,170,230,0.25)';
+          ctx.fillStyle = 'rgba(210,210,210,0.2)';
           ctx.beginPath(); ctx.arc(px + s / 2, py + s / 2, Math.max(1.5, s * 0.03), 0, Math.PI * 2); ctx.fill();
         } else if (noBuild) {
           // nicht bebaubar: feine Schraffur
@@ -157,7 +157,7 @@ export class BoardRenderer {
     // Tastatur-Cursor
     if (opts.showCursor && opts.cursor) {
       const px = this.ox + opts.cursor.x * s, py = this.oy + opts.cursor.y * s;
-      ctx.strokeStyle = '#ffd166';
+      ctx.strokeStyle = '#ddd';
       ctx.lineWidth = 2.5;
       ctx.setLineDash([6, 4]);
       ctx.lineDashOffset = opts.reduced ? 0 : -t / 60;
@@ -236,17 +236,17 @@ export class BoardRenderer {
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = s * 0.15; ctx.shadowOffsetY = s * 0.05;
     const g = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
-    if (b.kind === 'stone') { g.addColorStop(0, '#4a4f63'); g.addColorStop(1, '#2c3042'); }
-    else { g.addColorStop(0, '#3a3f7a'); g.addColorStop(1, '#252a58'); }
+    if (b.kind === 'stone') { g.addColorStop(0, '#555'); g.addColorStop(1, '#292929'); }
+    else { g.addColorStop(0, '#777'); g.addColorStop(1, '#383838'); }
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, s * 0.12); ctx.fill();
     ctx.shadowColor = 'transparent';
-    ctx.strokeStyle = b.kind !== 'stone' ? 'rgba(180,170,255,0.55)' : 'rgba(255,255,255,0.18)';
+    ctx.strokeStyle = b.kind !== 'stone' ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.18)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
     if (b.kind !== 'stone') {
       // Ecknieten: erkennbar als schiebbarer Spiegelblock
-      ctx.fillStyle = 'rgba(200,190,255,0.6)';
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
       for (const [ox, oy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
         ctx.beginPath(); ctx.arc(cx + ox * r * 0.72, cy + oy * r * 0.72, s * 0.025, 0, Math.PI * 2); ctx.fill();
       }
@@ -280,10 +280,10 @@ export class BoardRenderer {
     const [x0, y0, x1, y1] = orient === '/' ? [cx - d, cy + d, cx + d, cy - d] : [cx - d, cy - d, cx + d, cy + d];
     ctx.save();
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(140,240,255,0.35)'; ctx.lineWidth = s * 0.14;
+    ctx.strokeStyle = 'rgba(220,220,220,0.35)'; ctx.lineWidth = s * 0.14;
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-    ctx.shadowColor = '#7ff6ff'; ctx.shadowBlur = s * 0.15;
-    ctx.strokeStyle = '#d9fbff'; ctx.lineWidth = s * 0.06;
+    ctx.shadowColor = '#ccc'; ctx.shadowBlur = s * 0.12;
+    ctx.strokeStyle = '#eee'; ctx.lineWidth = s * 0.06;
     ctx.setLineDash([s * 0.09, s * 0.07]);
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
     ctx.restore();
@@ -292,12 +292,12 @@ export class BoardRenderer {
   // Portal: wirbelnder Ring; Paare teilen Farbe und Buchstaben (ohne Farbsinn erkennbar).
   _drawPortal(c, cx, cy, s, t, opts) {
     const { ctx } = this;
-    const hue = { A: '#ff7af0', B: '#7affc8', C: '#ffb86b' }[c.pair] || '#c9a7ff';
+    const hue = { A: '#eee', B: '#aaa', C: '#666' }[c.pair] || '#bbb';
     const r = s * 0.36;
     const spin = opts.reduced ? 0 : t / 600;
     ctx.save();
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, '#0b0620'); g.addColorStop(0.65, 'rgba(40,10,80,0.9)'); g.addColorStop(1, hue);
+    g.addColorStop(0, '#080808'); g.addColorStop(0.65, 'rgba(40,40,40,0.9)'); g.addColorStop(1, hue);
     ctx.fillStyle = g;
     ctx.shadowColor = hue; ctx.shadowBlur = s * 0.35;
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
@@ -335,14 +335,14 @@ export class BoardRenderer {
     const bob = opts.reduced ? 0 : Math.sin(t / 380) * s * 0.015;
     const r = s * 0.36;
     ctx.save();
-    ctx.shadowColor = '#ffe9a8'; ctx.shadowBlur = s * 0.45;
+    ctx.shadowColor = '#ddd'; ctx.shadowBlur = s * 0.35;
     const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-    g.addColorStop(0, '#fff6d6'); g.addColorStop(0.5, '#ffd166'); g.addColorStop(1, '#ff9f5a');
+    g.addColorStop(0, '#fff'); g.addColorStop(0.5, '#bbb'); g.addColorStop(1, '#666');
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.roundRect(cx - r, cy - r + bob, r * 2, r * 2, s * 0.14); ctx.fill();
     ctx.shadowBlur = 0;
     // Prisma-Symbol
-    ctx.strokeStyle = 'rgba(80,40,10,0.7)'; ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx, cy - r * 0.45 + bob); ctx.lineTo(cx + r * 0.45, cy + r * 0.35 + bob); ctx.lineTo(cx - r * 0.45, cy + r * 0.35 + bob); ctx.closePath();
     ctx.stroke();
@@ -386,27 +386,27 @@ export class BoardRenderer {
     if (!ghost) {
       if (c.rotatable) {
         // runder Sockel mit Drehpfeilen = drehbar
-        ctx.strokeStyle = 'rgba(255,209,102,0.55)'; ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(235,235,235,0.55)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.36, 0.3, 1.3); ctx.stroke();
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.36, Math.PI + 0.3, Math.PI + 1.3); ctx.stroke();
-        ctx.fillStyle = 'rgba(255,209,102,0.12)';
+        ctx.fillStyle = 'rgba(235,235,235,0.1)';
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.33, 0, Math.PI * 2); ctx.fill();
       } else if (c.placed) {
         // gesetzter Spiegel: violette Ecken
-        ctx.fillStyle = 'rgba(139,123,255,0.18)';
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
         ctx.beginPath(); ctx.roundRect(cx - s * 0.4, cy - s * 0.4, s * 0.8, s * 0.8, s * 0.1); ctx.fill();
       } else {
-        ctx.fillStyle = 'rgba(150,160,200,0.12)';
+        ctx.fillStyle = 'rgba(190,190,190,0.1)';
         ctx.beginPath(); ctx.roundRect(cx - s * 0.4, cy - s * 0.4, s * 0.8, s * 0.8, 2); ctx.fill();
       }
     }
     const d = s * 0.32;
     const [x0, y0, x1, y1] = c.orient === '/' ? [cx - d, cy + d, cx + d, cy - d] : [cx - d, cy - d, cx + d, cy + d];
     const g = ctx.createLinearGradient(x0, y0, x1, y1);
-    g.addColorStop(0, '#c9d2ff'); g.addColorStop(0.5, '#ffffff'); g.addColorStop(1, '#a9b4ee');
+    g.addColorStop(0, '#888'); g.addColorStop(0.5, '#fff'); g.addColorStop(1, '#aaa');
     ctx.globalAlpha *= alpha;
     ctx.lineCap = 'round';
-    ctx.shadowColor = '#b8c2ff'; ctx.shadowBlur = ghost ? 0 : s * 0.12;
+    ctx.shadowColor = '#ddd'; ctx.shadowBlur = ghost ? 0 : s * 0.1;
     ctx.strokeStyle = g; ctx.lineWidth = s * 0.085;
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
     ctx.restore();
@@ -427,7 +427,7 @@ export class BoardRenderer {
       ctx.beginPath(); ctx.arc(cx, cy, r * pulse, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
     } else {
-      ctx.fillStyle = '#12162e';
+      ctx.fillStyle = '#111';
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
     }
     ctx.lineWidth = 3;
@@ -450,7 +450,7 @@ export class BoardRenderer {
       ctx.moveTo(cx - s * 0.08, cy + s * 0.12); ctx.lineTo(cx - s * 0.02, cy + s * 0.18); ctx.lineTo(cx + s * 0.1, cy + s * 0.06);
       ctx.stroke();
     } else if (wrong) {
-      ctx.fillStyle = '#ff8a98';
+      ctx.fillStyle = '#ddd';
       ctx.font = `700 ${Math.round(s * 0.16)}px system-ui, sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('≠', cx, cy + s * 0.14);
@@ -458,3 +458,4 @@ export class BoardRenderer {
     ctx.restore();
   }
 }
+
