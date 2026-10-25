@@ -125,8 +125,8 @@ const AUTO_SPIN = 0.0012; // rad pro Frame
 const IDLE_BEFORE_SPIN = 4000;
 
 const NODE_TYPE_ORDER = Object.keys(NODE_TYPES);
-export function nodeColor(type, palette = 'arctic') {
-  const colors = PALETTES[palette]?.colors || PALETTES.arctic.colors;
+export function nodeColor(type, palette = 'bunt') {
+  const colors = PALETTES[palette]?.colors || PALETTES.bunt.colors;
   const index = Math.max(0, NODE_TYPE_ORDER.indexOf(type));
   return colors[Math.round(index * (colors.length - 1) / Math.max(1, NODE_TYPE_ORDER.length - 1))];
 }
@@ -139,13 +139,14 @@ function hash(str) {
 }
 
 export class BrainMap {
-  constructor(canvas, { onSelect, onReplayLabel, reducedMotion }) {
+  constructor(canvas, { onSelect, onReplayLabel, onReplayProgress, reducedMotion }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.onSelect = onSelect;
     this.onReplayLabel = onReplayLabel;
+    this.onReplayProgress = onReplayProgress;
     this.reducedMotion = reducedMotion;
-    this.palette = 'arctic';
+    this.palette = 'bunt';
     this.nodes = new Map();
     this.edges = [];
     this.cam = { x: 0, y: 0, k: 1 };
@@ -159,6 +160,10 @@ export class BrainMap {
     this.loaded = false;
     this.hidden = new Set();
     this.replayActive = false;
+    this.replayFollowing = true;
+    this.replayOrder = [];
+    this.replayIndex = 0;
+    this.replaySpeed = 1;
     this.replayLabelId = null;
     this.replayLabelStarted = 0;
     this.importanceFilter = new Set([1, 2, 3, 4, 5]);
@@ -419,7 +424,7 @@ export class BrainMap {
   }
 
   fit(animate = true) {
-    if (this.replayActive) this.stopReplay();
+    if (this.replayActive) this.replayFollowing = false;
     const list = [...this.nodes.values()].filter((n) => this.isVisibleNode(n));
     if (!list.length || !this.w || !this.h) return false;
     this.userMoved = false;
@@ -458,10 +463,7 @@ export class BrainMap {
   }
 
   zoomBy(f, sx = this.w / 2, sy = this.h / 2) {
-    if (this.replayActive) {
-      this.stopReplay(true);
-      if (f < 1) return;
-    }
+    if (this.replayActive && f < 1) { this.replayFollowing = false; this.focusId = null; }
     this.userMoved = true;
     const t = this.camTarget;
     const k2 = Math.max(0.05, Math.min(5, t.k * f));
@@ -533,6 +535,10 @@ export class BrainMap {
     if (this.replayActive) this.stopReplay(true);
     const order = [...this.nodes.values()].filter((node) => this.isVisibleNode(node)).sort((a, b) => (a.step - b.step) || (a.index - b.index));
     if (this.reducedMotion()) { this.hidden.clear(); this.onReplayLabel?.(null); return; }
+    this.replayOrder = order;
+    if (!order.length) { this.replayActive = false; this.onReplayProgress?.(0, 0, false, true); return; }
+    this.replayIndex = 0;
+    this.replayFollowing = true;
     this.hidden.clear();
     this.select(null);
     this.replayActive = true;
@@ -540,28 +546,84 @@ export class BrainMap {
     this.replayLabelId = null;
     this.onReplayLabel?.(null);
     order.forEach((n) => this.hidden.add(n.id));
-    let i = 0;
-    const step = () => {
-      const n = order[i++];
-      if (!n) {
+    this.onReplayProgress?.(0, order.length, true);
+    this._showReplayStep();
+  }
+
+  _showReplayStep() {
+    if (!this.replayOrder.length) return;
+    const index = Math.max(0, Math.min(this.replayOrder.length - 1, this.replayIndex));
+    const node = this.replayOrder[index];
+    this.hidden.delete(node.id);
+    node.born = performance.now();
+    this.alpha = Math.max(this.alpha, 0.35);
+    this.replayLabelId = node.id;
+    this.replayLabelStarted = performance.now();
+    this.onReplayLabel?.(node, index, this.replayOrder.length);
+    this.onReplayProgress?.(index, this.replayOrder.length, true);
+    if (this.replayFollowing) this.focusNode(node.id, 3.2);
+    this.replayIndex = index + 1;
+    this.replayTimer = setTimeout(() => {
+      if (this.replayIndex >= this.replayOrder.length) {
         this.replayActive = false;
         this.hidden.clear();
-        this.focusId = null;
-        this.replayLabelId = null;
-        this.onReplayLabel?.(null);
-        this.fit();
+        this.onReplayProgress?.(this.replayOrder.length - 1, this.replayOrder.length, false, true);
+        if (this.replayFollowing) this.fit();
+        this.replayFollowing = false;
         return;
       }
-      this.hidden.delete(n.id);
-      n.born = performance.now();
-      this.alpha = Math.max(this.alpha, 0.35);
-      this.replayLabelId = n.id;
-      this.replayLabelStarted = performance.now();
-      this.onReplayLabel?.(n, i - 1, order.length);
-      this.focusNode(n.id, 3.2);
-      this.replayTimer = setTimeout(step, Math.max(80, 3000 / order.length));
-    };
-    step();
+      this._showReplayStep();
+    }, 520 / this.replaySpeed);
+  }
+
+  pauseReplay() {
+    if (!this.replayActive) return false;
+    clearTimeout(this.replayTimer);
+    this.replayActive = false;
+    this.onReplayProgress?.(Math.max(0, this.replayIndex - 1), this.replayOrder.length, false);
+    return true;
+  }
+
+  resumeReplay() {
+    if (!this.replayOrder.length) return this.replayGrowth();
+    if (this.replayIndex >= this.replayOrder.length) return this.replayGrowth();
+    if (this.replayActive) return false;
+    this.replayActive = true;
+    this._showReplayStep();
+    return true;
+  }
+
+  seekGrowth(index) {
+    if (!this.replayOrder.length) this.replayOrder = [...this.nodes.values()].filter((node) => this.isVisibleNode(node)).sort((a, b) => (a.step - b.step) || (a.index - b.index));
+    if (!this.replayOrder.length) return false;
+    clearTimeout(this.replayTimer);
+    this.replayActive = false;
+    const nextIndex = Math.max(0, Math.min(this.replayOrder.length - 1, Math.round(index)));
+    this.replayOrder.forEach((node, i) => i < nextIndex ? this.hidden.delete(node.id) : this.hidden.add(node.id));
+    this.replayIndex = nextIndex;
+    this.replayFollowing = false;
+    this.replayLabelId = null;
+    this._showReplayStep();
+    this.replayActive = false;
+    clearTimeout(this.replayTimer);
+    this.onReplayProgress?.(nextIndex, this.replayOrder.length, false);
+    return true;
+  }
+
+  setReplaySpeed(speed) {
+    this.replaySpeed = Math.max(0.35, Math.min(2.5, Number(speed) || 1));
+    if (this.replayActive) {
+      clearTimeout(this.replayTimer);
+      this.replayTimer = setTimeout(() => {
+        if (this.replayIndex >= this.replayOrder.length) {
+          this.replayActive = false;
+          this.hidden.clear();
+          this.onReplayProgress?.(this.replayOrder.length - 1, this.replayOrder.length, false, true);
+          if (this.replayFollowing) this.fit();
+          this.replayFollowing = false;
+        } else this._showReplayStep();
+      }, 520 / this.replaySpeed);
+    }
   }
 
   stopReplay(restoreOverview = false) {
@@ -610,7 +672,7 @@ export class BrainMap {
       // Zeilen-Modus (Firefox) in Pixel umrechnen; große Sammel-Ereignisse proportional zoomen.
       const dy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 400 : 1);
       const f = Math.exp(-Math.max(-800, Math.min(800, dy)) * 0.002);
-      if (this.replayActive) { this.stopReplay(true); if (f < 1) return; }
+      if (this.replayActive && f < 1) { this.replayFollowing = false; this.focusId = null; }
       const node = this._nodeAt(sx, sy, 22);
       this.lastInteract = performance.now();
       // Hineinzoomen auf einen Knoten: Knoten gleitet in die Mitte und wird groß.
