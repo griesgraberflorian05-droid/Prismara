@@ -759,7 +759,7 @@ export class BrainMap {
     if (!this.running) return;
     if (this.canvas.clientWidth !== this.w || this.canvas.clientHeight !== this.h) this._resize();
     // Kamera gleitet exponentiell zum Ziel (weiches Zoomen ohne Sprünge)
-    const ease = this.reducedMotion() ? 1 : this.replayActive ? 0.18 : 0.16;
+    const ease = this.reducedMotion() ? 1 : this.replayActive ? 0.09 : 0.16;
     for (const key of ['x', 'y', 'k']) this.cam[key] += (this.camTarget[key] - this.cam[key]) * ease;
     // Langsames Eigendrehen, solange niemand interagiert, nichts gewählt und nichts fokussiert ist.
     if (!this.reducedMotion() && !this.selected && !this.focusId && t - this.lastInteract > IDLE_BEFORE_SPIN) this.rot.yaw += AUTO_SPIN;
@@ -769,7 +769,7 @@ export class BrainMap {
       if (Math.abs(this.spin.yaw) + Math.abs(this.spin.pitch) < 0.0005) this.spin = null;
     }
     if (this.alpha > 0.004) { this._tick(); this.alpha *= 0.985; }
-    this._updatePivot(this.replayActive ? 0.2 : this.focusId ? 0.14 : 0.06);
+    this._updatePivot(this.replayActive ? 0.1 : this.focusId ? 0.14 : 0.06);
     // Ein Fehler beim Zeichnen darf die Schleife nie anhalten (sonst friert die Karte ein).
     requestAnimationFrame(this._frame);
     try { this._draw(t); } catch (err) { if (!this._drawErr) { this._drawErr = true; console.error('Gehirnkarte: Zeichenfehler', err); } }
