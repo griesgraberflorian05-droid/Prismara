@@ -32,6 +32,75 @@ export const FORMATIONS = {
   clusters: 'Cluster',
 };
 
+export const PALETTES = {
+  arctic: { label: 'Eisblau', colors: ['#f5fbff', '#dceeff', '#c2e1fa', '#a5d0f2', '#87bce6', '#6aa5d4', '#4e87b7', '#396a95', '#2d5275'] },
+  silver: { label: 'Silber', colors: ['#fff', '#e4e4e4', '#ccc', '#b5b5b5', '#999', '#858585', '#707070', '#5d5d5d', '#4a4a4a'] },
+  midnight: { label: 'Nachtblau', colors: ['#e6f3ff', '#c8e2f8', '#a6cdec', '#83b4dc', '#699bc6', '#5481aa', '#41688d', '#325472', '#263f58'] },
+};
+
+export const IMPORTANCE_LEVELS = [
+  { id: 1, label: 'Kern' },
+  { id: 2, label: 'Sehr wichtig' },
+  { id: 3, label: 'Wichtig' },
+  { id: 4, label: 'Ergänzend' },
+  { id: 5, label: 'Details' },
+];
+
+// Einschätzung der 80 kuratierten Projektknoten; 1 ist am zentralsten, 5 ist Kontext/Detail.
+const CURATED_IMPORTANCE = {
+  1: ['goal', 'dec-stack', 'dec-backup', 'feat-lab', 'feat-brain3d', 'feat-brainpage', 'feat-allnodes', 'feat-formations', 'feat-levelselect', 'req-push', 'mech-push', 'lvl-push', 'test-push', 'idea-light', 'mech-beam', 'mech-mix', 'dec-core', 'test-engine'],
+  2: ['obs-tools', 'dec-env', 'file-serve', 'file-backup', 'file-check', 'feat-brain', 'test-lab1', 'fix-drift', 'req-3d', 'feat-full', 'fix-pivot', 'fix-labels', 'fix-core', 'feat-zoomfocus', 'fix-measure', 'mech-place', 'play-push', 'mech-prism', 'mech-filter', 'mech-ice', 'lvl-push2', 'test-s3', 'play-s3'],
+  3: ['fix-livenodes', 'lvl-big1', 'fix-flicker', 'fix-rainbow', 'test-depth', 'req-more', 'idea-split-portal', 'mech-splitter', 'mech-portal', 'lvl-push3', 'fix-w15', 'test-s5', 'test-solver5', 'fix-w13', 'feat-mapgen2', 'feat-mapsize', 'doc-system', 'obs-freeze', 'fix-freeze'],
+  4: ['req-neon', 'feat-neon', 'feat-fx', 'req-map200', 'bak-1'],
+  5: ['file-solver', 'lvl-proto', 'dec-remove', 'play-place', 'feat-livelog', 'req-log', 'fix-testlog', 'feat-logfile', 'feat-logbus', 'feat-logtail', 'feat-logcolor', 'feat-pulse', 'obs-port', 'dec-restart', 'obs-gone'],
+};
+const CURATED_IMPORTANCE_BY_ID = Object.fromEntries(
+  Object.entries(CURATED_IMPORTANCE).flatMap(([level, ids]) => ids.map((id) => [id, Number(level)])),
+);
+
+// Einzelzuordnungen für automatisch erzeugte Knoten aus Spielregeln und Projektdateien.
+const GENERATED_IMPORTANCE_BY_ID = {
+  'g-mode-run': 1,
+  'g-obj-emitter': 1, 'g-obj-target': 1, 'g-obj-player': 1, 'g-obj-mirrorblock': 1, 'g-obj-beam': 1,
+  'g-obj-prism': 2, 'g-obj-filter': 2, 'g-obj-ice': 2, 'g-obj-stone': 2,
+  'g-obj-splitter': 3, 'g-obj-portal': 3, 'g-obj-wall': 2, 'g-obj-floor': 2,
+  'g-col-1': 1, 'g-col-2': 1, 'g-col-4': 1, 'g-col-3': 2, 'g-col-5': 2, 'g-col-6': 2, 'g-col-7': 2,
+  'g-file-engine': 1, 'g-file-push': 1, 'g-file-pushView': 1, 'g-file-main': 1,
+  'g-file-brainMap': 1, 'g-file-labView': 1, 'g-file-projectGraph': 2,
+  'g-file-pushLevels': 2, 'g-file-render': 2, 'g-file-menu': 2, 'g-file-progress': 2,
+  'g-file-config': 2, 'g-file-settings': 2, 'g-file-styles': 2,
+  'g-file-celebrate': 3, 'g-file-devlog': 5, 'g-file-serve': 4, 'g-file-backup': 4,
+  'g-file-check': 3, 'g-file-tests': 3, 'g-file-SYSTEM': 4, 'g-file-live': 5,
+  'g-anim-beamgrow': 2, 'g-anim-nodebirth': 2, 'g-anim-photons': 2, 'g-anim-targetpulse': 2,
+  'g-anim-slide': 2, 'g-anim-flicker': 3, 'g-anim-portalspin': 3, 'g-anim-framerun': 4,
+  'g-anim-sparkle': 3, 'g-anim-fireworks': 3, 'g-anim-starpop': 3, 'g-anim-logflow': 5,
+  'g-tex-glyphs': 2, 'g-tex-glow': 2, 'g-tex-glass': 2, 'g-tex-splitglass': 3,
+  'g-tex-portalring': 3, 'g-tex-icesheen': 2, 'g-tex-rivets': 3, 'g-tex-rainbow': 3,
+  'g-tex-tint': 3, 'g-tex-wallgrad': 4, 'g-tex-floordot': 4, 'g-tex-goldcube': 4,
+  'g-key-arrows': 1, 'g-key-space': 2, 'g-key-undo': 2, 'g-key-reset': 2, 'g-key-esc': 2, 'g-key-click': 2, 'g-key-enter': 3,
+  'g-route-menu': 1, 'g-route-run': 1, 'g-route-lab': 1, 'g-route-labfull': 2, 'g-route-brain': 2,
+  'g-form-brain': 2, 'g-form-sphere': 3, 'g-form-helix': 3, 'g-form-galaxy': 3, 'g-form-clusters': 3,
+  'g-test-parse': 2, 'g-test-badchar': 3, 'g-test-straight': 1, 'g-test-mirrors': 1,
+  'g-test-mix': 1, 'g-test-wrongcolor': 2, 'g-test-ends': 2, 'g-test-walk': 1,
+  'g-test-pushblock': 1, 'g-test-shadow': 2, 'g-test-prism': 2, 'g-test-filter': 2,
+  'g-test-ice': 2, 'g-test-splitter': 3, 'g-test-portal': 3, 'g-test-portalwalk': 3,
+  'g-tier-easy': 4, 'g-tier-mid': 4, 'g-tier-hard': 4,
+};
+
+const LEVEL_IMPORTANCE = { w1: 1, w2: 1, w3: 1, w4: 1, w5: 1, w6: 2, w7: 2, w8: 2, w9: 2, w10: 2, w11: 3, w12: 3, w13: 3, w14: 3, w15: 3 };
+const STEP_IMPORTANCE = { 1: 1, 2: 1, 3: 2, 4: 3, 5: 3, 6: 3 };
+
+export function nodeImportance(node) {
+  if (CURATED_IMPORTANCE_BY_ID[node.id]) return CURATED_IMPORTANCE_BY_ID[node.id];
+  if (GENERATED_IMPORTANCE_BY_ID[node.id]) return GENERATED_IMPORTANCE_BY_ID[node.id];
+  if (node.id?.startsWith('g-lvl-')) return LEVEL_IMPORTANCE[node.id.slice(6)] || 3;
+  if (node.id?.startsWith('g-step-')) return STEP_IMPORTANCE[node.id.slice(7)] || 3;
+  if (node.group === 'livelog' || node.group === 'backups') return 5;
+  if (node.group === 'levels-run') return 1;
+  if (node.group === 'formations' || node.group === 'tests') return 3;
+  return 3;
+}
+
 export const NODE_STATUS = {
   idea:     { label: 'Idee',       dash: [3, 3] },
   built:    { label: 'Umgesetzt',  dash: [] },
@@ -47,7 +116,13 @@ const PERSPECTIVE = 900;
 const AUTO_SPIN = 0.0012; // rad pro Frame
 const IDLE_BEFORE_SPIN = 4000;
 
-const colorOf = (n) => NODE_TYPES[n.type]?.color || '#d0d0d0';
+const NODE_TYPE_ORDER = Object.keys(NODE_TYPES);
+export function nodeColor(type, palette = 'arctic') {
+  const colors = PALETTES[palette]?.colors || PALETTES.arctic.colors;
+  const index = Math.max(0, NODE_TYPE_ORDER.indexOf(type));
+  return colors[Math.round(index * (colors.length - 1) / Math.max(1, NODE_TYPE_ORDER.length - 1))];
+}
+const colorOf = (n, palette) => nodeColor(n.type, palette);
 
 function hash(str) {
   let h = 2166136261;
@@ -61,6 +136,7 @@ export class BrainMap {
     this.ctx = canvas.getContext('2d');
     this.onSelect = onSelect;
     this.reducedMotion = reducedMotion;
+    this.palette = 'arctic';
     this.nodes = new Map();
     this.edges = [];
     this.cam = { x: 0, y: 0, k: 1 };
@@ -73,6 +149,7 @@ export class BrainMap {
     this.filter = '';
     this.loaded = false;
     this.hidden = new Set();
+    this.importanceFilter = new Set([1, 2, 3, 4, 5]);
     this.dpr = 1;
     this.running = true;
     this.lastInteract = 0;
@@ -158,9 +235,25 @@ export class BrainMap {
     this.formation = name;
     this.alpha = 1;
     this.focusId = null;
+    this.userMoved = false;
+    this.spin = null;
     clearTimeout(this.pivotTimer);
     if (this.reducedMotion()) for (let i = 0; i < 300; i++) this._tick(1 - i / 300);
     this.pivotTimer = setTimeout(() => { this._computePivotTarget(); if (!this.userMoved) this.fit(); }, this.reducedMotion() ? 0 : 1600);
+  }
+
+  setPalette(name) {
+    if (PALETTES[name]) this.palette = name;
+  }
+
+  setImportanceFilter(levels) {
+    this.importanceFilter = new Set(levels.map(Number).filter((level) => IMPORTANCE_LEVELS.some((item) => item.id === level)));
+    if (this.selected && !this.isVisibleNode(this.nodes.get(this.selected))) this.select(null);
+    if (this.importanceFilter.size) this.fit();
+  }
+
+  isVisibleNode(node) {
+    return !!node && !this.hidden.has(node.id) && this.importanceFilter.has(node.importance);
   }
 
   /** Zielpunkt eines Knotens in der aktuellen Formation und wie stark er dorthin zieht. */
@@ -219,7 +312,7 @@ export class BrainMap {
 
   // ---------- Simulation ----------
   _tick(alpha = this.alpha) {
-    const list = [...this.nodes.values()].filter((n) => !this.hidden.has(n.id));
+    const list = [...this.nodes.values()].filter((n) => this.isVisibleNode(n));
     // Feste Formationen (Kugel, Helix, Galaxie): Abstoßung und Federn schwächer, damit die Form klar bleibt.
     const exact = ['sphere', 'helix', 'galaxy'].includes(this.formation);
     const repulse = exact ? 0.25 : 1;
@@ -240,7 +333,7 @@ export class BrainMap {
     }
     for (const e of this.edges) {
       const a = this.nodes.get(e.from), b = this.nodes.get(e.to);
-      if (!a || !b || this.hidden.has(a.id) || this.hidden.has(b.id)) continue;
+      if (!this.isVisibleNode(a) || !this.isVisibleNode(b)) continue;
       const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
       const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
       const rest = a.step === b.step ? 70 : 130;
@@ -294,18 +387,29 @@ export class BrainMap {
   }
 
   fit(animate = true) {
-    const list = [...this.nodes.values()].filter((n) => !this.hidden.has(n.id));
-    if (!list.length || !this.w) return;
+    const list = [...this.nodes.values()].filter((n) => this.isVisibleNode(n));
+    if (!list.length || !this.w || !this.h) return false;
     this.userMoved = false;
     this.focusId = null;
+    this.spin = null;
     this._computePivotTarget();
-    // Drehpunkt in die Bildmitte; Zoom nach dem Radius der Kugel um den Drehpunkt,
-    // damit das Netz in jeder Drehlage ins Bild passt.
-    const r = (this.radius || 200) + 20;
-    const k = Math.max(0.35, Math.min(2.4, (Math.min(this.w, this.h) / 2 - 16) / r));
+    this.pivot = { ...this.pivotTarget };
+    // Tatsächliche projizierte Grenzen verwenden. Ein fester Mindestzoom ließ große Karten
+    // bisher außerhalb des Bildes; jetzt werden auch die 600+ Knoten vollständig eingepasst.
+    const previousCam = this.cam;
+    this.cam = { x: 0, y: 0, k: 1 };
+    const points = list.map((n) => this.project(n));
+    this.cam = previousCam;
+    const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const pad = Math.min(64, Math.max(24, Math.min(this.w, this.h) * 0.07));
+    const spanX = Math.max(1, maxX - minX + 72), spanY = Math.max(1, maxY - minY + 72);
+    const k = Math.max(0.05, Math.min(5, (this.w - pad * 2) / spanX, (this.h - pad * 2) / spanY));
     this.fitK = k;
-    this.camTarget = { x: 0, y: 0, k };
+    this.camTarget = { x: (minX + maxX) / 2 - this.w / 2, y: (minY + maxY) / 2 - this.h / 2, k };
     if (!animate || this.reducedMotion()) { this.cam = { ...this.camTarget }; this._updatePivot(1); }
+    return true;
   }
 
   /** Knoten wird Drehpunkt, gleitet in die Bildmitte und wird auf Zoomstufe k gebracht. */
@@ -323,7 +427,7 @@ export class BrainMap {
   zoomBy(f, sx = this.w / 2, sy = this.h / 2) {
     this.userMoved = true;
     const t = this.camTarget;
-    const k2 = Math.max(0.25, Math.min(5, t.k * f));
+    const k2 = Math.max(0.05, Math.min(5, t.k * f));
     // Punkt unter dem Zeiger bleibt stehen
     const px = (sx - this.w / 2) / t.k + t.x;
     const py = (sy - this.h / 2) / t.k + t.y;
@@ -342,7 +446,7 @@ export class BrainMap {
   // Drehpunkt = Mitte der Bounding-Box aller Knoten. Wird nur bei neuen Daten neu bestimmt
   // und dann sanft angefahren, damit er beim Drehen nicht wandert.
   _computePivotTarget() {
-    const list = [...this.nodes.values()];
+    const list = [...this.nodes.values()].filter((n) => this.isVisibleNode(n));
     if (!list.length) return;
     const mid = (axis) => (Math.min(...list.map((n) => n[axis])) + Math.max(...list.map((n) => n[axis]))) / 2;
     this.pivotTarget = { x: mid('x'), y: mid('y'), z: mid('z') };
@@ -412,7 +516,7 @@ export class BrainMap {
   _nodeAt(sx, sy, tolerance = 5) {
     let best = null, bestScore = Infinity;
     for (const n of this.nodes.values()) {
-      if (this.hidden.has(n.id)) continue;
+      if (!this.isVisibleNode(n)) continue;
       const p = this.proj.get(n.id) || this.project(n);
       const d = Math.hypot(p.x - sx, p.y - sy);
       const r = this._radius(n, p);
@@ -554,7 +658,7 @@ export class BrainMap {
       near.add(sel);
       for (const e of this.edges) { if (e.from === sel) near.add(e.to); if (e.to === sel) near.add(e.from); }
     }
-    const visible = (n) => n && !this.hidden.has(n.id);
+    const visible = (n) => this.isVisibleNode(n);
     const dimmed = (n) => (sel && !near.has(n.id)) || !this.matches(n);
 
     this._drawCore(t, reduced);
@@ -577,8 +681,8 @@ export class BrainMap {
       const dz = depth((pa.z + pb.z) / 2);
       const ex = pa.x + (pb.x - pa.x) * grow, ey = pa.y + (pb.y - pa.y) * grow;
       const grad = ctx.createLinearGradient(pa.x, pa.y, pb.x, pb.y);
-      grad.addColorStop(0, colorOf(a));
-      grad.addColorStop(1, colorOf(b));
+      grad.addColorStop(0, colorOf(a, this.palette));
+      grad.addColorStop(1, colorOf(b, this.palette));
       ctx.globalAlpha = active ? 0.95 : faded ? 0.05 : 0.36 * dz;
       ctx.strokeStyle = grad;
       ctx.lineWidth = (active ? 2.2 : 1.2) * Math.max(0.6, (pa.f + pb.f) / 2);
@@ -588,7 +692,7 @@ export class BrainMap {
         const ang = Math.atan2(pb.y - pa.y, pb.x - pa.x);
         const rb = this._radius(b, pb) + 4;
         const hx = pb.x - Math.cos(ang) * rb, hy = pb.y - Math.sin(ang) * rb;
-        ctx.fillStyle = colorOf(b);
+        ctx.fillStyle = colorOf(b, this.palette);
         ctx.beginPath();
         ctx.moveTo(hx, hy);
         ctx.lineTo(hx - Math.cos(ang - 0.45) * 7, hy - Math.sin(ang - 0.45) * 7);
@@ -624,7 +728,7 @@ export class BrainMap {
       ctx.globalAlpha = fade * (reduced ? 1 : Math.min(1, birth * 1.6));
 
       const glow = birth < 1 && !reduced ? 26 * (1 - birth) + 8 : Math.min(8, r * 1.2) * dz;
-      const col = colorOf(n);
+      const col = colorOf(n, this.palette);
       ctx.shadowColor = col;
       ctx.shadowBlur = n.id === sel || n.id === this.hover ? 22 : glow;
       // leichte Kugel-Schattierung für Tiefe
