@@ -42,31 +42,41 @@ export function mountLab(root, params = []) {
               </div>
             </div>
             <div class="map-tools">
-              <div class="seg" role="group" aria-label="Knotenauswahl">
-                <button class="seg-btn" data-mode="main" title="Nur die wichtigsten, kuratierten Knoten">Hauptknoten</button>
-                <button class="seg-btn" data-mode="all" title="Alle Level, Objekte, Farben, Animationen, Texturen und Verbindungen">Alle Knoten</button>
-              </div>
-              <label class="map-choice brain-only">
-                <span>Anordnung</span>
-                <select id="formation" aria-label="Anordnung der Knoten">${Object.entries(FORMATIONS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
-              </label>
-              <label class="map-choice">
-                <span>Farbpalette</span>
-                <select id="palette" aria-label="Farbpalette der Knoten">${Object.entries(PALETTES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
-              </label>
-              <input type="search" id="map-search" placeholder="Knoten suchen …" aria-label="Knoten suchen" list="map-node-list">
-              <datalist id="map-node-list"></datalist>
-              <button class="btn btn-sm brain-only" data-act="out" aria-label="Verkleinern">−</button>
-              <button class="btn btn-sm brain-only" data-act="in" aria-label="Vergrößern">+</button>
-              <button class="btn btn-sm brain-only" data-act="fit" title="Alle Knoten in die Karte einpassen">Alles einpassen</button>
-              <div class="growth-stack brain-only">
-                <button class="btn btn-sm" data-act="replay" id="growth-play">Wachstum abspielen</button>
-                <div class="growth-controls" aria-label="Wachstumsanimation steuern">
-                  <label class="growth-control" for="growth-speed"><span>Tempo <output id="growth-speed-value">1,0×</output></span><input id="growth-speed" type="range" min="0.35" max="2.5" step="0.05" value="1" aria-label="Wachstumstempo"></label>
-                  <label class="growth-control growth-seek" for="growth-position"><span>Verlauf <output id="growth-position-value">Bereit</output></span><input id="growth-position" type="range" min="0" max="0" step="1" value="0" disabled aria-label="Position im Wachstumsverlauf"></label>
+              <section class="map-tool-section map-node-tools" aria-label="Knoten und Darstellung">
+                <span class="map-tool-heading">Knoten &amp; Darstellung</span>
+                <div class="map-tool-row">
+                  <div class="seg" role="group" aria-label="Knotenauswahl">
+                    <button class="seg-btn" data-mode="main" title="Nur die wichtigsten, kuratierten Knoten">Hauptknoten</button>
+                    <button class="seg-btn" data-mode="all" title="Alle Level, Objekte, Farben, Animationen, Texturen und Verbindungen">Alle Knoten</button>
+                  </div>
+                  <label class="map-choice brain-only">
+                    <span>Anordnung</span>
+                    <select id="formation" aria-label="Anordnung der Knoten">${Object.entries(FORMATIONS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+                  </label>
+                  <label class="map-choice">
+                    <span>Farbpalette</span>
+                    <select id="palette" aria-label="Farbpalette der Knoten">${Object.entries(PALETTES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
+                  </label>
+                  <input type="search" id="map-search" placeholder="Knoten suchen …" aria-label="Knoten suchen" list="map-node-list">
+                  <datalist id="map-node-list"></datalist>
                 </div>
-              </div>
-              <button class="btn btn-sm btn-full brain-only" data-act="full" aria-pressed="false">⤢ Vollansicht</button>
+              </section>
+              <section class="map-tool-section map-growth-tools brain-only" aria-label="Kartenansicht und Wachstum">
+                <span class="map-tool-heading">Ansicht &amp; Wachstum</span>
+                <div class="map-tool-row map-growth-row">
+                  <button class="btn btn-sm" data-act="out" aria-label="Verkleinern">−</button>
+                  <button class="btn btn-sm" data-act="in" aria-label="Vergrößern">+</button>
+                  <button class="btn btn-sm" data-act="fit" title="Alle Knoten in die Karte einpassen">Alles einpassen</button>
+                  <div class="growth-stack">
+                    <button class="btn btn-sm" data-act="replay" id="growth-play">Wachstum abspielen</button>
+                    <div class="growth-controls" aria-label="Wachstumsanimation steuern">
+                      <label class="growth-control" for="growth-speed"><span>Tempo <output id="growth-speed-value">1,0×</output></span><input id="growth-speed" type="range" min="0.35" max="2.5" step="0.05" value="1" aria-label="Wachstumstempo"></label>
+                      <label class="growth-control growth-seek" for="growth-position"><span>Verlauf <output id="growth-position-value">Bereit</output></span><input id="growth-position" type="range" min="0" max="0" step="1" value="0" disabled aria-label="Position im Wachstumsverlauf"></label>
+                    </div>
+                  </div>
+                  <button class="btn btn-sm btn-full" data-act="full" aria-pressed="false">⤢ Vollansicht</button>
+                </div>
+              </section>
             </div>
             <div class="importance-controls" aria-label="Knoten nach Wichtigkeit filtern">
               <div class="importance-heading"><strong>Wichtigkeit</strong><span class="muted small">Mehrere Stufen gleichzeitig anzeigen</span><button id="importance-all" type="button" aria-label="Alle Wichtigkeitsstufen anzeigen">Alle Stufen</button></div>
