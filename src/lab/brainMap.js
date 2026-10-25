@@ -26,6 +26,8 @@ export const NODE_TYPES = {
 
 export const FORMATIONS = {
   brain: 'Gehirn',
+  dna: 'DNA-Strang',
+  cube: 'Würfel',
   sphere: 'Kugel',
   helix: 'Doppelhelix',
   galaxy: 'Galaxie',
@@ -36,6 +38,12 @@ export const PALETTES = {
   arctic: { label: 'Eisblau', colors: ['#f5fbff', '#dceeff', '#c2e1fa', '#a5d0f2', '#87bce6', '#6aa5d4', '#4e87b7', '#396a95', '#2d5275'] },
   silver: { label: 'Silber', colors: ['#fff', '#e4e4e4', '#ccc', '#b5b5b5', '#999', '#858585', '#707070', '#5d5d5d', '#4a4a4a'] },
   midnight: { label: 'Nachtblau', colors: ['#e6f3ff', '#c8e2f8', '#a6cdec', '#83b4dc', '#699bc6', '#5481aa', '#41688d', '#325472', '#263f58'] },
+  bunt: { label: 'Bunt', colors: ['#ff5d73', '#ff9f43', '#ffd43b', '#a3e635', '#2dd4bf', '#38bdf8', '#818cf8', '#c084fc', '#f472b6'] },
+  rot: { label: 'Rot', colors: ['#fff1f2', '#ffe4e6', '#fecdd3', '#fda4af', '#fb7185', '#f43f5e', '#e11d48', '#be123c', '#881337'] },
+  gelb: { label: 'Gelb', colors: ['#fffde7', '#fff9c4', '#fff176', '#ffee58', '#ffeb3b', '#fdd835', '#f9a825', '#e69500', '#9a5b00'] },
+  gruen: { label: 'Grün', colors: ['#ecfdf5', '#d1fae5', '#a7f3d0', '#6ee7b7', '#34d399', '#10b981', '#059669', '#047857', '#065f46'] },
+  orange: { label: 'Orange', colors: ['#fff7ed', '#ffedd5', '#fed7aa', '#fdba74', '#fb923c', '#f97316', '#ea580c', '#c2410c', '#7c2d12'] },
+  violett: { label: 'Violett', colors: ['#faf5ff', '#f3e8ff', '#e9d5ff', '#d8b4fe', '#c084fc', '#a855f7', '#9333ea', '#7e22ce', '#581c87'] },
 };
 
 export const IMPORTANCE_LEVELS = [
@@ -149,6 +157,7 @@ export class BrainMap {
     this.filter = '';
     this.loaded = false;
     this.hidden = new Set();
+    this.replayActive = false;
     this.importanceFilter = new Set([1, 2, 3, 4, 5]);
     this.dpr = 1;
     this.running = true;
@@ -167,6 +176,7 @@ export class BrainMap {
     this.running = false;
     this.ro.disconnect();
     clearTimeout(this.replayTimer);
+    this.replayActive = false;
   }
 
   // ---------- Daten ----------
@@ -232,6 +242,7 @@ export class BrainMap {
 
   setFormation(name) {
     if (!FORMATIONS[name] || name === this.formation) return;
+    if (this.replayActive) this.stopReplay(true);
     this.formation = name;
     this.alpha = 1;
     this.focusId = null;
@@ -275,6 +286,24 @@ export class BrainMap {
       const a = t * 0.42 + strand * Math.PI;
       return { x: Math.cos(a) * 150, y: (t - N / 4) * 14, z: Math.sin(a) * 150, k: 0.06 };
     }
+    if (f === 'dna') {
+      const strand = info.i % 2;
+      const pair = Math.floor(info.i / 2);
+      const a = pair * 0.23 + strand * Math.PI;
+      const radius = 128;
+      return { x: Math.cos(a) * radius, y: (pair - (Math.ceil(N / 2) - 1) / 2) * 9, z: Math.sin(a) * radius, k: 0.055 };
+    }
+    if (f === 'cube') {
+      const side = Math.ceil(Math.cbrt(N));
+      const cells = side ** 3;
+      // Affine permutation verteilt die Knoten gleichmäßig auf alle Würfelschichten.
+      const cell = (info.i * 103 + 19) % cells;
+      const x = cell % side;
+      const y = Math.floor(cell / side) % side;
+      const z = Math.floor(cell / (side * side));
+      const center = (side - 1) / 2;
+      return { x: (x - center) * 76, y: (y - center) * 76, z: (z - center) * 76, k: 0.055 };
+    }
     if (f === 'galaxy') {
       const a = (info.g / G) * Math.PI * 2 + info.r * 0.32;
       const rad = 70 + info.r * 26;
@@ -314,7 +343,7 @@ export class BrainMap {
   _tick(alpha = this.alpha) {
     const list = [...this.nodes.values()].filter((n) => this.isVisibleNode(n));
     // Feste Formationen (Kugel, Helix, Galaxie): Abstoßung und Federn schwächer, damit die Form klar bleibt.
-    const exact = ['sphere', 'helix', 'galaxy'].includes(this.formation);
+    const exact = ['sphere', 'helix', 'dna', 'cube', 'galaxy'].includes(this.formation);
     const repulse = exact ? 0.25 : 1;
     const springK = exact ? 0.006 : 0.03;
     for (let i = 0; i < list.length; i++) {
@@ -387,6 +416,7 @@ export class BrainMap {
   }
 
   fit(animate = true) {
+    if (this.replayActive) this.stopReplay();
     const list = [...this.nodes.values()].filter((n) => this.isVisibleNode(n));
     if (!list.length || !this.w || !this.h) return false;
     this.userMoved = false;
@@ -425,6 +455,10 @@ export class BrainMap {
   }
 
   zoomBy(f, sx = this.w / 2, sy = this.h / 2) {
+    if (this.replayActive) {
+      this.stopReplay(true);
+      if (f < 1) return;
+    }
     this.userMoved = true;
     const t = this.camTarget;
     const k2 = Math.max(0.05, Math.min(5, t.k * f));
@@ -436,6 +470,7 @@ export class BrainMap {
   }
 
   panBy(dx, dy) {
+    if (this.replayActive) this.stopReplay(true);
     this.userMoved = true;
     for (const c of [this.cam, this.camTarget]) {
       c.x -= dx / this.cam.k;
@@ -461,6 +496,7 @@ export class BrainMap {
   }
 
   rotateBy(dyaw, dpitch) {
+    if (this.replayActive) this.stopReplay(true);
     this.rot.yaw += dyaw;
     this.rot.pitch = Math.max(-1.3, Math.min(1.3, this.rot.pitch + dpitch));
     this.lastInteract = performance.now();
@@ -468,6 +504,7 @@ export class BrainMap {
 
   // ---------- Auswahl ----------
   select(id, { center = false } = {}) {
+    if (this.replayActive) this.stopReplay(true);
     this.selected = id;
     const node = id ? this.nodes.get(id) : null;
     if (node) this.lastInteract = performance.now();
@@ -490,19 +527,41 @@ export class BrainMap {
 
   replayGrowth() {
     clearTimeout(this.replayTimer);
-    const order = [...this.nodes.values()].sort((a, b) => (a.step - b.step) || (a.index - b.index));
+    const order = [...this.nodes.values()].filter((node) => this.isVisibleNode(node)).sort((a, b) => (a.step - b.step) || (a.index - b.index));
     if (this.reducedMotion()) { this.hidden.clear(); return; }
+    this.hidden.clear();
+    this.select(null);
+    this.replayActive = true;
+    this.focusId = null;
     order.forEach((n) => this.hidden.add(n.id));
     let i = 0;
     const step = () => {
       const n = order[i++];
-      if (!n) return;
+      if (!n) {
+        this.replayActive = false;
+        this.hidden.clear();
+        this.focusId = null;
+        this.fit();
+        return;
+      }
       this.hidden.delete(n.id);
       n.born = performance.now();
       this.alpha = Math.max(this.alpha, 0.35);
+      this.focusNode(n.id, 3.2);
       this.replayTimer = setTimeout(step, Math.max(60, 2400 / order.length));
     };
     step();
+  }
+
+  stopReplay(restoreOverview = false) {
+    if (!this.replayActive) return false;
+    clearTimeout(this.replayTimer);
+    this.replayActive = false;
+    this.hidden.clear();
+    this.focusId = null;
+    this._computePivotTarget();
+    if (restoreOverview) this.fit();
+    return true;
   }
 
   /** Bildschirmposition eines Knotens (für Tests und Tastaturfokus). */
@@ -538,6 +597,7 @@ export class BrainMap {
       // Zeilen-Modus (Firefox) in Pixel umrechnen; große Sammel-Ereignisse proportional zoomen.
       const dy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 400 : 1);
       const f = Math.exp(-Math.max(-800, Math.min(800, dy)) * 0.002);
+      if (this.replayActive) { this.stopReplay(true); if (f < 1) return; }
       const node = this._nodeAt(sx, sy, 22);
       this.lastInteract = performance.now();
       // Hineinzoomen auf einen Knoten: Knoten gleitet in die Mitte und wird groß.
@@ -558,6 +618,7 @@ export class BrainMap {
     });
     c.addEventListener('contextmenu', (e) => e.preventDefault());
     c.addEventListener('pointerdown', (e) => {
+      if (this.replayActive) this.stopReplay(true);
       const r = c.getBoundingClientRect();
       const sx = e.clientX - r.left, sy = e.clientY - r.top;
       drag = { sx, sy, lastX: sx, lastY: sy, node: this._nodeAt(sx, sy), moved: false, pan: e.shiftKey || e.button === 2, spin: null };
@@ -623,7 +684,7 @@ export class BrainMap {
     if (!this.running) return;
     if (this.canvas.clientWidth !== this.w || this.canvas.clientHeight !== this.h) this._resize();
     // Kamera gleitet exponentiell zum Ziel (weiches Zoomen ohne Sprünge)
-    const ease = this.reducedMotion() ? 1 : 0.16;
+    const ease = this.reducedMotion() ? 1 : this.replayActive ? 0.28 : 0.16;
     for (const key of ['x', 'y', 'k']) this.cam[key] += (this.camTarget[key] - this.cam[key]) * ease;
     // Langsames Eigendrehen, solange niemand interagiert, nichts gewählt und nichts fokussiert ist.
     if (!this.reducedMotion() && !this.selected && !this.focusId && t - this.lastInteract > IDLE_BEFORE_SPIN) this.rot.yaw += AUTO_SPIN;
@@ -633,7 +694,7 @@ export class BrainMap {
       if (Math.abs(this.spin.yaw) + Math.abs(this.spin.pitch) < 0.0005) this.spin = null;
     }
     if (this.alpha > 0.004) { this._tick(); this.alpha *= 0.985; }
-    this._updatePivot(this.focusId ? 0.14 : 0.06);
+    this._updatePivot(this.replayActive ? 0.42 : this.focusId ? 0.14 : 0.06);
     // Ein Fehler beim Zeichnen darf die Schleife nie anhalten (sonst friert die Karte ein).
     requestAnimationFrame(this._frame);
     try { this._draw(t); } catch (err) { if (!this._drawErr) { this._drawErr = true; console.error('Gehirnkarte: Zeichenfehler', err); } }
