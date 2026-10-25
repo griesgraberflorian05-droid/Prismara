@@ -9,6 +9,7 @@ export function mountHome(root) {
         <div class="home-hero-copy">
           <span class="home-eyebrow">LICHTPUZZLE · PROJEKTKARTE · BROWSER</span>
           <h1 id="home-title">Prismara</h1>
+          <p class="home-owner">bei Florian</p>
           <p class="home-lead">Ein Lichtstrahl, viele Wege. Löse farbige Rätsel und entdecke, wie das Projekt dahinter aufgebaut ist.</p>
           <div class="home-actions">
             <a class="btn btn-primary" href="#/menu">Spiel öffnen <span aria-hidden="true">→</span></a>
