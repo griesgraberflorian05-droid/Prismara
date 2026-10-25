@@ -5,6 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prismara ist ein browserbasiertes Lichtpuzzle mit Spiel und interaktivem Gehirn Lab.">
   <meta name="prismara-build" content="{{ site.github.build_revision }}">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -102,6 +103,7 @@
         "/src/settings.js": "/src/settings.js?v={{ site.github.build_revision }}",
         "/src/devlog.js": "/src/devlog.js?v={{ site.github.build_revision }}",
         "/src/ui/menu.js": "/src/ui/menu.js?v={{ site.github.build_revision }}",
+        "/src/ui/homeView.js": "/src/ui/homeView.js?v={{ site.github.build_revision }}",
         "/src/ui/pushView.js": "/src/ui/pushView.js?v={{ site.github.build_revision }}",
         "/src/ui/celebrate.js": "/src/ui/celebrate.js?v={{ site.github.build_revision }}",
         "/src/lab/labView.js": "/src/lab/labView.js?v={{ site.github.build_revision }}",
@@ -134,12 +136,13 @@
   </section>
   <div class="bg-fx" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="grid"></span></div>
   <header class="topbar">
-    <a class="brand" href="#/menu" aria-label="Prismara Startmenü">
+    <a class="brand" href="#/home" aria-label="Prismara Startseite">
       <span class="brand-mark" aria-hidden="true"></span>Prismara
     </a>
     <nav class="tabs" aria-label="Hauptbereiche">
+      <a href="#/home" data-tab="home">Start</a>
       <a href="#/menu" data-tab="game">Spiel</a>
-      <a href="#/lab" data-tab="lab">Prismara Lab</a>
+      <a href="#/lab" data-tab="lab">Gehirn Lab</a>
     </nav>
   </header>
   <main id="view" tabindex="-1"></main>
