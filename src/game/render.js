@@ -335,14 +335,14 @@ export class BoardRenderer {
     const bob = opts.reduced ? 0 : Math.sin(t / 380) * s * 0.015;
     const r = s * 0.36;
     ctx.save();
-    ctx.shadowColor = '#ddd'; ctx.shadowBlur = s * 0.35;
+    ctx.shadowColor = '#ffe9a8'; ctx.shadowBlur = s * 0.45;
     const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-    g.addColorStop(0, '#fff'); g.addColorStop(0.5, '#bbb'); g.addColorStop(1, '#666');
+    g.addColorStop(0, '#fff6d6'); g.addColorStop(0.5, '#ffd166'); g.addColorStop(1, '#ff9f5a');
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.roundRect(cx - r, cy - r + bob, r * 2, r * 2, s * 0.14); ctx.fill();
     ctx.shadowBlur = 0;
     // Prisma-Symbol
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(80,40,10,0.7)'; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx, cy - r * 0.45 + bob); ctx.lineTo(cx + r * 0.45, cy + r * 0.35 + bob); ctx.lineTo(cx - r * 0.45, cy + r * 0.35 + bob); ctx.closePath();
     ctx.stroke();
