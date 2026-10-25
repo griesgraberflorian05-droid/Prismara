@@ -2,7 +2,7 @@
 // Ein gemeinsames Canvas über allem (pointer-events: none), das sich selbst entfernt.
 import { prefersReducedMotion } from '../settings.js';
 
-const NEON = ['#ff4fd8', '#4ff0ff', '#ffe14f', '#7dff6a', '#ff7a4f', '#a07bff', '#ffffff'];
+const NEON = ['#fff', '#ddd', '#bbb', '#999', '#777'];
 let layer = null;
 
 function getLayer() {
@@ -125,3 +125,4 @@ export function celebrate(origins = []) {
   burst();
   start(L);
 }
+
