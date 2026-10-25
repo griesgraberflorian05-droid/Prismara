@@ -14,11 +14,14 @@
   <style>
     html.prismara-locked, html.prismara-locked body { overflow: hidden; }
     html.prismara-locked body > :not(#prismara-entry):not(#prismara-access):not(#prismara-mystic-animation) { visibility: hidden !important; pointer-events: none !important; }
-    #prismara-entry { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px; color: #f4f1ff; background: radial-gradient(ellipse at center, #171326 0, #090a12 54%, #030308 100%); font: 600 clamp(1.2rem, 4vw, 2rem)/1.4 system-ui, sans-serif; text-align: center; }
+    #prismara-entry { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px; color: #172e70; background: #f5f6fa; font: 600 clamp(1.2rem, 4vw, 2rem)/1.4 system-ui, sans-serif; text-align: center; }
     #prismara-entry[hidden] { display: none; }
-    #prismara-entry p { margin: 0; text-shadow: 0 0 30px rgba(168,140,255,.2); }
-    #prismara-enter { position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); width: 34px; height: 34px; padding: 0; border: 1px solid rgba(220,215,255,.12); border-radius: 50%; color: rgba(231,224,255,.36); background: rgba(255,255,255,.025); font: 18px/1 system-ui,sans-serif; opacity: .18; cursor: pointer; transition: opacity .25s, border-color .25s, box-shadow .25s; }
-    #prismara-enter:hover, #prismara-enter:focus-visible { opacity: 1; border-color: rgba(68,222,255,.72); outline: 2px solid rgba(68,222,255,.5); outline-offset: 3px; box-shadow: 0 0 24px rgba(68,222,255,.32); }
+    #prismara-entry .domain-notice { display: flex; align-items: center; gap: 18px; width: min(100%, 720px); padding: clamp(22px, 5vw, 40px); border: 1px solid #e1e4ee; border-radius: 16px; background: #fff; box-shadow: 0 12px 40px rgba(25,42,87,.08); text-align: left; }
+    #prismara-entry .domain-notice-mark { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 50%; color: #fff; background: #2745b8; font: 700 1.5rem/1 system-ui,sans-serif; }
+    #prismara-entry .domain-notice-copy small { display: block; margin-bottom: 5px; color: #6b7280; font: 700 .7rem/1.4 system-ui,sans-serif; letter-spacing: .12em; }
+    #prismara-entry p { margin: 0; color: #192f7e; }
+    #prismara-enter { position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); width: 34px; height: 34px; padding: 0; border: 1px solid rgba(36,55,113,.1); border-radius: 50%; color: rgba(36,55,113,.38); background: rgba(255,255,255,.7); font: 18px/1 system-ui,sans-serif; opacity: .16; cursor: pointer; transition: opacity .25s, border-color .25s, box-shadow .25s; }
+    #prismara-enter:hover, #prismara-enter:focus-visible { opacity: 1; border-color: #3159ce; outline: 2px solid rgba(49,89,206,.35); outline-offset: 3px; box-shadow: 0 0 20px rgba(49,89,206,.2); }
     #prismara-access { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px; color: #f3f4f6; background: rgba(8,11,18,.28); backdrop-filter: blur(22px) saturate(1.5); font: 16px/1.5 system-ui, sans-serif; opacity: 0; visibility: hidden; transition: opacity .45s ease, visibility .45s ease; }
     #prismara-access.is-visible { opacity: 1; visibility: visible; }
     #prismara-access[hidden] { display: none; }
@@ -201,8 +204,8 @@
   <script type="module" src="src/main.js?v={{ site.github.build_revision }}"></script>
 </head>
 <body>
-  <section id="prismara-entry" aria-label="Startseite">
-    <p>Diese Domain wurde schon genommen.</p>
+  <section id="prismara-entry" aria-label="Domainstatus">
+    <div class="domain-notice"><span class="domain-notice-mark" aria-hidden="true">!</span><div class="domain-notice-copy"><small>DOMAINSTATUS</small><p>Diese Domain wurde schon genommen.</p></div></div>
     <button id="prismara-enter" type="button" aria-label="Prismara öffnen" title="Prismara öffnen">✧</button>
   </section>
   <section id="prismara-access" role="dialog" aria-modal="true" aria-labelledby="prismara-access-title">
