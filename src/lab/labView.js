@@ -24,7 +24,7 @@ export function mountLab(root, params = []) {
     <section class="lab">
       <div class="lab-head">
         <div>
-          <h1>Prismara Lab</h1>
+          <h1>Gehirn Lab</h1>
           <p class="muted">Knoten frei anordnen, einfärben und erkunden.</p>
         </div>
       </div>
