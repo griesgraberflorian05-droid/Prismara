@@ -24,6 +24,7 @@
     #prismara-access button { width: 100%; padding: 12px; border: 0; border-radius: 9px; color: #111; background: #d0d0d0; font: inherit; font-weight: 650; cursor: pointer; }
     #prismara-access button:hover { background: #fff; }
     #prismara-access .error { min-height: 1.5em; margin: 10px 0 0; color: #ccc; font-size: .9rem; }
+    #prismara-access .hosted-by { margin: -12px 0 20px; color: #8792a3; font-size: .78rem; letter-spacing: .04em; }
   </style>
   <script>
     (() => {
@@ -93,12 +94,34 @@
       });
     })();
   </script>
+  <script type="importmap">
+    {
+      "imports": {
+        "/src/main.js": "/src/main.js?v={{ site.github.build_revision }}",
+        "/src/config.js": "/src/config.js?v={{ site.github.build_revision }}",
+        "/src/settings.js": "/src/settings.js?v={{ site.github.build_revision }}",
+        "/src/devlog.js": "/src/devlog.js?v={{ site.github.build_revision }}",
+        "/src/ui/menu.js": "/src/ui/menu.js?v={{ site.github.build_revision }}",
+        "/src/ui/pushView.js": "/src/ui/pushView.js?v={{ site.github.build_revision }}",
+        "/src/ui/celebrate.js": "/src/ui/celebrate.js?v={{ site.github.build_revision }}",
+        "/src/lab/labView.js": "/src/lab/labView.js?v={{ site.github.build_revision }}",
+        "/src/lab/brainMap.js": "/src/lab/brainMap.js?v={{ site.github.build_revision }}",
+        "/src/lab/projectGraph.js": "/src/lab/projectGraph.js?v={{ site.github.build_revision }}",
+        "/src/game/pushLevels.js": "/src/game/pushLevels.js?v={{ site.github.build_revision }}",
+        "/src/game/push.js": "/src/game/push.js?v={{ site.github.build_revision }}",
+        "/src/game/engine.js": "/src/game/engine.js?v={{ site.github.build_revision }}",
+        "/src/game/render.js": "/src/game/render.js?v={{ site.github.build_revision }}",
+        "/src/game/progress.js": "/src/game/progress.js?v={{ site.github.build_revision }}"
+      }
+    }
+  </script>
   <script type="module" src="src/main.js?v={{ site.github.build_revision }}"></script>
 </head>
 <body>
   <section id="prismara-access" role="dialog" aria-modal="true" aria-labelledby="prismara-access-title">
     <div class="gate-card">
-      <h1 id="prismara-access-title">Prismara Zugang</h1>
+      <h1 id="prismara-access-title">Geschützte Website</h1>
+      <p class="hosted-by">Hosted by Grisgraber Florian</p>
       <p>Bitte gib die PIN ein, um die Website zu öffnen.</p>
       <form id="prismara-access-form">
         <label for="prismara-pin">PIN</label>
