@@ -1,9 +1,11 @@
 // Einstieg: einfacher Hash-Router zwischen Spiel- und Lab-Ansichten.
 import { mountMenu } from './ui/menu.js';
+import { mountHome } from './ui/homeView.js';
 import { mountLab } from './lab/labView.js';
 import { mountPush } from './ui/pushView.js';
 
 const routes = {
+  home: { tab: 'home', mount: mountHome },
   menu: { tab: 'game', mount: mountMenu },
   run: { tab: 'game', mount: mountPush },
   play: { tab: 'game', mount: mountPush }, // alte Links des entfernten Setz-Modus
@@ -17,7 +19,7 @@ let unmount = null;
 
 function parseHash() {
   const [name, ...rest] = location.hash.replace(/^#\/?/, '').split('/');
-  return { name: routes[name] ? name : 'menu', params: rest };
+  return { name: routes[name] ? name : 'home', params: rest };
 }
 
 function render() {
@@ -39,3 +41,4 @@ export function registerRoute(name, tab, mount) {
 
 window.addEventListener('hashchange', render);
 render();
+
