@@ -10,7 +10,6 @@ export function mountHome(root) {
           <span class="home-eyebrow">LICHTPUZZLE · PROJEKTKARTE · BROWSER</span>
           <h1 id="home-title">Prismara</h1>
           <p class="home-owner">bei Florian</p>
-          <p class="home-lead">Ein Lichtstrahl, viele Wege. Löse farbige Rätsel und entdecke, wie das Projekt dahinter aufgebaut ist.</p>
           <div class="home-actions">
             <a class="btn btn-primary" href="#/menu">Spiel öffnen <span aria-hidden="true">→</span></a>
             <a class="btn" href="#/lab">Gehirn Lab ansehen <span aria-hidden="true">↗</span></a>
@@ -18,10 +17,24 @@ export function mountHome(root) {
           <p class="home-facts"><span>${PUSH_LEVELS.length} Level</span><i></i><span>Rot · Grün · Blau</span><i></i><span>Im Browser spielbar</span></p>
         </div>
         <div class="home-visual" aria-hidden="true">
-          <div class="home-orbit orbit-one"></div><div class="home-orbit orbit-two"></div>
-          <div class="home-light-ray"></div>
-          <div class="home-prism"><span></span></div>
-          <div class="home-beam beam-red"></div><div class="home-beam beam-green"></div><div class="home-beam beam-blue"></div>
+          <div class="energy-field">
+            <i class="energy-orbit energy-orbit-one"></i>
+            <i class="energy-orbit energy-orbit-two"></i>
+            <i class="energy-orbit energy-orbit-three"></i>
+            <i class="energy-orbit energy-orbit-four"></i>
+            <i class="energy-trail energy-trail-one"></i>
+            <i class="energy-trail energy-trail-two"></i>
+            <i class="energy-trail energy-trail-three"></i>
+            <i class="energy-particle particle-one"></i>
+            <i class="energy-particle particle-two"></i>
+            <i class="energy-particle particle-three"></i>
+            <i class="energy-particle particle-four"></i>
+            <i class="energy-particle particle-five"></i>
+            <i class="energy-particle particle-six"></i>
+            <span class="energy-core"><b>SM</b></span>
+            <i class="energy-flare flare-one"></i>
+            <i class="energy-flare flare-two"></i>
+          </div>
         </div>
       </section>
 
@@ -56,6 +69,15 @@ export function mountHome(root) {
           <article><b>02</b><div><h3>Spieloberfläche</h3><p><code>src/ui</code> zeigt das Startmenü, die Level und das Spielfeld im Browser.</p></div></article>
           <article><b>03</b><div><h3>Gehirn Lab</h3><p><code>src/lab</code> verbindet Spielregeln, Dateien und Projektwissen zu einer durchsuchbaren Karte.</p></div></article>
           <article><b>04</b><div><h3>Projektwissen</h3><p><code>lab</code> enthält die gespeicherten Knoten und Entwicklungsnotizen, die das Lab darstellt.</p></div></article>
+        </div>
+      </section>
+
+      <section class="home-section home-how" aria-labelledby="home-how-title">
+        <div class="home-section-head"><span class="home-eyebrow">SPIELEN · ENTDECKEN · VERSTEHEN</span><h2 id="home-how-title">Ein Puzzle, viele Wege zum Ziel</h2><p>Jedes Level ist ein kleines Lichtsystem. Beobachte die Farben, plane deine Züge und finde heraus, wie sich der Strahl durch die Elemente verändert.</p></div>
+        <div class="home-how-grid">
+          <article class="home-how-card"><span>01</span><div><h3>Richte den Weg ein</h3><p>Schiebe den Lichtblock über das Feld und positioniere Spiegel so, dass der Strahl in die richtige Richtung läuft.</p></div></article>
+          <article class="home-how-card"><span>02</span><div><h3>Mische die Farben</h3><p>Prismen und farbige Lichtquellen verändern den Strahl. Triff jedes Ziel mit genau der Farbe, die es verlangt.</p></div></article>
+          <article class="home-how-card"><span>03</span><div><h3>Finde deine Lösung</h3><p>Probiere verschiedene Wege aus. Die Level werden Schritt für Schritt anspruchsvoller und belohnen vorausschauendes Denken.</p></div></article>
         </div>
       </section>
 
