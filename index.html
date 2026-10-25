@@ -1,12 +1,47 @@
+---
+---
 <!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="prismara-build" content="{{ site.github.build_revision }}">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Prismara</title>
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="src/styles.css">
-  <script type="module" src="src/main.js"></script>
+  <link rel="stylesheet" href="src/styles.css?v={{ site.github.build_revision }}">
+  <script>
+    (() => {
+      const currentBuild = document.querySelector('meta[name="prismara-build"]')?.content;
+      if (!currentBuild) return;
+      let reloading = false;
+      async function checkForUpdate() {
+        if (reloading) return;
+        try {
+          const url = new URL(location.href);
+          url.hash = '';
+          url.searchParams.set('prismara-check', Date.now());
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) return;
+          const html = await response.text();
+          const latestBuild = html.match(/<meta name="prismara-build" content="([^"]+)"/i)?.[1];
+          if (latestBuild && latestBuild !== currentBuild) {
+            reloading = true;
+            const nextUrl = new URL(location.href);
+            nextUrl.searchParams.set('prismara-build', latestBuild);
+            location.replace(nextUrl);
+          }
+        } catch { /* Netzwerk nicht erreichbar; beim nächsten Intervall erneut prüfen. */ }
+      }
+      window.setInterval(checkForUpdate, 60_000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) checkForUpdate();
+      });
+    })();
+  </script>
+  <script type="module" src="src/main.js?v={{ site.github.build_revision }}"></script>
 </head>
 <body>
   <div class="bg-fx" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="grid"></span></div>
