@@ -43,7 +43,7 @@ export function mountMenu(root) {
       <nav class="menu-actions" aria-label="Startmenü">
         <a class="btn btn-primary" href="#/run/${next}" id="play">${label}</a>
         <p class="menu-progress muted">${solved} / ${PUSH_LEVELS.length} Level gelöst</p>
-        <a class="btn" href="#/lab">Prismara Lab ansehen</a>
+        <a class="btn" href="#/lab">Gehirn Lab ansehen</a>
       </nav>
       <section class="level-select" aria-labelledby="ls-title">
         <h2 id="ls-title" class="kicker">Level-Auswahl</h2>
@@ -52,3 +52,4 @@ export function mountMenu(root) {
     </section>`;
   root.querySelector('#play').focus();
 }
+
