@@ -60,12 +60,16 @@ export function mountLab(root, params = []) {
               <button class="btn btn-sm btn-full brain-only" data-act="full" aria-pressed="false">⤢ Vollansicht</button>
             </div>
             <div class="importance-controls" aria-label="Knoten nach Wichtigkeit filtern">
-              <div class="importance-heading"><strong>Wichtigkeit</strong><span class="muted small">Mehrere Stufen gleichzeitig anzeigen</span></div>
+              <div class="importance-heading"><strong>Wichtigkeit</strong><span class="muted small">Mehrere Stufen gleichzeitig anzeigen</span><button id="importance-all" type="button" aria-label="Alle Wichtigkeitsstufen anzeigen">Alle Stufen</button></div>
               <div class="importance-options" id="importance-options" role="group" aria-label="Wichtigkeitsstufen"></div>
             </div>
           </div>
           <div class="map-wrap">
             <canvas id="brain" tabindex="0" aria-label="Gehirnkarte in 3D. Ziehen oder Pfeiltasten drehen, Umschalt+Ziehen verschiebt, Mausrad oder Plus/Minus zoomt, Klick wählt einen Knoten."></canvas>
+            <div class="map-growth-caption" id="map-growth-caption" aria-hidden="true" hidden>
+              <div class="growth-caption-layer"><span class="growth-caption-count"></span><strong></strong><small></small></div>
+              <div class="growth-caption-layer"><span class="growth-caption-count"></span><strong></strong><small></small></div>
+            </div>
             <div class="map-node-list" id="map-node-list-view" aria-label="Knotenliste" hidden></div>
             <div class="map-hint muted small">Ziehen: drehen · Umschalt+Ziehen: verschieben · Rad: zoomen</div>
             <div class="map-legend" id="map-legend"></div>
@@ -77,10 +81,12 @@ export function mountLab(root, params = []) {
 
   const $ = (sel) => root.querySelector(sel);
   const detail = $('#map-detail');
+  let activeCaptionLayer = null;
 
   const map = new BrainMap($('#brain'), {
     reducedMotion: prefersReducedMotion,
     onSelect: (node, relations) => { renderDetail(node, relations); renderNodeList(); },
+    onReplayLabel: (node, index, total) => renderGrowthLabel(node, index, total),
   });
   const mapCard = root.querySelector('.map-card');
 
@@ -108,6 +114,7 @@ export function mountLab(root, params = []) {
     $('.map-hint').hidden = pref.view === 'list';
     $('#map-legend').hidden = pref.view === 'list';
     root.querySelectorAll('[data-importance]').forEach((b) => b.setAttribute('aria-pressed', String(pref.importance.includes(Number(b.dataset.importance)))));
+    $('#importance-all').setAttribute('aria-pressed', String(pref.importance.length === IMPORTANCE_LEVELS.length));
   }
   function renderNodeList() {
     const list = $('#map-node-list-view');
@@ -127,6 +134,25 @@ export function mountLab(root, params = []) {
       </button>`;
     }).join('') : '<p class="node-list-empty">Keine Knoten passen zu Suche und Wichtigkeitsfilter.</p>';
   }
+  function renderGrowthLabel(node, index = 0, total = 0) {
+    const caption = $('#map-growth-caption');
+    const layers = [...caption.querySelectorAll('.growth-caption-layer')];
+    if (!node) {
+      caption.hidden = true;
+      layers.forEach((layer) => layer.classList.remove('is-active'));
+      activeCaptionLayer = null;
+      return;
+    }
+    const next = activeCaptionLayer === 0 ? 1 : 0;
+    if (activeCaptionLayer !== null) layers[activeCaptionLayer].classList.remove('is-active');
+    const type = NODE_TYPES[node.type] || {};
+    layers[next].querySelector('.growth-caption-count').textContent = `KNOTEN ${String(index + 1).padStart(3, '0')} / ${total}`;
+    layers[next].querySelector('strong').textContent = node.label;
+    layers[next].querySelector('small').textContent = `${type.label || 'Projektknoten'} · Wichtigkeit ${node.importance}`;
+    caption.hidden = false;
+    requestAnimationFrame(() => layers[next].classList.add('is-active'));
+    activeCaptionLayer = next;
+  }
   root.querySelector('[data-view="brain"]').addEventListener('click', () => {
     pref.view = 'brain'; savePref(pref); syncControls(); requestAnimationFrame(() => map.fit());
   });
@@ -136,6 +162,14 @@ export function mountLab(root, params = []) {
   $('#map-node-list-view').addEventListener('click', (event) => {
     const button = event.target.closest('[data-node]');
     if (button) map.select(button.dataset.node);
+  });
+  $('#importance-all').addEventListener('click', () => {
+    pref.importance = IMPORTANCE_LEVELS.map(({ id }) => id);
+    savePref(pref);
+    map.setImportanceFilter(pref.importance);
+    syncControls();
+    updateMapCount();
+    renderNodeList();
   });
   function renderImportanceControls(brain) {
     const counts = new Map(IMPORTANCE_LEVELS.map(({ id }) => [id, brain.nodes.filter((node) => node.importance === id).length]));
@@ -151,6 +185,7 @@ export function mountLab(root, params = []) {
     map.setImportanceFilter(pref.importance);
     syncControls();
     updateMapCount();
+    renderNodeList();
   });
   function updateMapCount() {
     if (!currentBrain) return;
