@@ -5,9 +5,9 @@ import { BrainMap, NODE_TYPES, NODE_STATUS, FORMATIONS } from './brainMap.js';
 import { buildProjectGraph, mergeGraphs, loadLevelsFresh } from './projectGraph.js';
 
 const PREF_KEY = 'prismara.brain.view';
-function loadPref() {
-  try { return { mode: 'main', formation: 'brain', ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; }
-  catch { return { mode: 'main', formation: 'brain' }; }
+function loadPref(defaultMode = 'main') {
+  try { return { mode: defaultMode, formation: 'brain', ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; }
+  catch { return { mode: defaultMode, formation: 'brain' }; }
 }
 function savePref(p) { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* blockiert */ } }
 
@@ -52,11 +52,11 @@ export function mountLab(root, params = []) {
           <div class="map-toolbar">
             <h2>Gehirnkarte <span class="muted small" id="map-count"></span></h2>
             <div class="map-tools">
-              ${IS_DEV ? `
-              <div class="seg" role="group" aria-label="Knotenauswahl (Dev)">
+              <div class="seg" role="group" aria-label="Knotenauswahl">
                 <button class="seg-btn" data-mode="main" title="Nur die wichtigsten, kuratierten Knoten">Hauptknoten</button>
-                <button class="seg-btn" data-mode="all" title="Zusätzlich jedes Level, Objekt, jede Farbe, Animation, Textur und Datei">Alle Knoten</button>
+                <button class="seg-btn" data-mode="all" title="Alle Level, Objekte, Farben, Animationen, Texturen und Verbindungen">Alle Knoten</button>
               </div>
+              ${IS_DEV ? `
               <label class="formation"><span class="sr-only">Formation</span>
                 <select id="formation" aria-label="Formation">${Object.entries(FORMATIONS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
               </label>` : ''}
@@ -101,8 +101,8 @@ export function mountLab(root, params = []) {
   // Nur in Development: Testzugriff auf die Karte (z. B. Knotenpositionen für Klicktests).
   if (IS_DEV) window.__prismaraBrain = map;
 
-  // Dev: Hauptknoten / Alle Knoten und Formation
-  const pref = IS_DEV ? loadPref() : { mode: 'main', formation: 'brain' };
+  // Die vollständige Karte bleibt auch auf der statischen Website verfügbar.
+  const pref = loadPref(IS_DEV ? 'main' : 'all');
   map.setFormation(pref.formation);
   let projectGraph = null;
   function syncControls() {
@@ -368,3 +368,4 @@ export function mountLab(root, params = []) {
     document.body.classList.remove('no-scroll');
   };
 }
+
