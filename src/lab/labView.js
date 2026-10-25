@@ -59,12 +59,14 @@ export function mountLab(root, params = []) {
               <button class="btn btn-sm brain-only" data-act="out" aria-label="Verkleinern">−</button>
               <button class="btn btn-sm brain-only" data-act="in" aria-label="Vergrößern">+</button>
               <button class="btn btn-sm brain-only" data-act="fit" title="Alle Knoten in die Karte einpassen">Alles einpassen</button>
-              <button class="btn btn-sm brain-only" data-act="replay" id="growth-play">Wachstum abspielen</button>
+              <div class="growth-stack brain-only">
+                <button class="btn btn-sm" data-act="replay" id="growth-play">Wachstum abspielen</button>
+                <div class="growth-controls" aria-label="Wachstumsanimation steuern">
+                  <label class="growth-control" for="growth-speed"><span>Tempo <output id="growth-speed-value">1,0×</output></span><input id="growth-speed" type="range" min="0.35" max="2.5" step="0.05" value="1" aria-label="Wachstumstempo"></label>
+                  <label class="growth-control growth-seek" for="growth-position"><span>Verlauf <output id="growth-position-value">Bereit</output></span><input id="growth-position" type="range" min="0" max="0" step="1" value="0" disabled aria-label="Position im Wachstumsverlauf"></label>
+                </div>
+              </div>
               <button class="btn btn-sm btn-full brain-only" data-act="full" aria-pressed="false">⤢ Vollansicht</button>
-            </div>
-            <div class="growth-controls brain-only" aria-label="Wachstumsanimation steuern">
-              <label class="growth-control" for="growth-speed"><span>Tempo <output id="growth-speed-value">1,0×</output></span><input id="growth-speed" type="range" min="0.35" max="2.5" step="0.05" value="1" aria-label="Wachstumstempo"></label>
-              <label class="growth-control growth-seek" for="growth-position"><span>Verlauf <output id="growth-position-value">Bereit</output></span><input id="growth-position" type="range" min="0" max="0" step="1" value="0" disabled aria-label="Position im Wachstumsverlauf"></label>
             </div>
             <div class="importance-controls" aria-label="Knoten nach Wichtigkeit filtern">
               <div class="importance-heading"><strong>Wichtigkeit</strong><span class="muted small">Mehrere Stufen gleichzeitig anzeigen</span><button id="importance-all" type="button" aria-label="Alle Wichtigkeitsstufen anzeigen">Alle Stufen</button></div>
