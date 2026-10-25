@@ -1,23 +1,23 @@
 <div align="center">
   <img src="assets/prismara-banner.svg" alt="Prismara — Licht in neuer Ordnung" width="100%">
   <br><br>
-  <a href="https://g2studio.net/"><strong>Website öffnen</strong></a>
+  <strong>LICHTPUZZLE</strong>
   &nbsp;·&nbsp;
-  <a href="https://g2studio.net/#/menu">Spiel starten</a>
+  <strong>INTERAKTIVE PROJEKTKARTE</strong>
   &nbsp;·&nbsp;
-  <a href="https://g2studio.net/#/lab">Gehirn Lab ansehen</a>
+  <strong>VON FLORIAN</strong>
 </div>
 
 ## Prismara
 
-Prismara verbindet ein farbiges Lichtpuzzle mit einer interaktiven Karte, die den Aufbau des Projekts sichtbar macht. Lenke Licht durch Spiegel und Prismen, löse Level und entdecke anschließend, wie die Spielteile miteinander verbunden sind.
+Prismara verbindet ein farbiges Lichtpuzzle mit einer interaktiven Karte, die den Aufbau des Projekts sichtbar macht. Lenke Licht durch Spiegel und Prismen, löse Level und entdecke anschließend, wie die Spielteile miteinander verbunden sind. Ein eigenständiges Browserprojekt, das Spielmechanik und Projektübersicht an einem Ort zusammenführt.
 
 ### Im Projekt
 
 - **Lichtpuzzle:** Level mit Spiegeln, Prismen, Zielen und farbigen Lichtstrahlen.
 - **Gehirn Lab:** Projektknoten als Karte oder Liste erkunden, filtern, einfärben und anordnen.
 - **Wachstumsansicht:** Verbindungen und Knotennamen nacheinander verfolgen.
-- **Browserbasiert:** Die Seite läuft direkt unter [g2studio.net](https://g2studio.net/).
+- **Browserbasiert:** Das Spiel und die Projektkarte laufen ohne Installation im Browser.
 
 ### Aufbau
 
@@ -35,10 +35,10 @@ Das Projekt besteht aus statischen Dateien. Öffne `index.html` in einem lokalen
 
 ### Links
 
-- Live-Seite: [g2studio.net](https://g2studio.net/)
-- Spiel: [Lichtpuzzle öffnen](https://g2studio.net/#/menu)
-- Gehirn Lab: [Projektkarte öffnen](https://g2studio.net/#/lab)
-- Projektdateien: [Repository durchsuchen](https://github.com/griesgraberflorian/Prismara)
+- [Spielcode ansehen](src/game/)
+- [Gehirn-Lab-Code ansehen](src/lab/)
+- [Projektknoten und Verbindungen ansehen](lab/)
+- [Quellcode und Projektdateien](.)
 
 Der Quellcode ist öffentlich einsehbar. Eine separate Lizenzdatei ist derzeit nicht enthalten; daraus sollte keine weitergehende Nutzungserlaubnis abgeleitet werden.
 
