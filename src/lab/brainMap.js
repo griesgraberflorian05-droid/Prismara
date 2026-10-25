@@ -139,10 +139,11 @@ function hash(str) {
 }
 
 export class BrainMap {
-  constructor(canvas, { onSelect, reducedMotion }) {
+  constructor(canvas, { onSelect, onReplayLabel, reducedMotion }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.onSelect = onSelect;
+    this.onReplayLabel = onReplayLabel;
     this.reducedMotion = reducedMotion;
     this.palette = 'arctic';
     this.nodes = new Map();
@@ -158,6 +159,8 @@ export class BrainMap {
     this.loaded = false;
     this.hidden = new Set();
     this.replayActive = false;
+    this.replayLabelId = null;
+    this.replayLabelStarted = 0;
     this.importanceFilter = new Set([1, 2, 3, 4, 5]);
     this.dpr = 1;
     this.running = true;
@@ -527,12 +530,15 @@ export class BrainMap {
 
   replayGrowth() {
     clearTimeout(this.replayTimer);
+    if (this.replayActive) this.stopReplay(true);
     const order = [...this.nodes.values()].filter((node) => this.isVisibleNode(node)).sort((a, b) => (a.step - b.step) || (a.index - b.index));
-    if (this.reducedMotion()) { this.hidden.clear(); return; }
+    if (this.reducedMotion()) { this.hidden.clear(); this.onReplayLabel?.(null); return; }
     this.hidden.clear();
     this.select(null);
     this.replayActive = true;
     this.focusId = null;
+    this.replayLabelId = null;
+    this.onReplayLabel?.(null);
     order.forEach((n) => this.hidden.add(n.id));
     let i = 0;
     const step = () => {
@@ -541,14 +547,19 @@ export class BrainMap {
         this.replayActive = false;
         this.hidden.clear();
         this.focusId = null;
+        this.replayLabelId = null;
+        this.onReplayLabel?.(null);
         this.fit();
         return;
       }
       this.hidden.delete(n.id);
       n.born = performance.now();
       this.alpha = Math.max(this.alpha, 0.35);
+      this.replayLabelId = n.id;
+      this.replayLabelStarted = performance.now();
+      this.onReplayLabel?.(n, i - 1, order.length);
       this.focusNode(n.id, 3.2);
-      this.replayTimer = setTimeout(step, Math.max(60, 2400 / order.length));
+      this.replayTimer = setTimeout(step, Math.max(80, 3000 / order.length));
     };
     step();
   }
@@ -559,6 +570,8 @@ export class BrainMap {
     this.replayActive = false;
     this.hidden.clear();
     this.focusId = null;
+    this.replayLabelId = null;
+    this.onReplayLabel?.(null);
     this._computePivotTarget();
     if (restoreOverview) this.fit();
     return true;
@@ -684,7 +697,7 @@ export class BrainMap {
     if (!this.running) return;
     if (this.canvas.clientWidth !== this.w || this.canvas.clientHeight !== this.h) this._resize();
     // Kamera gleitet exponentiell zum Ziel (weiches Zoomen ohne Sprünge)
-    const ease = this.reducedMotion() ? 1 : this.replayActive ? 0.28 : 0.16;
+    const ease = this.reducedMotion() ? 1 : this.replayActive ? 0.18 : 0.16;
     for (const key of ['x', 'y', 'k']) this.cam[key] += (this.camTarget[key] - this.cam[key]) * ease;
     // Langsames Eigendrehen, solange niemand interagiert, nichts gewählt und nichts fokussiert ist.
     if (!this.reducedMotion() && !this.selected && !this.focusId && t - this.lastInteract > IDLE_BEFORE_SPIN) this.rot.yaw += AUTO_SPIN;
@@ -694,7 +707,7 @@ export class BrainMap {
       if (Math.abs(this.spin.yaw) + Math.abs(this.spin.pitch) < 0.0005) this.spin = null;
     }
     if (this.alpha > 0.004) { this._tick(); this.alpha *= 0.985; }
-    this._updatePivot(this.replayActive ? 0.42 : this.focusId ? 0.14 : 0.06);
+    this._updatePivot(this.replayActive ? 0.2 : this.focusId ? 0.14 : 0.06);
     // Ein Fehler beim Zeichnen darf die Schleife nie anhalten (sonst friert die Karte ein).
     requestAnimationFrame(this._frame);
     try { this._draw(t); } catch (err) { if (!this._drawErr) { this._drawErr = true; console.error('Gehirnkarte: Zeichenfehler', err); } }
@@ -839,8 +852,12 @@ export class BrainMap {
       }
 
       const important = n.type === 'goal' || n.id === sel || n.id === this.hover || near.has(n.id) || (this.filter && this.matches(n));
-      const showLabel = important || (this.cam.k * p.f >= 0.8 && dz > 0.62);
-      if (showLabel && birth > 0.5) labels.push({ x: p.x, y: p.y + r + 13, text: n.label, strong: n.id === sel || n.type === 'goal', important, z: p.z, a: ctx.globalAlpha });
+      const replayFocus = this.replayActive && n.id === this.replayLabelId;
+      const showLabel = this.replayActive ? replayFocus : important || (this.cam.k * p.f >= 0.8 && dz > 0.62);
+      if (showLabel && birth > 0.5) {
+        const fade = replayFocus ? Math.min(1, (t - this.replayLabelStarted) / 180) : 1;
+        labels.push({ x: p.x, y: p.y + r + 13, text: n.label, strong: replayFocus || n.id === sel || n.type === 'goal', important: replayFocus || important, z: p.z, a: ctx.globalAlpha * fade });
+      }
       ctx.globalAlpha = 1;
     }
     // Beschriftungen zuletzt; überlappende werden weggelassen (Wichtiges und Vorderes zuerst).
