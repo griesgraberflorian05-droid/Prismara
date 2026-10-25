@@ -317,50 +317,6 @@ body.standalone .map-card.is-full { animation: none; }
   padding: 6px 8px; font: inherit; font-size: 0.85rem;
 }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-/* Live-Log rechts an der Gehirnkarte: eingeklappt nur ein Reiter, offen ca. 20 % der Breite */
-.map-card { position: relative; }
-.map-card .map-wrap { margin-right: 0; transition: margin-right 0.3s ease; }
-.map-card:has(.livelog.open) .map-wrap { margin-right: clamp(260px, 20vw, 420px); }
-.livelog { position: absolute; top: 56px; right: 0; bottom: 0; display: flex; z-index: 5; pointer-events: none; }
-.livelog-toggle {
-  pointer-events: auto; align-self: flex-start; margin-top: 12px;
-  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 7px;
-  background: linear-gradient(180deg, rgba(255, 79, 216, 0.35), rgba(79, 240, 255, 0.25));
-  border: 1px solid rgba(255, 255, 255, 0.3); border-right: 0; border-radius: 10px 0 0 10px;
-  color: var(--text); cursor: pointer; font: inherit; font-size: 0.78rem; font-weight: 700;
-  box-shadow: 0 0 18px rgba(255, 79, 216, 0.35);
-}
-.livelog-tab { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 0.08em; }
-.livelog-body {
-  pointer-events: auto; width: 0; overflow: hidden; display: flex; flex-direction: column;
-  background: rgba(22, 12, 60, 0.92); border-left: 1px solid rgba(255, 79, 216, 0.4);
-  transition: width 0.3s ease; backdrop-filter: blur(8px);
-}
-.livelog.open .livelog-body { width: clamp(260px, 20vw, 420px); }
-.livelog-head { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.livelog-list { list-style: none; margin: 0; padding: 6px 8px; overflow-y: auto; flex: 1; font-size: 0.78rem; }
-.log-item { display: grid; grid-template-columns: auto auto 1fr; gap: 6px; padding: 5px 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); animation: log-in 0.35s ease-out; }
-.log-time { color: var(--muted); font-variant-numeric: tabular-nums; }
-.log-icon { font-weight: 700; width: 14px; text-align: center; }
-.log-text { font-family: ui-monospace, Consolas, monospace; word-break: break-all; }
-.log-text a { color: var(--text); text-decoration: none; }
-.log-text a:hover { color: var(--neon-cyan); text-decoration: underline; }
-.log-text small { display: block; color: var(--muted); font-family: var(--font); }
-.k-new .log-icon { color: #7dff6a; }
-.k-mod .log-icon { color: var(--neon-cyan); }
-.k-del .log-icon { color: #ff6b8b; }
-.k-node .log-icon { color: var(--neon-pink); }
-.k-step .log-icon { color: var(--neon-yellow); }
-.k-node .log-text, .k-step .log-text { font-family: var(--font); font-weight: 600; }
-/* Farbcodierung: --tc kommt je Eintrag aus labView.js (Art bzw. Quelle) */
-.log-item { border-left: 3px solid var(--tc, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--tc, transparent) 14%, transparent), transparent 70%); }
-.log-item .log-icon { color: var(--tc, inherit); text-shadow: 0 0 8px var(--tc, transparent); }
-.k-log .log-text small { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.06em; color: var(--tc); font-weight: 700; }
-.k-log .log-text { color: color-mix(in srgb, var(--tc) 35%, var(--text)); }
-.k-pulse { opacity: 0.7; }
-.k-pulse .log-text { font-family: var(--font); }
-@media (prefers-reduced-motion: reduce) { .log-item { animation: none; } }
-@keyframes log-in { from { opacity: 0; transform: translateX(14px); background: rgba(255, 79, 216, 0.25); } }
 .map-hint { position: absolute; right: 12px; bottom: 10px; pointer-events: none; opacity: 0.8; }
 .map-toast {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
@@ -406,10 +362,30 @@ a.level-tile:hover, a.level-tile:focus-visible, .level-tile.next { border-color:
 .live-dot { background: #ddd; }
 .map-legend, .map-detail { background: rgba(12,12,12,.94); border-color: #555; box-shadow: 0 12px 40px rgba(0,0,0,.7); }
 .btn-full[aria-pressed="true"], .seg-btn[aria-pressed="true"] { background: rgba(255,255,255,.18); border-color: #aaa; }
-.livelog-toggle { background: linear-gradient(180deg, #555, #222); border-color: #777; box-shadow: none; }
-.livelog-body { background: rgba(12,12,12,.97); border-left-color: #666; }
-.log-item, .log-item .log-icon, .k-log .log-text, .k-log .log-text small,
-.k-new .log-icon, .k-mod .log-icon, .k-del .log-icon, .k-node .log-icon, .k-step .log-icon { color: #ccc !important; }
-.log-item { border-left-color: #777 !important; background: linear-gradient(90deg, rgba(255,255,255,.06), transparent 70%) !important; }
 .map-toast { background: #1b1b1b; border-color: #777; color: #eee; }
+.lab { padding-top: 14px; }
+.lab-grid { grid-template-columns: minmax(0, 1fr); }
+.map-card { min-height: max(520px, calc(100vh - 150px)); }
+.map-tools { gap: 8px; }
+.map-choice { display: grid; gap: 2px; color: #aaa; font-size: .65rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.map-choice select { min-width: 112px; max-width: 150px; padding: 6px 26px 6px 9px; border: 1px solid #555; border-radius: 8px; color: #eee; background: #111; font: 600 .82rem var(--font); text-transform: none; letter-spacing: normal; }
+.map-choice select:hover, .map-choice select:focus-visible { border-color: #aaa; }
+.map-choice option { color: #eee; background: #111; }
+.map-card .map-wrap { margin-right: 0 !important; }
+.importance-controls { display: flex; align-items: center; gap: 10px 16px; width: 100%; flex-wrap: wrap; padding-top: 2px; }
+.importance-heading { display: flex; align-items: baseline; gap: 8px; }
+.importance-heading strong { color: #eee; font-size: .8rem; }
+.importance-heading .small { font-size: .72rem; }
+.importance-options { display: flex; gap: 6px; flex-wrap: wrap; }
+.importance-btn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #484848; border-radius: 999px; padding: 5px 9px; color: #aaa; background: #111; font: 600 .76rem var(--font); cursor: pointer; }
+.importance-btn:hover, .importance-btn:focus-visible { border-color: #aaa; color: #fff; }
+.importance-btn[aria-pressed="true"] { border-color: #bbb; color: #fff; background: #292929; }
+.importance-number { display: inline-grid; width: 19px; height: 19px; place-items: center; border-radius: 50%; color: #111; background: #aaa; font-size: .7rem; }
+.importance-count { min-width: 1.4em; text-align: right; color: #888; font-variant-numeric: tabular-nums; }
+@media (max-width: 680px) {
+  .importance-controls { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .importance-options { gap: 5px; }
+  .importance-btn { font-size: .7rem; }
+  .map-card { min-height: max(560px, calc(100vh - 120px)); }
+}
 
