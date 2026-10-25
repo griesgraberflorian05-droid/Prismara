@@ -1,0 +1,135 @@
+{
+  "project": "Prismara",
+  "updated": "2026-10-25 21:30",
+  "current": {
+    "step": 5,
+    "phase": "Schritt 5 · Strahlteiler, Portale, lebendiges Live-Log, Karte > 200",
+    "status": "in_progress",
+    "workingOn": "Neue Lichtelemente und Level, Live-Log-Bus mit Farben, Gehirnkarte mit allen Projektinhalten.",
+    "question": "Tragen Teilen und Versetzen von Licht neue Rätselideen – und macht das Lab die Arbeit in Echtzeit sichtbar?",
+    "next": "Finale-Level, Level-Auswahl, Tests, live spielen, SYSTEM.md, Sicherung."
+  },
+  "steps": [
+    {
+      "id": 1,
+      "title": "Projektgrundlage und Prismara Lab",
+      "status": "passed",
+      "goal": "Ein startbares Projekt mit Doku, Sicherungen, Umgebungskennzeichnung und einer lebendigen Lab-Ansicht samt Gehirnkarte.",
+      "quality": {
+        "problem": "Ohne Grundlage kann weder gespielt noch die Entwicklung verfolgt werden.",
+        "fit": "Das Lab ist ausdrücklich Teil des Erlebnisses und muss von Anfang an sichtbar sein.",
+        "success": "Ein Befehl startet die App; Lab zeigt Status, Schritte und Karte; Karte lädt neue Knoten ohne Neuladen; Env-Badge zeigt 'Development'.",
+        "check": "Server starten, Lab im sichtbaren Browser öffnen, Knoten anklicken; tools/check.py ausführen."
+      },
+      "tried": [
+        "Werkzeuge geprüft: Python 3.12 vorhanden; Node.js, npm und Git fehlen.",
+        "Server gestartet, /env.js und gesperrten Pfad /backups/ abgefragt.",
+        "Lab im Browserfenster geöffnet und Knoten per Maus ausgewählt.",
+        "Zwei Knoten in brain.json ergänzt, während das Lab offen war."
+      ],
+      "observed": [
+        "/env.js liefert env=development aus .env; /backups/ antwortet 404.",
+        "tools/check.py bestanden.",
+        "Erster Klick verfehlte den Knoten: Layout driftete nach dem Einpassen weiter (behoben, erneut geprüft: Auswahl und Detailpanel funktionieren).",
+        "Neue Knoten erschienen ohne Neuladen mit Hinweis '2 neue Knoten …'."
+      ],
+      "decision": "Stack ohne Abhängigkeiten (ES-Module + Python-Server), Sicherungen als nummerierte ZIPs. Qualitätsziel erfüllt → Schritt bestanden.",
+      "open": ["Leistung der Karte bei >150 Knoten noch ungeprüft."],
+      "next": "Spielprototyp mit Lichtpfad-Hypothese.",
+      "backup": "step-01-grundlage-lab.zip"
+    },
+    {
+      "id": 2,
+      "title": "Spielbarer Prototyp: Lichtpfade",
+      "status": "passed",
+      "backup": "step-02-prototyp-lichtlaeufer.zip",
+      "tried": [
+        "Engine mit Strahlen, Spiegeln, additiver Mischung; Setz-Modus mit 5 Leveln.",
+        "Zufallsspieler-Messung: Setzen vs. nur Drehen.",
+        "Nach Nutzerwunsch: Modus Lichtläufer (Block steuern, Spiegel schieben/drehen, Schatten) mit 5 Leveln.",
+        "Live gespielt im sichtbaren Browser: Setz-Level 1, Lichtläufer 1–3."
+      ],
+      "observed": [
+        "Tests 22/22 bestanden; alle Level lösbar, Zugziele = Mindestzüge laut Löser.",
+        "Nur Drehen: 87–100 % Zufallslösungen in ≤20 Klicks; Setzen: 1 %.",
+        "Lichtläufer 1–3 mit Mindestzügen gelöst (3/6/12, je ★★★); Schatten, Drehen, Kreuzen funktionieren.",
+        "Gehirnkarte: Zoom auf Knoten, 'Alle Knoten' (91/174), Formationen sichtbar umgeschaltet."
+      ],
+      "decision": "Lichtläufer wird Kernmodus; Setz-Modus wird entfernt. Qualitätsziel erfüllt → bestanden.",
+      "next": "Lichtläufer ausbauen: neue Elemente und Varianten, mehr Level.",
+      "goal": "Kleinster vollständiger Spielablauf mit einer Kernmechanik, deren Tragfähigkeit geprüft wird.",
+      "quality": {
+        "problem": "Es gibt noch nichts zu spielen; die Kernidee ist unbewiesen.",
+        "fit": "Farbige Lichtpfade passen zu Name und Stil (Prisma, Licht, Farbe).",
+        "success": "Mehrere Level lassen sich mit Maus und Tastatur vollständig lösen; Sieg wird korrekt erkannt; Ziele sind auch ohne Farbwahrnehmung (Symbole) unterscheidbar; ein Zufallsspieler löst die Level deutlich seltener als bei reinem Drehen.",
+        "check": "Browser-Tests der Engine (tests/), Zufallsspieler-Messung, Live-Spiel im sichtbaren Browser."
+      }
+    },
+    {
+      "id": 3,
+      "title": "Lichtläufer ausbauen: neue Elemente und Level",
+      "status": "passed",
+      "backup": "step-03-lichtlaeufer-ausbau.zip",
+      "tried": [
+        "Setz-Modus mit Leveln, Löser und Tests entfernt (in step-02 gesichert).",
+        "Prismablock, Farbfilter und Eisfelder in Engine/Schiebelogik eingebaut, je ein Einführungslevel plus Finale 'Regenbogen'.",
+        "Alle 9 Level live im sichtbaren Browser gespielt, inkl. Fehlzug und Neustart."
+      ],
+      "observed": [
+        "Tests 22/22; Löser bestätigt alle Level (Mindestzüge 3–19).",
+        "Erster Regenbogen-Entwurf nach 400 000 Zuständen ungelöst → neu entworfen (19 Züge).",
+        "Live: alle 9 Level mit Mindestzügen gelöst (★★★); Prisma-Zerlegung, Filter (≠ → ✓), Rutschen und Neustart sichtbar korrekt."
+      ],
+      "decision": "Qualitätsziel erfüllt → bestanden. Nächster Nutzerwunsch: helleres Neon-Design, Siegesanimation über den ganzen Bildschirm, größere Spielfelder.",
+      "next": "Schritt 4: Neon-Design, Siegesfeuerwerk, größere Level.",
+      "goal": "Setz-Modus entfernen; Lichtläufer mit neuen Elementen (Prisma, Farbfilter, Eis) und mehr Leveln mit klarem Schwierigkeitsanstieg ausbauen.",
+      "quality": {
+        "problem": "Fünf Level mit nur Spiegeln werden schnell eintönig; der Nutzer wünscht Varianten.",
+        "fit": "Prisma und Farbfilter passen direkt zum Licht- und Farbthema; Eis verändert die Bewegung, nicht das Licht.",
+        "success": "Jedes neue Element wird in einem eigenen Einführungslevel erklärt; alle Level lösbar mit steigenden Mindestzügen; Tests grün; mehrere neue Level live gespielt.",
+        "check": "Engine-Tests für Prisma/Filter/Eis, Löser für jedes Level, Live-Spieltest im sichtbaren Browser."
+      }
+    },
+    {
+      "id": 4,
+      "title": "Neon-Design, Siegesfeuerwerk, größere Level",
+      "status": "in_progress",
+      "goal": "Freundlicher, heller, mehr Neon und Bewegung; beim Lösen eine bildschirmfüllende Feier; größere Spielfelder.",
+      "quality": {
+        "problem": "Rückmeldung: Design wirkt zu dunkel und ruhig, der Sieg zu klein, Felder zu eng (7 Spalten).",
+        "fit": "Neon und Licht sind der Kern des Themas; Feier muss nach dem Lösen kommen und darf nichts verdecken, während man spielt.",
+        "success": "Hellere Farbwelt mit sichtbarem Neon-Glühen und Hintergrundbewegung; Sieg löst Partikel/Lichtwellen über den ganzen Bildschirm aus; neue Level mit mindestens 13 Spalten; reduzierte Bewegung schaltet Effekte ab; Lesbarkeit der Symbole bleibt.",
+        "check": "Live-Spieltest im sichtbaren Browser inkl. Sieg; Löser für die neuen großen Level; Tests grün."
+      }
+    },
+    {
+      "id": 5,
+      "title": "Strahlteiler, Portale, lebendiges Live-Log, Karte > 200",
+      "status": "in_progress",
+      "goal": "Zwei neue Lichtelemente mit eigenen Einführungsleveln und großen Kombi-Leveln; Level-Auswahl; Live-Log, das jede Aktion farbig und fließend zeigt; Gehirnkarte mit über 200 echten, verbundenen Knoten; Systembeschreibung.",
+      "quality": {
+        "problem": "Nach 10 Leveln fehlen neue Ideen; das Live-Log war zu ruhig; die Karte bildete nur einen Teil des Projekts ab.",
+        "fit": "Teilen und Versetzen von Licht passt zum Prisma-Thema; das Lab soll die Entwicklung in Echtzeit erlebbar machen.",
+        "success": "Neue Elemente je mit Einführungslevel; alle Level per Löser lösbar und Zugziel = Minimum; Tests grün; Live-Log zeigt Spielzüge, Löser und Tests live auf 8420; 'Alle Knoten' > 200; docs/SYSTEM.md vorhanden.",
+        "check": "Löser + Tests im Browser, live spielen, Lab-Vollansicht auf localhost:8420 beobachten, Knotenzahl ablesen."
+      },
+      "tried": [
+        "Strahlteiler und Portale in engine.js/push.js/render.js eingebaut.",
+        "Leveldesign mit Löser im Browser: w11, w12, w13 (2 Entwürfe), w14.",
+        "Live-Log-Bus (POST /api/log), Nachlesen von live.log, Farbcodierung, Systempuls.",
+        "Generator für 'Alle Knoten' stark erweitert."
+      ],
+      "observed": [
+        "w11 7 · w12 9 · w13 17 (erster Entwurf ungelöst) · w14 27 Züge.",
+        "Port 8420 war von altem Server belegt → neu gestartet.",
+        "Karte kurz leer während des Umbaus, danach 153 Knoten / 485 Verbindungen."
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Animation, visueller Stil und Sound",
+      "status": "planned",
+      "goal": "Licht, Übergänge und synthetisierter Klang geben Energie, ohne Lesbarkeit zu stören."
+    }
+  ]
+}
