@@ -13,8 +13,9 @@
   <title>Prismara</title>
   <style>
     html.prismara-locked, html.prismara-locked body { overflow: hidden; }
-    html.prismara-locked body > :not(#prismara-access) { visibility: hidden !important; pointer-events: none !important; }
-    #prismara-access { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px; color: #f3f4f6; background: #080b12; font: 16px/1.5 system-ui, sans-serif; }
+    html.prismara-locked body > :not(#prismara-access):not(#prismara-mystic-animation) { visibility: hidden !important; pointer-events: none !important; }
+    #prismara-access { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px; color: #f3f4f6; background: rgba(8,11,18,.28); backdrop-filter: blur(22px) saturate(1.5); font: 16px/1.5 system-ui, sans-serif; opacity: 0; visibility: hidden; transition: opacity .45s ease, visibility .45s ease; }
+    #prismara-access.is-visible { opacity: 1; visibility: visible; }
     #prismara-access[hidden] { display: none; }
     #prismara-access .gate-card { width: min(100%, 390px); padding: 28px; border: 1px solid rgba(168,140,255,.46); border-radius: 18px; background: linear-gradient(145deg, #171326, #111722 68%, #0b1c24); box-shadow: 0 24px 80px #0009, 0 0 34px rgba(125,94,255,.14); }
     #prismara-access h1 { margin: 0 0 8px; font-size: 1.5rem; }
@@ -25,8 +26,8 @@
     #prismara-access button { width: 100%; padding: 12px; border: 1px solid #a88cff; border-radius: 9px; color: #fff; background: linear-gradient(115deg, #9c52ec, #487ded 55%, #35c7c6); font: inherit; font-weight: 650; cursor: pointer; }
     #prismara-access .error { min-height: 1.5em; margin: 10px 0 0; color: #ff9bad; font-size: .9rem; }
     #prismara-access .hosted-by { margin: -12px 0 20px; color: #a9a0c8; font-size: .78rem; letter-spacing: .04em; }
-    #prismara-mystic-animation { position: fixed; inset: 0; z-index: 8; width: 100%; height: 100%; pointer-events: none; opacity: 0; mix-blend-mode: screen; }
-    #prismara-mystic-animation.is-playing { opacity: 1; transition: opacity .35s ease; }
+    #prismara-mystic-animation { position: fixed; inset: 0; z-index: 2147483646; width: 100%; height: 100%; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, #0c0a1d 0, #05060d 68%, #020307); transition: opacity .7s ease; }
+    #prismara-mystic-animation.is-playing { opacity: 1; }
     @media (max-width: 500px) { #prismara-access { padding: 14px; } #prismara-access .gate-card { padding: 22px; } }
     @media (prefers-reduced-motion: reduce) { #prismara-mystic-animation { display: none; } }
   </style>
@@ -51,48 +52,73 @@
           canvas.height = Math.round(innerHeight * ratio);
           ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         };
-        const playMysticAnimation = () => {
-          if (reducedMotion) return;
+        const playMysticAnimation = (onComplete) => {
+          if (reducedMotion) { onComplete(); return; }
           cancelAnimationFrame(frame);
           resize();
           canvas.classList.add('is-playing');
           const started = performance.now();
           const draw = (now) => {
-            const progress = Math.min(1, (now - started) / 5200);
-            const fade = Math.min(1, progress * 5, (1 - progress) * 5);
-            const w = innerWidth, h = innerHeight, cx = w / 2, cy = h * .46;
-            const scale = Math.min(1, w / 820), bloom = Math.sin(progress * Math.PI);
+            const progress = Math.min(1, (now - started) / 5400);
+            const fade = Math.min(1, progress * 4, (1 - progress) * 4);
+            const w = innerWidth, h = innerHeight, cx = w / 2, cy = h * .48;
+            const scale = Math.min(1.25, Math.max(.62, w / 820)), bloom = Math.sin(progress * Math.PI);
             ctx.clearRect(0, 0, w, h);
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
             for (const star of stars) {
               const twinkle = .25 + .75 * Math.abs(Math.sin(now * .001 + star.phase));
-              ctx.fillStyle = `hsla(${star.hue},100%,78%,${twinkle * fade * .7})`;
-              ctx.beginPath(); ctx.arc(star.x * w, star.y * h, star.r * scale * (1 + twinkle), 0, 6.28); ctx.fill();
+              const depth = .18 + progress * .9;
+              const sx = cx + (star.x * w - cx) * depth, sy = cy + (star.y * h - cy) * depth;
+              ctx.fillStyle = `hsla(${star.hue},100%,78%,${twinkle * fade * .78})`;
+              ctx.beginPath(); ctx.arc(sx, sy, star.r * scale * (1 + twinkle), 0, 6.28); ctx.fill();
             }
-            const aura = ctx.createRadialGradient(cx, cy, 0, cx, cy, 270 * scale);
-            aura.addColorStop(0, `rgba(126,106,255,${.2 * fade})`); aura.addColorStop(.45, `rgba(68,222,255,${.09 * fade})`); aura.addColorStop(1, 'rgba(68,222,255,0)');
-            ctx.fillStyle = aura; ctx.fillRect(cx - 280 * scale, cy - 280 * scale, 560 * scale, 560 * scale);
-            for (let ring = 0; ring < 4; ring++) {
-              ctx.beginPath(); ctx.ellipse(cx, cy, (74 + ring * 27 + Math.sin(now * .001 + ring) * 7) * scale, (38 + ring * 14) * scale, now * .00018 * (ring % 2 ? -1 : 1) + ring * .7, 0, 6.28);
-              ctx.strokeStyle = `hsla(${180 + ring * 53 + now * .012},100%,78%,${(.42 - ring * .06) * fade})`; ctx.lineWidth = ring ? 1 : 2; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 16 * scale; ctx.stroke();
+            const radius = (80 + bloom * Math.min(w, h) * .34) * scale;
+            const aura = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.8);
+            aura.addColorStop(0, `rgba(255,255,255,${.2 * fade})`); aura.addColorStop(.16, `rgba(126,106,255,${.24 * fade})`); aura.addColorStop(.48, `rgba(68,222,255,${.12 * fade})`); aura.addColorStop(1, 'rgba(68,222,255,0)');
+            ctx.fillStyle = aura; ctx.fillRect(cx - radius * 2, cy - radius * 2, radius * 4, radius * 4);
+            for (let ring = 0; ring < 7; ring++) {
+              const ringProgress = (progress * 1.15 + ring / 7) % 1;
+              const rx = (32 + ringProgress * Math.min(w, h) * .58) * scale;
+              ctx.beginPath(); ctx.ellipse(cx, cy, rx, rx * (.42 + ring * .018), now * .00018 * (ring % 2 ? -1 : 1) + ring * .7, 0, 6.28);
+              ctx.strokeStyle = `hsla(${180 + ring * 37 + now * .012},100%,${72 + ring % 2 * 10}%,${(.48 - ring * .035) * fade * (1 - ringProgress * .5)})`; ctx.lineWidth = (ring % 3 ? 1 : 2.2) * scale; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 24 * scale; ctx.stroke();
             }
-            for (let i = 0; i < 40; i++) {
-              const angle = i * Math.PI / 20 + now * .00012, inner = 42 * scale, outer = (100 + bloom * 300 + (i % 4) * 24) * scale;
+            for (let i = 0; i < 112; i++) {
+              const angle = i * Math.PI / 56 + now * .00012 * (i % 2 ? 1 : -1), inner = (18 + (i % 9) * 4) * scale, outer = (70 + bloom * Math.min(w, h) * .48 + (i % 7) * 22) * scale;
               ctx.beginPath(); ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner); ctx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
-              ctx.strokeStyle = `hsla(${(i * 19 + now * .025) % 360},100%,72%,${(.05 + bloom * .3) * fade})`; ctx.lineWidth = (i % 6 ? .7 : 2) * scale; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 14 * scale; ctx.stroke();
+              ctx.strokeStyle = `hsla(${(i * 13 + now * .025) % 360},100%,${70 + i % 3 * 8}%,${(.07 + bloom * .34) * fade})`; ctx.lineWidth = (i % 8 ? .7 : 2.4) * scale; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 18 * scale; ctx.stroke();
             }
-            const size = (42 + bloom * 28) * scale;
-            ctx.translate(cx, cy); ctx.rotate(now * .00045); ctx.beginPath(); ctx.moveTo(0, -size); ctx.lineTo(size * .72, size * .58); ctx.lineTo(-size * .72, size * .58); ctx.closePath();
-            const glass = ctx.createLinearGradient(-size, -size, size, size); glass.addColorStop(0, `rgba(255,255,255,${.92 * fade})`); glass.addColorStop(.45, `hsla(${190 + now * .02},100%,72%,${.72 * fade})`); glass.addColorStop(1, `hsla(${285 + now * .03},100%,68%,${.78 * fade})`);
-            ctx.fillStyle = glass; ctx.shadowColor = '#a88cff'; ctx.shadowBlur = 34 * scale; ctx.fill(); ctx.strokeStyle = `rgba(255,255,255,${.9 * fade})`; ctx.lineWidth = 1.4 * scale; ctx.stroke(); ctx.restore();
-            if (progress < 1) frame = requestAnimationFrame(draw); else canvas.classList.remove('is-playing');
+            for (let i = 0; i < 180; i++) {
+              const t = (progress * 1.4 + i / 180) % 1, a = i * 2.399 + now * .0005, r = (25 + t * Math.min(w, h) * .45) * scale;
+              const px = cx + Math.cos(a + t * 8) * r, py = cy + Math.sin(a + t * 8) * r * .58;
+              ctx.beginPath(); ctx.arc(px, py, (1 + (i % 4) * .55) * scale, 0, 6.28);
+              ctx.fillStyle = `hsla(${(190 + i * 7 + now * .035) % 360},100%,${70 + i % 4 * 6}%,${(.16 + .58 * (1 - t)) * fade})`; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 12 * scale; ctx.fill();
+            }
+            ctx.translate(cx, cy); ctx.rotate(now * .00033);
+            for (let shard = 0; shard < 3; shard++) {
+              const size = (26 + bloom * 46 - shard * 6) * scale, rot = shard * 2.094;
+              ctx.save(); ctx.rotate(rot); ctx.beginPath(); ctx.moveTo(0, -size * 1.35); ctx.lineTo(size * .82, size * .72); ctx.lineTo(0, size * .3); ctx.lineTo(-size * .82, size * .72); ctx.closePath();
+              const glass = ctx.createLinearGradient(-size, -size, size, size); glass.addColorStop(0, `rgba(255,255,255,${.96 * fade})`); glass.addColorStop(.42, `hsla(${185 + shard * 47 + now * .02},100%,72%,${.78 * fade})`); glass.addColorStop(1, `hsla(${285 + shard * 24 + now * .03},100%,68%,${.82 * fade})`);
+              ctx.fillStyle = glass; ctx.shadowColor = shard % 2 ? '#44deff' : '#bd72ff'; ctx.shadowBlur = 38 * scale; ctx.fill(); ctx.strokeStyle = `rgba(255,255,255,${.88 * fade})`; ctx.lineWidth = 1.5 * scale; ctx.stroke(); ctx.restore();
+            }
+            ctx.restore();
+            if (progress < 1) frame = requestAnimationFrame(draw);
+            else { canvas.classList.remove('is-playing'); window.setTimeout(onComplete, 520); }
           };
           frame = requestAnimationFrame(draw);
         };
-        const unlock = () => { document.documentElement.classList.remove('prismara-locked'); gate.hidden = true; playMysticAnimation(); };
-        try { if (Number(localStorage.getItem(KEY)) > Date.now()) { unlock(); return; } localStorage.removeItem(KEY); } catch { /* PIN bei jedem Besuch abfragen. */ }
-        input.focus();
+        const unlock = () => { document.documentElement.classList.remove('prismara-locked'); gate.hidden = true; gate.classList.remove('is-visible'); };
+        let remembered = false;
+        try { remembered = Number(localStorage.getItem(KEY)) > Date.now(); if (!remembered) localStorage.removeItem(KEY); } catch { /* PIN bei jedem Besuch abfragen. */ }
+        gate.inert = true;
+        gate.setAttribute('aria-hidden', 'true');
+        playMysticAnimation(() => {
+          if (remembered) { unlock(); return; }
+          gate.inert = false;
+          gate.removeAttribute('aria-hidden');
+          gate.classList.add('is-visible');
+          input.focus();
+        });
         form.addEventListener('submit', async (event) => {
           event.preventDefault();
           const bytes = new TextEncoder().encode(input.value.trim());
