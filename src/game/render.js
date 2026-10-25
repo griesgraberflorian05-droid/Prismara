@@ -72,12 +72,12 @@ export class BoardRenderer {
       const ang = ph * Math.PI * 2;
       const cx = bx + bw / 2, cy = by + bh / 2, R = Math.max(bw, bh);
       const g = ctx.createLinearGradient(cx + Math.cos(ang) * R, cy + Math.sin(ang) * R, cx - Math.cos(ang) * R, cy - Math.sin(ang) * R);
-      g.addColorStop(0, '#f2f2f2'); g.addColorStop(0.5, '#999'); g.addColorStop(1, '#555');
+      g.addColorStop(0, '#ff4fd8'); g.addColorStop(0.18, '#ff4d6d'); g.addColorStop(0.38, '#ffd166'); g.addColorStop(0.56, '#3ddc97'); g.addColorStop(0.76, '#4ff0ff'); g.addColorStop(1, '#9b72ff');
       ctx.save();
-      ctx.fillStyle = 'rgba(18,18,18,0.8)';
+      ctx.fillStyle = 'rgba(8,10,24,0.86)';
       ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, s * 0.25); ctx.fill();
-      ctx.shadowColor = '#bbb'; ctx.shadowBlur = 18;
-      ctx.strokeStyle = g; ctx.lineWidth = 3;
+      ctx.shadowColor = `hsl(${(ph * 360 + 205) % 360},100%,65%)`; ctx.shadowBlur = 24;
+      ctx.strokeStyle = g; ctx.lineWidth = 3.5;
       ctx.stroke();
       ctx.restore();
     }
@@ -89,10 +89,10 @@ export class BoardRenderer {
         const px = this.ox + x * s, py = this.oy + y * s;
         if (c.type === 'wall') {
           const g = ctx.createLinearGradient(px, py, px, py + s);
-          g.addColorStop(0, '#555'); g.addColorStop(1, '#262626');
+          g.addColorStop(0, '#30244e'); g.addColorStop(1, '#111323');
           ctx.fillStyle = g;
           ctx.beginPath(); ctx.roundRect(px + 1, py + 1, s - 2, s - 2, s * 0.14); ctx.fill();
-          ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(168,140,255,0.52)'; ctx.lineWidth = 1.2;
           ctx.stroke();
           ctx.fillStyle = 'rgba(255,255,255,0.16)';
           ctx.fillRect(px + s * 0.14, py + 3, s * 0.72, 2);
@@ -100,21 +100,23 @@ export class BoardRenderer {
         }
         const buildable = c.type === 'empty' && c.build;
         const noBuild = c.type === 'empty' && c.build === false;
-        ctx.fillStyle = noBuild ? '#101010' : '#191919';
+        ctx.fillStyle = noBuild ? '#080a16' : '#101426';
         ctx.beginPath(); ctx.roundRect(px + 2, py + 2, s - 4, s - 4, s * 0.12); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(108,145,255,0.18)'; ctx.lineWidth = 1;
         ctx.stroke();
         if (c.ice) {
           // Eis: hellblau mit Glanzstreifen
           const g = ctx.createLinearGradient(px, py, px + s, py + s);
-          g.addColorStop(0, 'rgba(235,235,235,0.28)'); g.addColorStop(1, 'rgba(120,120,120,0.14)');
+          g.addColorStop(0, 'rgba(151,246,255,0.36)'); g.addColorStop(1, 'rgba(88,132,255,0.12)');
           ctx.fillStyle = g;
           ctx.beginPath(); ctx.roundRect(px + 2, py + 2, s - 4, s - 4, s * 0.12); ctx.fill();
-          ctx.strokeStyle = 'rgba(245,245,245,0.4)'; ctx.lineWidth = 1.5;
+          ctx.strokeStyle = 'rgba(163,248,255,0.75)'; ctx.lineWidth = 1.5;
+          ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * .12;
           ctx.beginPath(); ctx.moveTo(px + s * 0.2, py + s * 0.45); ctx.lineTo(px + s * 0.45, py + s * 0.2);
           ctx.moveTo(px + s * 0.35, py + s * 0.75); ctx.lineTo(px + s * 0.75, py + s * 0.35); ctx.stroke();
         } else if (buildable) {
-          ctx.fillStyle = 'rgba(210,210,210,0.2)';
+          ctx.fillStyle = 'rgba(79,240,255,0.26)';
+          ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * .14;
           ctx.beginPath(); ctx.arc(px + s / 2, py + s / 2, Math.max(1.5, s * 0.03), 0, Math.PI * 2); ctx.fill();
         } else if (noBuild) {
           // nicht bebaubar: feine Schraffur
@@ -157,7 +159,8 @@ export class BoardRenderer {
     // Tastatur-Cursor
     if (opts.showCursor && opts.cursor) {
       const px = this.ox + opts.cursor.x * s, py = this.oy + opts.cursor.y * s;
-      ctx.strokeStyle = '#ddd';
+      ctx.strokeStyle = '#4ff0ff';
+      ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = 14;
       ctx.lineWidth = 2.5;
       ctx.setLineDash([6, 4]);
       ctx.lineDashOffset = opts.reduced ? 0 : -t / 60;
@@ -236,12 +239,13 @@ export class BoardRenderer {
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = s * 0.15; ctx.shadowOffsetY = s * 0.05;
     const g = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
-    if (b.kind === 'stone') { g.addColorStop(0, '#555'); g.addColorStop(1, '#292929'); }
-    else { g.addColorStop(0, '#777'); g.addColorStop(1, '#383838'); }
+    if (b.kind === 'stone') { g.addColorStop(0, '#47405c'); g.addColorStop(1, '#181622'); }
+    else { g.addColorStop(0, '#4eeeff'); g.addColorStop(.48, '#835aff'); g.addColorStop(1, '#ed4eff'); }
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, s * 0.12); ctx.fill();
     ctx.shadowColor = 'transparent';
-    ctx.strokeStyle = b.kind !== 'stone' ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.18)';
+    ctx.strokeStyle = b.kind !== 'stone' ? 'rgba(210,250,255,0.82)' : 'rgba(185,164,255,0.34)';
+    if (b.kind !== 'stone') { ctx.shadowColor = '#8c65ff'; ctx.shadowBlur = s * .28; }
     ctx.lineWidth = 1.5;
     ctx.stroke();
     if (b.kind !== 'stone') {
@@ -263,12 +267,12 @@ export class BoardRenderer {
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(cx, cy - r); ctx.lineTo(cx + r * 1.05, cy + r * 0.8); ctx.lineTo(cx - r * 1.05, cy + r * 0.8); ctx.closePath();
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillStyle = 'rgba(162,236,255,0.22)';
     ctx.fill();
     const g = ctx.createLinearGradient(cx - r, cy, cx + r, cy);
     g.addColorStop(0, '#ff4d6d'); g.addColorStop(0.5, '#3ddc97'); g.addColorStop(1, '#4da3ff');
     ctx.strokeStyle = g; ctx.lineWidth = s * 0.05; ctx.lineJoin = 'round';
-    ctx.shadowColor = '#ffffff'; ctx.shadowBlur = s * 0.12;
+    ctx.shadowColor = '#b874ff'; ctx.shadowBlur = s * 0.24;
     ctx.stroke();
     ctx.restore();
   }
@@ -280,10 +284,11 @@ export class BoardRenderer {
     const [x0, y0, x1, y1] = orient === '/' ? [cx - d, cy + d, cx + d, cy - d] : [cx - d, cy - d, cx + d, cy + d];
     ctx.save();
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(220,220,220,0.35)'; ctx.lineWidth = s * 0.14;
+    ctx.strokeStyle = 'rgba(79,240,255,0.22)'; ctx.lineWidth = s * 0.14;
+    ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * .24;
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-    ctx.shadowColor = '#ccc'; ctx.shadowBlur = s * 0.12;
-    ctx.strokeStyle = '#eee'; ctx.lineWidth = s * 0.06;
+    ctx.shadowColor = '#a88cff'; ctx.shadowBlur = s * 0.22;
+    ctx.strokeStyle = '#c9faff'; ctx.lineWidth = s * 0.06;
     ctx.setLineDash([s * 0.09, s * 0.07]);
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
     ctx.restore();
@@ -292,12 +297,12 @@ export class BoardRenderer {
   // Portal: wirbelnder Ring; Paare teilen Farbe und Buchstaben (ohne Farbsinn erkennbar).
   _drawPortal(c, cx, cy, s, t, opts) {
     const { ctx } = this;
-    const hue = { A: '#eee', B: '#aaa', C: '#666' }[c.pair] || '#bbb';
+    const hue = { A: '#4ff0ff', B: '#ff4fd8', C: '#ffe14f' }[c.pair] || '#a88cff';
     const r = s * 0.36;
     const spin = opts.reduced ? 0 : t / 600;
     ctx.save();
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, '#080808'); g.addColorStop(0.65, 'rgba(40,40,40,0.9)'); g.addColorStop(1, hue);
+    g.addColorStop(0, '#090a18'); g.addColorStop(0.56, 'rgba(24,19,48,0.92)'); g.addColorStop(1, hue);
     ctx.fillStyle = g;
     ctx.shadowColor = hue; ctx.shadowBlur = s * 0.35;
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
@@ -335,14 +340,14 @@ export class BoardRenderer {
     const bob = opts.reduced ? 0 : Math.sin(t / 380) * s * 0.015;
     const r = s * 0.36;
     ctx.save();
-    ctx.shadowColor = '#ffe9a8'; ctx.shadowBlur = s * 0.45;
+    ctx.shadowColor = '#ff4fd8'; ctx.shadowBlur = s * 0.72;
     const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-    g.addColorStop(0, '#fff6d6'); g.addColorStop(0.5, '#ffd166'); g.addColorStop(1, '#ff9f5a');
+    g.addColorStop(0, '#fff8ff'); g.addColorStop(0.17, '#ff4fd8'); g.addColorStop(0.38, '#9b72ff'); g.addColorStop(0.58, '#4ff0ff'); g.addColorStop(0.78, '#3ddc97'); g.addColorStop(1, '#ffe14f');
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.roundRect(cx - r, cy - r + bob, r * 2, r * 2, s * 0.14); ctx.fill();
     ctx.shadowBlur = 0;
     // Prisma-Symbol
-    ctx.strokeStyle = 'rgba(80,40,10,0.7)'; ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(8,12,35,0.9)'; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx, cy - r * 0.45 + bob); ctx.lineTo(cx + r * 0.45, cy + r * 0.35 + bob); ctx.lineTo(cx - r * 0.45, cy + r * 0.35 + bob); ctx.closePath();
     ctx.stroke();
@@ -386,27 +391,28 @@ export class BoardRenderer {
     if (!ghost) {
       if (c.rotatable) {
         // runder Sockel mit Drehpfeilen = drehbar
-        ctx.strokeStyle = 'rgba(235,235,235,0.55)'; ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(79,240,255,0.85)'; ctx.lineWidth = 2;
+        ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * .18;
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.36, 0.3, 1.3); ctx.stroke();
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.36, Math.PI + 0.3, Math.PI + 1.3); ctx.stroke();
-        ctx.fillStyle = 'rgba(235,235,235,0.1)';
+        ctx.fillStyle = 'rgba(79,240,255,0.12)';
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.33, 0, Math.PI * 2); ctx.fill();
       } else if (c.placed) {
         // gesetzter Spiegel: violette Ecken
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillStyle = 'rgba(168,140,255,0.2)';
         ctx.beginPath(); ctx.roundRect(cx - s * 0.4, cy - s * 0.4, s * 0.8, s * 0.8, s * 0.1); ctx.fill();
       } else {
-        ctx.fillStyle = 'rgba(190,190,190,0.1)';
+        ctx.fillStyle = 'rgba(100,132,255,0.14)';
         ctx.beginPath(); ctx.roundRect(cx - s * 0.4, cy - s * 0.4, s * 0.8, s * 0.8, 2); ctx.fill();
       }
     }
     const d = s * 0.32;
     const [x0, y0, x1, y1] = c.orient === '/' ? [cx - d, cy + d, cx + d, cy - d] : [cx - d, cy - d, cx + d, cy + d];
     const g = ctx.createLinearGradient(x0, y0, x1, y1);
-    g.addColorStop(0, '#888'); g.addColorStop(0.5, '#fff'); g.addColorStop(1, '#aaa');
+    g.addColorStop(0, '#ff4fd8'); g.addColorStop(0.42, '#fff'); g.addColorStop(0.72, '#4ff0ff'); g.addColorStop(1, '#a88cff');
     ctx.globalAlpha *= alpha;
     ctx.lineCap = 'round';
-    ctx.shadowColor = '#ddd'; ctx.shadowBlur = ghost ? 0 : s * 0.1;
+    ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = ghost ? 0 : s * 0.26;
     ctx.strokeStyle = g; ctx.lineWidth = s * 0.085;
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
     ctx.restore();
