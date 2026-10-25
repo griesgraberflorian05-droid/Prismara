@@ -6,8 +6,11 @@ import { buildProjectGraph, mergeGraphs, loadLevelsFresh } from './projectGraph.
 // v2 ignores the old saved production default so the full graph appears once after upgrade.
 const PREF_KEY = 'prismara.brain.view.v2';
 function loadPref(defaultMode = 'main') {
-  try { return { mode: defaultMode, view: 'brain', formation: 'brain', palette: 'arctic', importance: [1, 2, 3, 4, 5], ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; }
-  catch { return { mode: defaultMode, view: 'brain', formation: 'brain', palette: 'arctic', importance: [1, 2, 3, 4, 5] }; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
+    if (saved.palette === 'arctic') saved.palette = 'bunt';
+    return { mode: defaultMode, view: 'brain', formation: 'brain', palette: 'bunt', importance: [1, 2, 3, 4, 5], ...saved };
+  } catch { return { mode: defaultMode, view: 'brain', formation: 'brain', palette: 'bunt', importance: [1, 2, 3, 4, 5] }; }
 }
 function savePref(p) { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* blockiert */ } }
 
@@ -56,8 +59,12 @@ export function mountLab(root, params = []) {
               <button class="btn btn-sm brain-only" data-act="out" aria-label="Verkleinern">−</button>
               <button class="btn btn-sm brain-only" data-act="in" aria-label="Vergrößern">+</button>
               <button class="btn btn-sm brain-only" data-act="fit" title="Alle Knoten in die Karte einpassen">Alles einpassen</button>
-              <button class="btn btn-sm brain-only" data-act="replay">Wachstum abspielen</button>
+              <button class="btn btn-sm brain-only" data-act="replay" id="growth-play">Wachstum abspielen</button>
               <button class="btn btn-sm btn-full brain-only" data-act="full" aria-pressed="false">⤢ Vollansicht</button>
+            </div>
+            <div class="growth-controls brain-only" aria-label="Wachstumsanimation steuern">
+              <label class="growth-control" for="growth-speed"><span>Tempo <output id="growth-speed-value">1,0×</output></span><input id="growth-speed" type="range" min="0.35" max="2.5" step="0.05" value="1" aria-label="Wachstumstempo"></label>
+              <label class="growth-control growth-seek" for="growth-position"><span>Verlauf <output id="growth-position-value">Bereit</output></span><input id="growth-position" type="range" min="0" max="0" step="1" value="0" disabled aria-label="Position im Wachstumsverlauf"></label>
             </div>
             <div class="importance-controls" aria-label="Knoten nach Wichtigkeit filtern">
               <div class="importance-heading"><strong>Wichtigkeit</strong><span class="muted small">Mehrere Stufen gleichzeitig anzeigen</span><button id="importance-all" type="button" aria-label="Alle Wichtigkeitsstufen anzeigen">Alle Stufen</button></div>
@@ -87,6 +94,7 @@ export function mountLab(root, params = []) {
     reducedMotion: prefersReducedMotion,
     onSelect: (node, relations) => { renderDetail(node, relations); renderNodeList(); },
     onReplayLabel: (node, index, total) => renderGrowthLabel(node, index, total),
+    onReplayProgress: (index, total, playing, complete) => renderReplayProgress(index, total, playing, complete),
   });
   const mapCard = root.querySelector('.map-card');
 
@@ -95,7 +103,7 @@ export function mountLab(root, params = []) {
   if (!['main', 'all'].includes(pref.mode)) pref.mode = 'all';
   if (!['brain', 'list'].includes(pref.view)) pref.view = 'brain';
   if (!FORMATIONS[pref.formation]) pref.formation = 'brain';
-  if (!PALETTES[pref.palette]) pref.palette = 'arctic';
+  if (!PALETTES[pref.palette]) pref.palette = 'bunt';
   if (!Array.isArray(pref.importance)) pref.importance = [1, 2, 3, 4, 5];
   pref.importance = [...new Set(pref.importance.map(Number).filter((n) => IMPORTANCE_LEVELS.some((level) => level.id === n)))];
   map.setFormation(pref.formation);
@@ -103,6 +111,16 @@ export function mountLab(root, params = []) {
   map.setImportanceFilter(pref.importance);
   let projectGraph = null;
   let currentBrain = null;
+  function renderReplayProgress(index, total, playing, complete = false) {
+    const slider = $('#growth-position');
+    const play = $('#growth-play');
+    const safeTotal = Math.max(0, total || 0);
+    slider.max = String(Math.max(0, safeTotal - 1));
+    slider.disabled = safeTotal === 0;
+    if (safeTotal) slider.value = String(Math.max(0, Math.min(safeTotal - 1, index)));
+    $('#growth-position-value').textContent = safeTotal ? `${String(Math.max(0, index + 1)).padStart(3, '0')} / ${safeTotal}` : 'Bereit';
+    play.textContent = playing ? 'Wachstum pausieren' : complete ? 'Wachstum erneut abspielen' : 'Wachstum abspielen';
+  }
   function syncControls() {
     root.querySelectorAll('.seg-btn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === pref.mode)));
     $('#formation').value = pref.formation;
@@ -230,9 +248,19 @@ export function mountLab(root, params = []) {
     if (act === 'in') map.zoomBy(1.25);
     if (act === 'out') map.zoomBy(1 / 1.25);
     if (act === 'fit') map.fit();
-    if (act === 'replay') map.replayGrowth();
+    if (act === 'replay') {
+      if (map.replayActive) map.pauseReplay();
+      else if (map.replayOrder.length && map.replayIndex < map.replayOrder.length) map.resumeReplay();
+      else map.replayGrowth();
+    }
     if (act === 'full') setFull(!mapCard.classList.contains('is-full'));
   });
+  $('#growth-speed').addEventListener('input', (event) => {
+    const speed = Number(event.target.value);
+    map.setReplaySpeed(speed);
+    $('#growth-speed-value').textContent = `${speed.toFixed(1).replace('.', ',')}×`;
+  });
+  $('#growth-position').addEventListener('input', (event) => map.seekGrowth(Number(event.target.value)));
 
   // Vollansicht: Karte füllt das ganze Fenster; Esc oder erneuter Klick schließt.
   const fullBtn = root.querySelector('[data-act="full"]');
