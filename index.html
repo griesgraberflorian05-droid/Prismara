@@ -16,59 +16,19 @@
     html.prismara-locked body > :not(#prismara-access) { visibility: hidden !important; pointer-events: none !important; }
     #prismara-access { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px; color: #f3f4f6; background: #080b12; font: 16px/1.5 system-ui, sans-serif; }
     #prismara-access[hidden] { display: none; }
-    #prismara-access .gate-card { width: min(100%, 390px); padding: 28px; border: 1px solid #303849; border-radius: 18px; background: #111722; box-shadow: 0 24px 80px #0009; }
-    #prismara-access .intro-card { position: relative; width: min(100%, 980px); min-height: min(620px, calc(100vh - 48px)); display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, .9fr); align-items: center; gap: 24px; overflow: hidden; padding: clamp(28px, 6vw, 72px); border-color: rgba(168,140,255,.34); background: radial-gradient(ellipse at 76% 48%, rgba(89,62,157,.28) 0, rgba(18,34,57,.72) 35%, #080b12 76%); animation: intro-emerge 1.15s cubic-bezier(.18,.72,.2,1) both; }
-    #prismara-access .intro-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .62; background: radial-gradient(circle at 74% 48%, transparent 0 18%, rgba(79,240,255,.06) 18.2% 18.35%, transparent 18.6% 30%, rgba(168,140,255,.08) 30.2% 30.35%, transparent 30.6%), radial-gradient(1px 1px at 16% 22%, #fff 99%, transparent), radial-gradient(1px 1px at 39% 72%, #8cecff 99%, transparent), radial-gradient(1.5px 1.5px at 83% 18%, #dfd4ff 99%, transparent), radial-gradient(1px 1px at 91% 78%, #fff 99%, transparent), radial-gradient(1px 1px at 61% 87%, #8cecff 99%, transparent); background-size: auto, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%; mask-image: linear-gradient(90deg, transparent, #000 35%); animation: star-drift 18s ease-in-out infinite alternate; }
-    #prismara-access .intro-card::after { content: ""; position: absolute; width: 52%; aspect-ratio: 1; right: 4%; top: 4%; border-radius: 50%; pointer-events: none; background: conic-gradient(from 20deg, transparent, rgba(79,240,255,.08), transparent 24%, rgba(168,140,255,.12), transparent 54%, rgba(255,79,216,.06), transparent 75%); filter: blur(28px); animation: nebula-turn 28s linear infinite; }
-    #prismara-access .intro-copy, #prismara-access .quantum-visual { position: relative; z-index: 1; }
-    #prismara-access .intro-eyebrow { color: #9befff; font-size: .7rem; font-weight: 750; letter-spacing: .24em; text-shadow: 0 0 22px rgba(79,240,255,.35); }
-    #prismara-access .intro-card h1 { margin: 14px 0; font-size: clamp(2.5rem, 6vw, 4.6rem); line-height: .98; letter-spacing: -.055em; background: linear-gradient(105deg, #fff 8%, #9ff5ff 43%, #c5a8ff 76%, #ffb2e7); background-clip: text; color: transparent; filter: drop-shadow(0 0 24px rgba(168,140,255,.18)); }
-    #prismara-access .intro-copy p { max-width: 440px; color: #bdc1d4; line-height: 1.7; }
-    #prismara-access .intro-status { display: flex; align-items: center; gap: 10px; margin: 28px 0 18px; color: #c5baff; font: 650 .7rem/1.4 system-ui, sans-serif; letter-spacing: .16em; }
-    #prismara-access .intro-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #a98cff; box-shadow: 0 0 14px #a98cff, 0 0 30px #4ff0ff; animation: quantum-pulse 2.4s ease-in-out infinite; }
-    #prismara-access .intro-progress { height: 2px; width: min(100%, 330px); overflow: hidden; background: rgba(166,155,221,.16); }
-    #prismara-access .intro-progress::after { content: ""; display: block; width: 42%; height: 100%; background: linear-gradient(90deg, transparent, #4ff0ff, #c4a7ff, #fff); box-shadow: 0 0 16px #a88cff; animation: quantum-scan 3.2s ease-in-out infinite; }
-    #prismara-access #prismara-intro-continue { width: auto; min-width: 220px; margin-top: 30px; padding: 12px 18px; border: 1px solid rgba(175,158,255,.72); color: #f5f2ff; background: linear-gradient(110deg, rgba(91,71,157,.72), rgba(43,150,166,.66)); box-shadow: 0 0 28px rgba(113,100,227,.2), inset 0 0 20px rgba(255,255,255,.06); }
-    #prismara-access #prismara-intro-continue:hover { border-color: #a7f5ff; background: linear-gradient(110deg, rgba(119,92,203,.9), rgba(52,184,194,.84)); box-shadow: 0 0 38px rgba(105,195,255,.32); }
-    #prismara-access .quantum-visual { display: grid; place-items: center; min-height: 300px; perspective: 800px; }
-    #prismara-access .quantum-core { position: relative; width: min(34vw, 300px); min-width: 220px; aspect-ratio: 1; display: grid; place-items: center; filter: drop-shadow(0 0 42px rgba(115,83,223,.2)); }
-    #prismara-access .quantum-ring { position: absolute; inset: 8%; border: 1px solid rgba(79,240,255,.52); border-radius: 50%; box-shadow: inset 0 0 28px rgba(79,240,255,.08), 0 0 28px rgba(79,240,255,.12); transform: rotateX(64deg) rotateZ(-24deg); animation: quantum-orbit 18s linear infinite; }
-    #prismara-access .quantum-ring.ring-two { inset: 15%; border-color: rgba(168,140,255,.68); border-style: dashed; transform: rotateY(64deg) rotateZ(28deg); animation-duration: 24s; animation-direction: reverse; }
-    #prismara-access .quantum-ring.ring-three { inset: 4%; border-color: rgba(255,255,255,.28); transform: rotateX(74deg) rotateY(35deg); animation-duration: 30s; }
-    #prismara-access .quantum-nucleus { position: relative; width: 100px; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid rgba(232,220,255,.9); clip-path: polygon(50% 0, 62% 35%, 100% 50%, 62% 65%, 50% 100%, 38% 65%, 0 50%, 38% 35%); color: #fff; background: radial-gradient(circle at 30% 24%, #fff, #9ff5ff 22%, #9670e7 48%, #31265c 76%); box-shadow: 0 0 26px #8f7aff, 0 0 100px rgba(79,240,255,.38); animation: quantum-breathe 5s ease-in-out infinite; }
-    #prismara-access .quantum-nucleus span { font-family: Georgia, serif; font-size: 2rem; text-shadow: 0 0 16px #fff, 0 0 34px #a98cff; }
-    #prismara-access .quantum-particle { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #c9faff; box-shadow: 0 0 12px #4ff0ff, 0 0 26px #c5a8ff; }
-    #prismara-access .quantum-particle.p-one { top: 11%; left: 29%; animation: particle-float 6.5s ease-in-out infinite; }
-    #prismara-access .quantum-particle.p-two { right: 8%; top: 43%; background: #e4d5ff; box-shadow: 0 0 16px #a88cff; animation: particle-float 8s ease-in-out -1.2s infinite; }
-    #prismara-access .quantum-particle.p-three { bottom: 12%; left: 24%; animation: particle-float 7.5s ease-in-out -2s infinite; }
-    #prismara-access .pin-card { animation: gate-reveal .42s cubic-bezier(.2,.75,.25,1) both; }
-    @keyframes quantum-orbit { to { rotate: 360deg; } }
-    @keyframes quantum-breathe { 50% { scale: 1.08; filter: brightness(1.18); } }
-    @keyframes quantum-pulse { 50% { opacity: .45; box-shadow: 0 0 6px #4ff0ff, 0 0 24px #a88cff; } }
-    @keyframes quantum-scan { 0% { transform: translateX(-120%); opacity: .3; } 55% { opacity: 1; } 100% { transform: translateX(360%); opacity: .3; } }
-    @keyframes particle-float { 50% { translate: 12px -18px; scale: 1.5; } }
-    @keyframes intro-emerge { from { opacity: 0; transform: translateY(18px) scale(.97); filter: blur(8px); } to { opacity: 1; transform: none; filter: blur(0); } }
-    @keyframes nebula-turn { to { rotate: 360deg; } }
-    @keyframes star-drift { to { transform: translate3d(0,-8px,0); opacity: .42; } }
-    @keyframes gate-reveal { from { opacity: 0; transform: translateY(12px) scale(.98); } }
+    #prismara-access .gate-card { width: min(100%, 390px); padding: 28px; border: 1px solid rgba(168,140,255,.46); border-radius: 18px; background: linear-gradient(145deg, #171326, #111722 68%, #0b1c24); box-shadow: 0 24px 80px #0009, 0 0 34px rgba(125,94,255,.14); }
     #prismara-access h1 { margin: 0 0 8px; font-size: 1.5rem; }
-    #prismara-access p { margin: 0 0 20px; color: #aab4c4; }
+    #prismara-access p { margin: 0 0 20px; color: #c5c0d9; }
     #prismara-access label { display: block; margin: 12px 0 6px; }
-    #prismara-access input[type="password"] { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #59657a; border-radius: 9px; color: #fff; background: #080b12; font: inherit; }
+    #prismara-access input[type="password"] { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #6f67a0; border-radius: 9px; color: #fff; background: #080b12; font: inherit; }
     #prismara-access .remember { display: flex; gap: 8px; align-items: center; margin: 12px 0 18px; color: #c4ccda; font-size: .9rem; }
-    #prismara-access button { width: 100%; padding: 12px; border: 0; border-radius: 9px; color: #111; background: #d0d0d0; font: inherit; font-weight: 650; cursor: pointer; }
-    #prismara-access button:hover { background: #fff; }
-    #prismara-access .error { min-height: 1.5em; margin: 10px 0 0; color: #ccc; font-size: .9rem; }
-    #prismara-access .hosted-by { margin: -12px 0 20px; color: #8792a3; font-size: .78rem; letter-spacing: .04em; }
-    @media (max-width: 680px) {
-      #prismara-access { padding: 14px; }
-      #prismara-access .intro-card { grid-template-columns: 1fr; gap: 0; min-height: min(700px, calc(100vh - 28px)); padding: 30px 24px; }
-      #prismara-access .quantum-visual { position: absolute; right: -55px; bottom: 0; width: 58%; min-height: 250px; opacity: .48; }
-      #prismara-access .quantum-core { min-width: 190px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      #prismara-access .intro-card, #prismara-access .intro-card::before, #prismara-access .intro-card::after, #prismara-access .quantum-ring, #prismara-access .quantum-nucleus, #prismara-access .quantum-particle, #prismara-access .intro-status::before, #prismara-access .intro-progress::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
-    }
+    #prismara-access button { width: 100%; padding: 12px; border: 1px solid #a88cff; border-radius: 9px; color: #fff; background: linear-gradient(115deg, #9c52ec, #487ded 55%, #35c7c6); font: inherit; font-weight: 650; cursor: pointer; }
+    #prismara-access .error { min-height: 1.5em; margin: 10px 0 0; color: #ff9bad; font-size: .9rem; }
+    #prismara-access .hosted-by { margin: -12px 0 20px; color: #a9a0c8; font-size: .78rem; letter-spacing: .04em; }
+    #prismara-mystic-animation { position: fixed; inset: 0; z-index: 8; width: 100%; height: 100%; pointer-events: none; opacity: 0; mix-blend-mode: screen; }
+    #prismara-mystic-animation.is-playing { opacity: 1; transition: opacity .35s ease; }
+    @media (max-width: 500px) { #prismara-access { padding: 14px; } #prismara-access .gate-card { padding: 22px; } }
+    @media (prefers-reduced-motion: reduce) { #prismara-mystic-animation { display: none; } }
   </style>
   <script>
     (() => {
@@ -77,44 +37,68 @@
       document.documentElement.classList.add('prismara-locked');
       document.addEventListener('DOMContentLoaded', () => {
         const gate = document.getElementById('prismara-access');
-        const intro = document.getElementById('prismara-intro');
-        const pinPanel = document.getElementById('prismara-pin-panel');
-        const continueButton = document.getElementById('prismara-intro-continue');
         const form = document.getElementById('prismara-access-form');
         const input = document.getElementById('prismara-pin');
         const error = document.getElementById('prismara-pin-error');
-        let rememberedAccess = false;
-        let introTimer;
-        const unlock = () => {
-          clearTimeout(introTimer);
-          document.documentElement.classList.remove('prismara-locked');
-          gate.hidden = true;
+        const canvas = document.getElementById('prismara-mystic-animation');
+        const ctx = canvas.getContext('2d');
+        const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const stars = Array.from({ length: 280 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + .25, phase: Math.random() * 6.28, hue: Math.random() * 300 + 170 }));
+        let frame = 0;
+        const resize = () => {
+          const ratio = Math.min(devicePixelRatio || 1, 1.5);
+          canvas.width = Math.round(innerWidth * ratio);
+          canvas.height = Math.round(innerHeight * ratio);
+          ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         };
-        try {
-          rememberedAccess = Number(localStorage.getItem(KEY)) > Date.now();
-          if (!rememberedAccess) localStorage.removeItem(KEY);
-        } catch { /* Speicher nicht verfügbar: PIN bei jedem Besuch abfragen. */ }
-        continueButton.textContent = rememberedAccess ? 'Website betreten  →' : 'Weiter zum PIN-Menü  →';
-        const showPinMenu = () => {
-          clearTimeout(introTimer);
-          if (rememberedAccess) { unlock(); return; }
-          intro.hidden = true;
-          pinPanel.hidden = false;
-          gate.setAttribute('aria-labelledby', 'prismara-access-title');
-          input.focus();
+        const playMysticAnimation = () => {
+          if (reducedMotion) return;
+          cancelAnimationFrame(frame);
+          resize();
+          canvas.classList.add('is-playing');
+          const started = performance.now();
+          const draw = (now) => {
+            const progress = Math.min(1, (now - started) / 5200);
+            const fade = Math.min(1, progress * 5, (1 - progress) * 5);
+            const w = innerWidth, h = innerHeight, cx = w / 2, cy = h * .46;
+            const scale = Math.min(1, w / 820), bloom = Math.sin(progress * Math.PI);
+            ctx.clearRect(0, 0, w, h);
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            for (const star of stars) {
+              const twinkle = .25 + .75 * Math.abs(Math.sin(now * .001 + star.phase));
+              ctx.fillStyle = `hsla(${star.hue},100%,78%,${twinkle * fade * .7})`;
+              ctx.beginPath(); ctx.arc(star.x * w, star.y * h, star.r * scale * (1 + twinkle), 0, 6.28); ctx.fill();
+            }
+            const aura = ctx.createRadialGradient(cx, cy, 0, cx, cy, 270 * scale);
+            aura.addColorStop(0, `rgba(126,106,255,${.2 * fade})`); aura.addColorStop(.45, `rgba(68,222,255,${.09 * fade})`); aura.addColorStop(1, 'rgba(68,222,255,0)');
+            ctx.fillStyle = aura; ctx.fillRect(cx - 280 * scale, cy - 280 * scale, 560 * scale, 560 * scale);
+            for (let ring = 0; ring < 4; ring++) {
+              ctx.beginPath(); ctx.ellipse(cx, cy, (74 + ring * 27 + Math.sin(now * .001 + ring) * 7) * scale, (38 + ring * 14) * scale, now * .00018 * (ring % 2 ? -1 : 1) + ring * .7, 0, 6.28);
+              ctx.strokeStyle = `hsla(${180 + ring * 53 + now * .012},100%,78%,${(.42 - ring * .06) * fade})`; ctx.lineWidth = ring ? 1 : 2; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 16 * scale; ctx.stroke();
+            }
+            for (let i = 0; i < 40; i++) {
+              const angle = i * Math.PI / 20 + now * .00012, inner = 42 * scale, outer = (100 + bloom * 300 + (i % 4) * 24) * scale;
+              ctx.beginPath(); ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner); ctx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
+              ctx.strokeStyle = `hsla(${(i * 19 + now * .025) % 360},100%,72%,${(.05 + bloom * .3) * fade})`; ctx.lineWidth = (i % 6 ? .7 : 2) * scale; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 14 * scale; ctx.stroke();
+            }
+            const size = (42 + bloom * 28) * scale;
+            ctx.translate(cx, cy); ctx.rotate(now * .00045); ctx.beginPath(); ctx.moveTo(0, -size); ctx.lineTo(size * .72, size * .58); ctx.lineTo(-size * .72, size * .58); ctx.closePath();
+            const glass = ctx.createLinearGradient(-size, -size, size, size); glass.addColorStop(0, `rgba(255,255,255,${.92 * fade})`); glass.addColorStop(.45, `hsla(${190 + now * .02},100%,72%,${.72 * fade})`); glass.addColorStop(1, `hsla(${285 + now * .03},100%,68%,${.78 * fade})`);
+            ctx.fillStyle = glass; ctx.shadowColor = '#a88cff'; ctx.shadowBlur = 34 * scale; ctx.fill(); ctx.strokeStyle = `rgba(255,255,255,${.9 * fade})`; ctx.lineWidth = 1.4 * scale; ctx.stroke(); ctx.restore();
+            if (progress < 1) frame = requestAnimationFrame(draw); else canvas.classList.remove('is-playing');
+          };
+          frame = requestAnimationFrame(draw);
         };
-        continueButton.addEventListener('click', showPinMenu);
-        introTimer = setTimeout(showPinMenu, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 650 : 3600);
+        const unlock = () => { document.documentElement.classList.remove('prismara-locked'); gate.hidden = true; playMysticAnimation(); };
+        try { if (Number(localStorage.getItem(KEY)) > Date.now()) { unlock(); return; } localStorage.removeItem(KEY); } catch { /* PIN bei jedem Besuch abfragen. */ }
+        input.focus();
         form.addEventListener('submit', async (event) => {
           event.preventDefault();
           const bytes = new TextEncoder().encode(input.value.trim());
           const digest = await crypto.subtle.digest('SHA-256', bytes);
-          const enteredHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
-          if (enteredHash !== PIN_HASH) {
-            error.textContent = 'Die PIN stimmt nicht. Bitte versuche es erneut.';
-            input.select();
-            return;
-          }
+          const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+          if (hash !== PIN_HASH) { error.textContent = 'Die PIN stimmt nicht. Bitte versuche es erneut.'; input.select(); return; }
           if (document.getElementById('prismara-remember').checked) {
             try { localStorage.setItem(KEY, String(Date.now() + 7 * 24 * 60 * 60 * 1000)); } catch { /* Sitzung bleibt offen. */ }
           }
@@ -179,25 +163,8 @@
   <script type="module" src="src/main.js?v={{ site.github.build_revision }}"></script>
 </head>
 <body>
-  <section id="prismara-access" role="dialog" aria-modal="true" aria-labelledby="prismara-intro-title">
-    <div class="gate-card intro-card" id="prismara-intro">
-      <div class="intro-copy">
-        <span class="intro-eyebrow">PRISMARA · LICHTPRISMA</span>
-        <h1 id="prismara-intro-title">Ein Licht,<br>tausend Wege.</h1>
-        <p>Im Inneren erwacht ein Prisma. Sein Licht öffnet den Weg in eine Welt aus Farben, Rätseln und verborgenen Verbindungen.</p>
-        <div class="intro-status">DAS LICHT ERWACHT</div>
-        <div class="intro-progress" aria-hidden="true"></div>
-        <button id="prismara-intro-continue" type="button">Weiter zum PIN-Menü  →</button>
-      </div>
-      <div class="quantum-visual" aria-hidden="true">
-        <div class="quantum-core">
-          <i class="quantum-ring ring-one"></i><i class="quantum-ring ring-two"></i><i class="quantum-ring ring-three"></i>
-          <i class="quantum-particle p-one"></i><i class="quantum-particle p-two"></i><i class="quantum-particle p-three"></i>
-          <div class="quantum-nucleus"><span>Φ</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="gate-card pin-card" id="prismara-pin-panel" hidden>
+  <section id="prismara-access" role="dialog" aria-modal="true" aria-labelledby="prismara-access-title">
+    <div class="gate-card">
       <h1 id="prismara-access-title">Geschützte Website</h1>
       <p class="hosted-by">Hosted by Grisgraber Florian</p>
       <p>Bitte gib die PIN ein, um die Website zu öffnen.</p>
@@ -210,6 +177,7 @@
       </form>
     </div>
   </section>
+<canvas id="prismara-mystic-animation" aria-hidden="true"></canvas>
   <div class="bg-fx" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="grid"></span></div>
   <header class="topbar">
     <a class="brand" href="#/home" aria-label="Prismara Startseite">
