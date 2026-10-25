@@ -72,6 +72,7 @@ export function mountLab(root, params = []) {
               <div class="importance-heading"><strong>Wichtigkeit</strong><span class="muted small">Mehrere Stufen gleichzeitig anzeigen</span><button id="importance-all" type="button" aria-label="Alle Wichtigkeitsstufen anzeigen">Alle Stufen</button></div>
               <div class="importance-options" id="importance-options" role="group" aria-label="Wichtigkeitsstufen"></div>
             </div>
+            <button class="btn btn-sm map-legend-toggle" id="map-legend-toggle" type="button" aria-expanded="false" aria-controls="map-legend">Legende anzeigen</button>
           </div>
           <div class="map-wrap">
             <canvas id="brain" tabindex="0" aria-label="Gehirnkarte in 3D. Ziehen oder Pfeiltasten drehen, Umschalt+Ziehen verschiebt, Mausrad oder Plus/Minus zoomt, Klick wählt einen Knoten."></canvas>
@@ -132,7 +133,6 @@ export function mountLab(root, params = []) {
     $('#brain').hidden = pref.view === 'list';
     $('#map-node-list-view').hidden = pref.view !== 'list';
     $('.map-hint').hidden = pref.view === 'list';
-    $('#map-legend').hidden = pref.view === 'list';
     root.querySelectorAll('[data-importance]').forEach((b) => b.setAttribute('aria-pressed', String(pref.importance.includes(Number(b.dataset.importance)))));
     $('#importance-all').setAttribute('aria-pressed', String(pref.importance.length === IMPORTANCE_LEVELS.length));
   }
@@ -182,6 +182,11 @@ export function mountLab(root, params = []) {
   $('#map-node-list-view').addEventListener('click', (event) => {
     const button = event.target.closest('[data-node]');
     if (button) map.select(button.dataset.node);
+  });
+  $('#map-legend-toggle').addEventListener('click', (event) => {
+    const open = $('#map-legend').classList.toggle('is-open');
+    event.currentTarget.setAttribute('aria-expanded', String(open));
+    event.currentTarget.textContent = open ? 'Legende schließen' : 'Legende anzeigen';
   });
   $('#importance-all').addEventListener('click', () => {
     pref.importance = IMPORTANCE_LEVELS.map(({ id }) => id);
