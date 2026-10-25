@@ -823,6 +823,7 @@ export class BrainMap {
       this._shape(type.shape, p.x, p.y, r + Math.min(3.5, r * 0.4));
       ctx.stroke();
       ctx.setLineDash([]);
+      if (n.type === 'object') this._drawObjectSprite(n.id, p.x, p.y, r, col);
 
       const badgeR = Math.min(6, r * 0.55);
       if (status.badge && badgeR >= 3) {
@@ -919,6 +920,64 @@ export class BrainMap {
     ctx.fill();
     ctx.fillStyle = color;
     ctx.fillText(text, x, y + 0.5);
+  }
+
+  // Kleine Vektorzeichen nach den bereits vorhandenen Spielgrafiken in render.js.
+  _drawObjectSprite(id, x, y, r, color) {
+    const ctx = this.ctx;
+    const kind = id.replace(/^g-obj-/, '');
+    const q = Math.max(1.5, r * 0.58);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,0,0,.82)';
+    ctx.fillStyle = 'rgba(0,0,0,.82)';
+    ctx.lineWidth = Math.max(0.9, r * 0.15);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const line = (...points) => {
+      ctx.beginPath();
+      points.forEach(([px, py], i) => ctx[i ? 'lineTo' : 'moveTo'](x + px * q, y + py * q));
+      ctx.stroke();
+    };
+    if (kind === 'emitter') {
+      line([-0.8, 0], [0.62, 0]); line([0.18, -0.42], [0.68, 0], [0.18, 0.42]);
+    } else if (kind === 'target') {
+      ctx.beginPath(); ctx.arc(x, y, q * 0.75, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, q * 0.27, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === 'mirrorblock') {
+      line([-0.65, 0.65], [0.65, -0.65]);
+    } else if (kind === 'stone') {
+      ctx.strokeRect(x - q * 0.55, y - q * 0.45, q * 1.1, q * 0.9);
+      line([-0.5, 0.05], [0.5, 0.05]);
+    } else if (kind === 'prism') {
+      line([0, -0.75], [0.7, 0.55], [-0.7, 0.55], [0, -0.75]);
+      line([0, -0.45], [0, 0.4]);
+    } else if (kind === 'filter') {
+      ctx.strokeRect(x - q * 0.65, y - q * 0.55, q * 1.3, q * 1.1);
+      line([-0.2, -0.4], [-0.2, 0.4]); line([0.2, -0.4], [0.2, 0.4]);
+    } else if (kind === 'ice') {
+      for (let i = 0; i < 3; i++) {
+        const a = i * Math.PI / 3;
+        line([-Math.cos(a) * 0.7, -Math.sin(a) * 0.7], [Math.cos(a) * 0.7, Math.sin(a) * 0.7]);
+      }
+    } else if (kind === 'splitter') {
+      line([0, 0.72], [0, -0.05], [-0.55, -0.65]); line([0, -0.05], [0.55, -0.65]);
+    } else if (kind === 'portal') {
+      ctx.beginPath(); ctx.arc(x, y, q * 0.6, 0.25, 2.45); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, q * 0.6, 3.35, 5.55); ctx.stroke();
+    } else if (kind === 'player') {
+      line([0, -0.72], [0.62, 0.55], [-0.62, 0.55], [0, -0.72]);
+    } else if (kind === 'wall') {
+      line([-0.68, -0.1], [0.68, -0.1]); line([-0.25, -0.55], [-0.25, -0.1]); line([0.3, 0.15], [0.3, 0.62]);
+    } else if (kind === 'floor') {
+      ctx.fillStyle = color;
+      for (const [dx, dy] of [[-0.35, -0.3], [0.35, -0.3], [-0.35, 0.35], [0.35, 0.35]]) {
+        ctx.beginPath(); ctx.arc(x + dx * q, y + dy * q, Math.max(0.7, q * 0.09), 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (kind === 'beam') {
+      line([-0.75, 0], [0.75, 0]);
+      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, Math.max(1, q * 0.2), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
   }
 
   _shape(shape, x, y, r) {
