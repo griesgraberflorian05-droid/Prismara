@@ -600,6 +600,16 @@ body { overflow-x: hidden; background: radial-gradient(ellipse at 12% 5%, rgba(9
 .home-how-card p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.65; }
 @media (max-width: 680px) { .home-how-grid { grid-template-columns: 1fr; } .home-how-card { min-height: 0; padding: 16px; } }
 
+/* Keep the category legend available on phones without letting it cover the node list. */
+.map-legend-toggle { display: none; }
+@media (max-width: 680px) {
+  .map-legend-toggle { display: inline-flex; justify-self: start; width: max-content; min-height: 34px; }
+  .map-legend,
+  .view-list .map-legend { display: none !important; }
+  .map-legend.is-open,
+  .view-list .map-legend.is-open { display: flex !important; z-index: 6; max-height: min(34dvh, 240px); overflow: auto; }
+}
+
 /* In der Listenansicht soll die Kartenlegende keine Knoten überdecken. */
 .view-list .map-legend,
 .view-list .map-hint { display: none !important; }
