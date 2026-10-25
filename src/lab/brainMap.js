@@ -4,24 +4,24 @@
 // verschiebt, Mausrad zoomt, Klick wählt aus.
 
 export const NODE_TYPES = {
-  goal:        { label: 'Spielziel',       shape: 'star',     color: '#ffd166', r: 15 },
-  idea:        { label: 'Idee/Hypothese',  shape: 'circle',   color: '#c792ea', r: 9 },
-  decision:    { label: 'Entscheidung',    shape: 'diamond',  color: '#5ec8ff', r: 10 },
-  mechanic:    { label: 'Mechanik',        shape: 'hexagon',  color: '#ff7ab6', r: 11 },
-  level:       { label: 'Level',           shape: 'square',   color: '#7ee787', r: 9 },
-  file:        { label: 'Datei/Funktion',  shape: 'roundrect',color: '#9aa4bf', r: 8 },
-  test:        { label: 'Test',            shape: 'triangle', color: '#ffa657', r: 10 },
-  observation: { label: 'Beobachtung',     shape: 'pentagon', color: '#79e2f2', r: 9 },
-  improvement: { label: 'Verbesserung',    shape: 'chevron',  color: '#a5f3a0', r: 10 },
-  issue:       { label: 'Offenes Problem', shape: 'octagon',  color: '#ff5f6d', r: 10 },
+  goal:        { label: 'Spielziel',       shape: 'star',     color: '#f2f2f2', r: 15 },
+  idea:        { label: 'Idee/Hypothese',  shape: 'circle',   color: '#aaa', r: 9 },
+  decision:    { label: 'Entscheidung',    shape: 'diamond',  color: '#ccc', r: 10 },
+  mechanic:    { label: 'Mechanik',        shape: 'hexagon',  color: '#ddd', r: 11 },
+  level:       { label: 'Level',           shape: 'square',   color: '#999', r: 9 },
+  file:        { label: 'Datei/Funktion',  shape: 'roundrect',color: '#777', r: 8 },
+  test:        { label: 'Test',            shape: 'triangle', color: '#eee', r: 10 },
+  observation: { label: 'Beobachtung',     shape: 'pentagon', color: '#aaa', r: 9 },
+  improvement: { label: 'Verbesserung',    shape: 'chevron',  color: '#d5d5d5', r: 10 },
+  issue:       { label: 'Offenes Problem', shape: 'octagon',  color: '#888', r: 10 },
   // nur in "Alle Knoten" (aus Projektdaten erzeugt)
-  object:      { label: 'Spielobjekt',     shape: 'cube',     color: '#e0c3ff', r: 8 },
+  object:      { label: 'Spielobjekt',     shape: 'cube',     color: '#c2c2c2', r: 8 },
   color:       { label: 'Farbe',           shape: 'circle',   color: '#ffffff', r: 8 },
-  animation:   { label: 'Animation',       shape: 'star4',    color: '#ffe08a', r: 8 },
-  texture:     { label: 'Textur/Stil',     shape: 'tridown',  color: '#8fd3ff', r: 7 },
-  step:        { label: 'Arbeitsschritt',  shape: 'octagon',  color: '#ffb86b', r: 13 },
-  tier:        { label: 'Schwierigkeit',   shape: 'diamond',  color: '#ff9fb2', r: 9 },
-  logsrc:      { label: 'Live-Log-Quelle', shape: 'chevron',  color: '#b6ff3d', r: 8 },
+  animation:   { label: 'Animation',       shape: 'star4',    color: '#ddd', r: 8 },
+  texture:     { label: 'Textur/Stil',     shape: 'tridown',  color: '#999', r: 7 },
+  step:        { label: 'Arbeitsschritt',  shape: 'octagon',  color: '#eee', r: 13 },
+  tier:        { label: 'Schwierigkeit',   shape: 'diamond',  color: '#bdbdbd', r: 9 },
+  logsrc:      { label: 'Live-Log-Quelle', shape: 'chevron',  color: '#777', r: 8 },
 };
 
 export const FORMATIONS = {
@@ -36,9 +36,9 @@ export const NODE_STATUS = {
   idea:     { label: 'Idee',       dash: [3, 3] },
   built:    { label: 'Umgesetzt',  dash: [] },
   testing:  { label: 'In Prüfung', dash: [1, 3] },
-  passed:   { label: 'Bestanden',  dash: [], badge: '✓', badgeColor: '#3ddc97' },
-  open:     { label: 'Offen',      dash: [], badge: '!', badgeColor: '#ff5f6d' },
-  rejected: { label: 'Verworfen',  dash: [2, 4], badge: '×', badgeColor: '#9aa3c7', faded: true },
+  passed:   { label: 'Bestanden',  dash: [], badge: '✓', badgeColor: '#ddd' },
+  open:     { label: 'Offen',      dash: [], badge: '!', badgeColor: '#aaa' },
+  rejected: { label: 'Verworfen',  dash: [2, 4], badge: '×', badgeColor: '#777', faded: true },
 };
 
 const BIRTH_MS = 1400;
@@ -47,7 +47,7 @@ const PERSPECTIVE = 900;
 const AUTO_SPIN = 0.0012; // rad pro Frame
 const IDLE_BEFORE_SPIN = 4000;
 
-const colorOf = (n) => n.color || NODE_TYPES[n.type]?.color || '#ffffff';
+const colorOf = (n) => NODE_TYPES[n.type]?.color || '#d0d0d0';
 
 function hash(str) {
   let h = 2166136261;
@@ -654,7 +654,7 @@ export class BrainMap {
       ctx.setLineDash(status.dash);
       // Ring und Abzeichen schrumpfen mit kleinen Knoten, damit sie die Form nicht überdecken.
       ctx.lineWidth = n.id === sel ? 2.5 : Math.max(0.6, Math.min(1.5, r * 0.18));
-      ctx.strokeStyle = n.status === 'open' ? '#ff5f6d' : n.status === 'passed' ? '#3ddc97' : 'rgba(255,255,255,0.75)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
       this._shape(type.shape, p.x, p.y, r + Math.min(3.5, r * 0.4));
       ctx.stroke();
       ctx.setLineDash([]);
@@ -693,7 +693,7 @@ export class BrainMap {
     if (sel) {
       ctx.globalAlpha = 1;
       for (const { e, pa, pb } of edges) {
-        if (e.from === sel || e.to === sel) this._label((pa.x + pb.x) / 2, (pa.y + pb.y) / 2, e.rel, { small: true, color: '#cfd6ff' });
+        if (e.from === sel || e.to === sel) this._label((pa.x + pb.x) / 2, (pa.y + pb.y) / 2, e.rel, { small: true, color: '#d0d0d0' });
       }
     }
     ctx.globalAlpha = 1;
@@ -716,7 +716,7 @@ export class BrainMap {
         });
         ctx[i ? 'lineTo' : 'moveTo'](p.x, p.y);
       }
-      ctx.strokeStyle = `rgba(160,150,255,${alpha})`;
+      ctx.strokeStyle = `rgba(180,180,180,${alpha})`;
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 6]);
       ctx.stroke();
@@ -724,11 +724,11 @@ export class BrainMap {
     ctx.setLineDash([]);
     const pulse = reduced ? 1 : 1 + Math.sin(t / 700) * 0.15;
     const glow = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 34 * pulse);
-    glow.addColorStop(0, 'rgba(190,180,255,0.55)');
-    glow.addColorStop(1, 'rgba(139,123,255,0)');
+    glow.addColorStop(0, 'rgba(220,220,220,0.45)');
+    glow.addColorStop(1, 'rgba(180,180,180,0)');
     ctx.fillStyle = glow;
     ctx.beginPath(); ctx.arc(c.x, c.y, 34 * pulse, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(220,215,255,0.8)';
+    ctx.strokeStyle = 'rgba(220,220,220,0.8)';
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(c.x, c.y, 7, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = '#ffffff';
@@ -741,14 +741,14 @@ export class BrainMap {
     return Math.max(0, Math.min(1, (t - n.born) / BIRTH_MS));
   }
 
-  _label(x, y, text, { small = false, strong = false, color = '#e8ecff' } = {}) {
+  _label(x, y, text, { small = false, strong = false, color = '#e8e8e8' } = {}) {
     const { ctx } = this;
     ctx.font = `${strong ? 600 : 500} ${small ? 10 : 11.5}px system-ui, "Segoe UI", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const w = ctx.measureText(text).width + 10;
     const h = small ? 15 : 18;
-    ctx.fillStyle = 'rgba(10,12,22,0.82)';
+    ctx.fillStyle = 'rgba(8,8,8,0.9)';
     ctx.beginPath();
     ctx.roundRect(x - w / 2, y - h / 2, w, h, 6);
     ctx.fill();
@@ -798,3 +798,4 @@ export class BrainMap {
     }
   }
 }
+
