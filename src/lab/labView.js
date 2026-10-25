@@ -4,7 +4,8 @@ import { prefersReducedMotion } from '../settings.js';
 import { BrainMap, NODE_TYPES, NODE_STATUS, FORMATIONS } from './brainMap.js';
 import { buildProjectGraph, mergeGraphs, loadLevelsFresh } from './projectGraph.js';
 
-const PREF_KEY = 'prismara.brain.view';
+// v2 ignores the old saved production default so the full graph appears once after upgrade.
+const PREF_KEY = 'prismara.brain.view.v2';
 function loadPref(defaultMode = 'main') {
   try { return { mode: defaultMode, formation: 'brain', ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; }
   catch { return { mode: defaultMode, formation: 'brain' }; }
