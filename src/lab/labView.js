@@ -6,8 +6,8 @@ import { buildProjectGraph, mergeGraphs, loadLevelsFresh } from './projectGraph.
 // v2 ignores the old saved production default so the full graph appears once after upgrade.
 const PREF_KEY = 'prismara.brain.view.v2';
 function loadPref(defaultMode = 'main') {
-  try { return { mode: defaultMode, formation: 'brain', palette: 'arctic', importance: [1, 2, 3, 4, 5], ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; }
-  catch { return { mode: defaultMode, formation: 'brain', palette: 'arctic', importance: [1, 2, 3, 4, 5] }; }
+  try { return { mode: defaultMode, view: 'brain', formation: 'brain', palette: 'arctic', importance: [1, 2, 3, 4, 5], ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; }
+  catch { return { mode: defaultMode, view: 'brain', formation: 'brain', palette: 'arctic', importance: [1, 2, 3, 4, 5] }; }
 }
 function savePref(p) { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* blockiert */ } }
 
@@ -31,13 +31,19 @@ export function mountLab(root, params = []) {
       <div class="lab-grid">
         <section class="card map-card" aria-label="Gehirnkarte">
           <div class="map-toolbar">
-            <h2>Gehirnkarte <span class="muted small" id="map-count"></span></h2>
+            <div class="map-title">
+              <h2>Gehirnkarte <span class="muted small" id="map-count"></span></h2>
+              <div class="seg map-view-switch" role="group" aria-label="Kartenansicht">
+                <button class="seg-btn" type="button" data-view="brain" aria-pressed="true">Gehirn</button>
+                <button class="seg-btn" type="button" data-view="list" aria-pressed="false">Liste</button>
+              </div>
+            </div>
             <div class="map-tools">
               <div class="seg" role="group" aria-label="Knotenauswahl">
                 <button class="seg-btn" data-mode="main" title="Nur die wichtigsten, kuratierten Knoten">Hauptknoten</button>
                 <button class="seg-btn" data-mode="all" title="Alle Level, Objekte, Farben, Animationen, Texturen und Verbindungen">Alle Knoten</button>
               </div>
-              <label class="map-choice">
+              <label class="map-choice brain-only">
                 <span>Anordnung</span>
                 <select id="formation" aria-label="Anordnung der Knoten">${Object.entries(FORMATIONS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
               </label>
@@ -47,11 +53,11 @@ export function mountLab(root, params = []) {
               </label>
               <input type="search" id="map-search" placeholder="Knoten suchen …" aria-label="Knoten suchen" list="map-node-list">
               <datalist id="map-node-list"></datalist>
-              <button class="btn btn-sm" data-act="out" aria-label="Verkleinern">−</button>
-              <button class="btn btn-sm" data-act="in" aria-label="Vergrößern">+</button>
-              <button class="btn btn-sm" data-act="fit" title="Alle Knoten in die Karte einpassen">Alles einpassen</button>
-              <button class="btn btn-sm" data-act="replay">Wachstum abspielen</button>
-              <button class="btn btn-sm btn-full" data-act="full" aria-pressed="false">⤢ Vollansicht</button>
+              <button class="btn btn-sm brain-only" data-act="out" aria-label="Verkleinern">−</button>
+              <button class="btn btn-sm brain-only" data-act="in" aria-label="Vergrößern">+</button>
+              <button class="btn btn-sm brain-only" data-act="fit" title="Alle Knoten in die Karte einpassen">Alles einpassen</button>
+              <button class="btn btn-sm brain-only" data-act="replay">Wachstum abspielen</button>
+              <button class="btn btn-sm btn-full brain-only" data-act="full" aria-pressed="false">⤢ Vollansicht</button>
             </div>
             <div class="importance-controls" aria-label="Knoten nach Wichtigkeit filtern">
               <div class="importance-heading"><strong>Wichtigkeit</strong><span class="muted small">Mehrere Stufen gleichzeitig anzeigen</span></div>
@@ -60,6 +66,7 @@ export function mountLab(root, params = []) {
           </div>
           <div class="map-wrap">
             <canvas id="brain" tabindex="0" aria-label="Gehirnkarte in 3D. Ziehen oder Pfeiltasten drehen, Umschalt+Ziehen verschiebt, Mausrad oder Plus/Minus zoomt, Klick wählt einen Knoten."></canvas>
+            <div class="map-node-list" id="map-node-list-view" aria-label="Knotenliste" hidden></div>
             <div class="map-hint muted small">Ziehen: drehen · Umschalt+Ziehen: verschieben · Rad: zoomen</div>
             <div class="map-legend" id="map-legend"></div>
             <div class="map-detail" id="map-detail" hidden></div>
@@ -73,12 +80,14 @@ export function mountLab(root, params = []) {
 
   const map = new BrainMap($('#brain'), {
     reducedMotion: prefersReducedMotion,
-    onSelect: (node, relations) => renderDetail(node, relations),
+    onSelect: (node, relations) => { renderDetail(node, relations); renderNodeList(); },
   });
+  const mapCard = root.querySelector('.map-card');
 
   // Die vollständige Karte bleibt auch auf der statischen Website verfügbar.
   const pref = loadPref('all');
   if (!['main', 'all'].includes(pref.mode)) pref.mode = 'all';
+  if (!['brain', 'list'].includes(pref.view)) pref.view = 'brain';
   if (!FORMATIONS[pref.formation]) pref.formation = 'brain';
   if (!PALETTES[pref.palette]) pref.palette = 'arctic';
   if (!Array.isArray(pref.importance)) pref.importance = [1, 2, 3, 4, 5];
@@ -92,8 +101,42 @@ export function mountLab(root, params = []) {
     root.querySelectorAll('.seg-btn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === pref.mode)));
     $('#formation').value = pref.formation;
     $('#palette').value = pref.palette;
+    root.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === pref.view)));
+    mapCard.classList.toggle('view-list', pref.view === 'list');
+    $('#brain').hidden = pref.view === 'list';
+    $('#map-node-list-view').hidden = pref.view !== 'list';
+    $('.map-hint').hidden = pref.view === 'list';
+    $('#map-legend').hidden = pref.view === 'list';
     root.querySelectorAll('[data-importance]').forEach((b) => b.setAttribute('aria-pressed', String(pref.importance.includes(Number(b.dataset.importance)))));
   }
+  function renderNodeList() {
+    const list = $('#map-node-list-view');
+    if (!list || !currentBrain) return;
+    const nodes = currentBrain.nodes
+      .filter((node) => pref.importance.includes(node.importance) && map.matches(node))
+      .sort((a, b) => a.importance - b.importance || a.label.localeCompare(b.label, 'de'));
+    list.innerHTML = nodes.length ? nodes.map((node) => {
+      const type = NODE_TYPES[node.type] || {};
+      const status = NODE_STATUS[node.status] || {};
+      return `<button class="node-list-row" type="button" data-node="${esc(node.id)}" aria-pressed="${map.selected === node.id}">
+        <i class="lg-shape lg-${esc(type.shape)}" style="--c:${nodeColor(node.type, pref.palette)}" aria-hidden="true"></i>
+        <span class="node-list-name">${esc(node.label)}</span>
+        <span class="node-list-type">${esc(type.label)}</span>
+        <span class="node-list-level">${node.importance}</span>
+        <span class="node-list-status">${status.badge ? esc(status.badge) + ' ' : ''}${esc(status.label)}</span>
+      </button>`;
+    }).join('') : '<p class="node-list-empty">Keine Knoten passen zu Suche und Wichtigkeitsfilter.</p>';
+  }
+  root.querySelector('[data-view="brain"]').addEventListener('click', () => {
+    pref.view = 'brain'; savePref(pref); syncControls(); requestAnimationFrame(() => map.fit());
+  });
+  root.querySelector('[data-view="list"]').addEventListener('click', () => {
+    pref.view = 'list'; savePref(pref); syncControls(); renderNodeList();
+  });
+  $('#map-node-list-view').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-node]');
+    if (button) map.select(button.dataset.node);
+  });
   function renderImportanceControls(brain) {
     const counts = new Map(IMPORTANCE_LEVELS.map(({ id }) => [id, brain.nodes.filter((node) => node.importance === id).length]));
     $('#importance-options').innerHTML = IMPORTANCE_LEVELS.map(({ id, label }) =>
@@ -116,7 +159,7 @@ export function mountLab(root, params = []) {
     const edges = currentBrain.edges.filter((edge) => visibleIds.has(edge.from) && visibleIds.has(edge.to)).length;
     $('#map-count').textContent = `${visible.length} / ${currentBrain.nodes.length} Knoten · ${edges} Verbindungen`;
   }
-  root.querySelectorAll('.seg-btn').forEach((b) => b.addEventListener('click', () => {
+  root.querySelectorAll('.seg-btn[data-mode]').forEach((b) => b.addEventListener('click', () => {
     pref.mode = b.dataset.mode;
     savePref(pref);
     syncControls();
@@ -133,6 +176,7 @@ export function mountLab(root, params = []) {
     savePref(pref);
     map.setPalette(pref.palette);
     renderLegend();
+    renderNodeList();
     if (map.selected) map.select(map.selected);
   });
   syncControls();
@@ -156,7 +200,6 @@ export function mountLab(root, params = []) {
   });
 
   // Vollansicht: Karte füllt das ganze Fenster; Esc oder erneuter Klick schließt.
-  const mapCard = root.querySelector('.map-card');
   const fullBtn = root.querySelector('[data-act="full"]');
   function setFull(on) {
     mapCard.classList.toggle('is-full', on);
@@ -177,8 +220,9 @@ export function mountLab(root, params = []) {
   const search = $('#map-search');
   search.addEventListener('input', () => {
     map.setFilter(search.value);
-    const hit = [...map.nodes.values()].find((n) => n.label.toLowerCase() === search.value.trim().toLowerCase());
+    const hit = [...map.nodes.values()].find((n) => map.isVisibleNode(n) && n.label.toLowerCase() === search.value.trim().toLowerCase());
     if (hit) map.select(hit.id, { center: true });
+    renderNodeList();
   });
 
   detail.addEventListener('click', (e) => {
@@ -239,6 +283,7 @@ export function mountLab(root, params = []) {
         renderImportanceControls(brain);
         updateMapCount();
         $('#map-node-list').innerHTML = brain.nodes.map((n) => `<option value="${esc(n.label)}">`).join('');
+        renderNodeList();
       }
     } catch (err) {
       $('#map-count').textContent = 'Karte konnte nicht geladen werden';
