@@ -958,3 +958,5 @@ body.wood .tm, body.wood .tm-ui { min-height: 100dvh; }
 .cm-build { color: var(--ink); font-weight: 700; text-decoration: none; }
 .bld-pub { grid-column: 1 / -1; background: linear-gradient(#5aa0d8, #3a6a9a) !important; }
 body.wood .view-community { overflow-y: auto; }
+.adv-full.touch, .adv-full.touch * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.adv-full.touch button { touch-action: none; }

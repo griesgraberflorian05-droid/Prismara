@@ -576,10 +576,18 @@ export function mountAdventure(root, params, opts = {}) {
     root.querySelectorAll('.dpad button').forEach((b) => {
       const d = +b.dataset.d;
       b.addEventListener('pointerdown', (ev) => { ev.preventDefault(); held = d; stepDir(d); lastStep = performance.now(); });
-      const up = () => { if (held === d) held = null; };
-      b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up); b.addEventListener('pointercancel', up);
+      const up = () => { held = null; }; // Finger hoch = stehen bleiben (auch wenn er auf einen anderen Pfeil gerutscht ist)
+      b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
     });
     $('#tpad-rot').addEventListener('pointerdown', (ev) => { ev.preventDefault(); rotate(); if (navigator.vibrate) navigator.vibrate(12); });
+    // Langes Drücken öffnet sonst das Kontextmenü (und stoppt das Laufen)
+    root.querySelector('.adv-full').addEventListener('contextmenu', (ev) => ev.preventDefault());
+    // Finger gleitet vom Pfeil auf einen anderen: Richtung wechseln statt hängenzubleiben
+    root.querySelector('.dpad').addEventListener('pointermove', (ev) => {
+      if (held == null) return;
+      const b = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.dpad button');
+      if (b && +b.dataset.d !== held) held = +b.dataset.d;
+    });
     // Wischen übers Spielfeld: ein Feld in Wischrichtung (Tippen fokussiert nur)
     let swipe = null;
     canvas.addEventListener('pointerdown', (ev) => { swipe = { x: ev.clientX, y: ev.clientY }; });
