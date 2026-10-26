@@ -960,3 +960,27 @@ body.wood .tm, body.wood .tm-ui { min-height: 100dvh; }
 body.wood .view-community { overflow-y: auto; }
 .adv-full.touch, .adv-full.touch * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .adv-full.touch button { touch-action: none; }
+
+/* ---------- Handy hochkant: feste Zonen, nichts überlappt (quer bleibt wie bisher) ---------- */
+@media (orientation: portrait) {
+  .adv-full.touch #board { top: 92px !important; height: calc(100% - 92px - 250px) !important; bottom: auto; }
+  .adv-full.touch .ihud-tl { top: 6px; left: 6px; transform: scale(0.78); transform-origin: top left; }
+  .adv-full.touch .ihud-tr { top: 6px; right: 6px; }
+  .adv-full.touch .ihud-tc { top: 58px; left: 50%; right: auto; bottom: auto; flex-direction: row; align-items: center; transform: translateX(-50%) scale(0.7); transform-origin: top center; white-space: nowrap; }
+  /* Kraft, Züge, Inventar als flache Leiste über der Steuerung */
+  .adv-full.touch .ihud-bl { top: auto; bottom: 206px; left: 6px; right: 6px; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 6px 8px; transform: none; }
+  .adv-full.touch .ihud-bl .ihud-label { display: none; }
+  .adv-full.touch .ihud-bl .stamina-bar { flex: 1 1 60px; min-width: 50px; margin: 0; }
+  .adv-full.touch .ihud-bl .ihud-moves { margin: 0; font-size: 0.5rem; white-space: nowrap; }
+  .adv-full.touch .ihud-bl .inv { margin: 0; gap: 3px; }
+  .adv-full.touch .ihud-bl .inv-slot { width: 30px; height: 30px; }
+  /* Zurück & Neu in der Lücke zwischen Steuerkreuz und Drehen-Knopf */
+  .adv-full.touch .ihud-br { left: auto; right: 106px; bottom: 22px; transform: none; flex-direction: column; gap: 8px; }
+  .adv-full.touch .ihud-br .ibtn { width: 42px; height: 42px; padding: 0; }
+  .adv-full.touch .dpad { bottom: 14px; left: 8px; grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); }
+  .adv-full.touch .tpad-rot { right: 10px; bottom: 30px; width: 88px; height: 88px; }
+}
+@media (orientation: portrait) and (max-width: 350px) {
+  .adv-full.touch .dpad { grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 50px); }
+  .adv-full.touch .tpad-rot { width: 76px; height: 76px; }
+}
