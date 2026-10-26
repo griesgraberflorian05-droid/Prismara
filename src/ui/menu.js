@@ -62,7 +62,7 @@ export function mountMenu(root, params = []) {
   const startCh = page === 'chapter' || page === 'chapters' ? Math.max(0, parseInt(params[1] ?? currentChapter(), 10) || 0) : currentChapter();
   // Welt-Seiten zeigen einen lebendigen Raum der Welt, alle anderen das eigene Titelbild
   const worldPage = page === 'chapter' || page === 'chapters';
-  const scene = worldPage ? mountScene(root.querySelector('.tm-scene'), themeOf(startCh)) : mountTitleArt(root.querySelector('.tm-scene'));
+  const scene = worldPage ? mountScene(root.querySelector('.tm-scene'), themeOf(startCh)) : mountTitleArt(root.querySelector('.tm-scene'), themeOf(currentChapter())); // Titelbild im Stil der aktuellen Welt
   let cleanup = () => {};
 
   // Gesperrte Modi: Hinweis statt Inhalt (Welten-Seiten zählen als Modus „worlds“)
