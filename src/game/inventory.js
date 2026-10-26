@@ -6,11 +6,11 @@ const KEY = 'prismara.inventory.v1';
 /** Alle Gegenstände: Symbol (Pixel-Emoji im HUD), Name, Erklärung, Preis beim Krämer. */
 export const ITEMS = {
   bread: { icon: '🍞', name: 'Kraftbrot', info: 'Füllt die Kraftleiste sofort ganz auf.', price: 15 },
-  scroll: { icon: '📜', name: 'Wegrolle', info: 'Zeigt dir den nächsten richtigen Zug (der Löser rechnet mit).', price: 40 },
+  scroll: { icon: '📜', name: 'Wegrolle', info: 'Zeigt dir den nächsten richtigen Zug (der Löser rechnet mit).', price: 0 },
   lens: { icon: '🔍', name: 'Lupe', info: 'Zeigt eine Runde lang, wo Kristalle, Münzen und Schlüssel liegen.', price: 25 },
   pick: { icon: '🔧', name: 'Dietrich', info: 'Öffnet eine Schatztruhe in der Wand (lauf gegen die Truhe). Wird dabei verbraucht.', price: 30 },
   boots: { icon: '🥾', name: 'Wanderstiefel', info: 'Dauerhaft: Laufen lädt doppelt so viel Kraft auf.', price: 120, permanent: true },
-  gloves: { icon: '🧤', name: 'Kletterhandschuhe', info: 'Dauerhaft: Schieben kostet weniger Kraft (4 statt 3 Schübe am Stück).', price: 160, permanent: true },
+  gloves: { icon: '🧤', name: 'Kletterhandschuhe', info: 'Dauerhaft: Schieben kostet weniger Kraft (9 statt 6 Schübe am Stück).', price: 160, permanent: true },
   lantern: { icon: '🏮', name: 'Große Laterne', info: 'Dauerhaft: Deine Laterne leuchtet heller und weiter.', price: 90, permanent: true },
 };
 export const SLOTS = ['bread', 'scroll', 'lens', 'pick'];

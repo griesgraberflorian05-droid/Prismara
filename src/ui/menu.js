@@ -110,7 +110,7 @@ function mainPage(el) {
       <a class="wbtn big" id="play" href="${fresh ? '#/adv/tutorial' : next ? `#/adv/${t.firstOpen}` : '#/menu/chapters'}">
         ▶ ${fresh ? 'ABENTEUER BEGINNEN' : 'SPIELEN'}<small>${fresh ? 'Mit dem Lehrzimmer' : next ? `Weiter: ${esc(next.name)}` : 'Alle Räume geschafft!'}</small></a>
       <div class="tm-grid">${MODES.map((m) => {
-        const href = { worlds: `#/menu/chapters/${currentChapter()}`, kit: '#/menu/kit', daily: '#/daily', shop: '#/menu/shop', trophies: '#/menu/trophies', builder: '#/build', community: '#/community' }[m.id];
+        const href = { worlds: `#/menu/chapters/${currentChapter()}`, kit: '#/menu/kit', daily: '#/daily', shop: '#/menu/shop', trophies: '#/menu/trophies' }[m.id];
         if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn locked" aria-disabled="true" title="${esc(m.info)}">🔒 ${m.name}<small>ab ${m.need} Räumen</small></span>`;
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
         return `<a class="wbtn${glow ? ' glow' : ''}" href="${href}">${m.icon} ${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</a>`;

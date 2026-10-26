@@ -9,8 +9,7 @@ export const MODES = [
   { id: 'daily', name: 'Tagesrätsel', icon: '📅', need: 6, info: 'Jeden Tag ein neues, garantiert lösbares Rätsel.' },
   { id: 'shop', name: 'Krämer', icon: '🛒', need: 8, info: 'Münzen gegen Brot, Lupen, Dietriche und mehr.' },
   { id: 'trophies', name: 'Erfolge', icon: '🏆', need: 10, info: 'Deine Abzeichen und Rekorde.' },
-  { id: 'builder', name: 'Level-Bauer', icon: '🔨', need: 12, info: 'Eigene Räume bauen, vom Löser prüfen lassen und spielen.' },
-  { id: 'community', name: 'Community', icon: '🌍', need: 12, info: 'Räume anderer Spieler spielen und eigene veröffentlichen.' },
+  // Level-Bauer und Community auf Nutzerwunsch entfernt (2026-10-27)
 ];
 const SEEN_KEY = 'prismara.unlocks.v1';
 

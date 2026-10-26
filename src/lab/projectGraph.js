@@ -124,8 +124,6 @@ const FILES = [
   ['src/lab/labView.js', 'Lab-Seite: Status, Schritte, Karte, Live-Log-Panel mit Systempuls', [], 1],
   ['src/lab/lab.css', 'Lab im Holz-/Pergament-Stil des Spiels', [], 2],
   ['src/game/unlocks.js', 'Freischalten: Modi öffnen sich nach gelösten Räumen', [], 1],
-  ['src/ui/builderView.js', 'Level-Bauer: Raster-Editor, Löser-Prüfung, Spielen, Speichern, Teilen', [], 1],
-  ['src/ui/communityView.js', 'Community: Räume aus GitHub-Issues laden, veröffentlichen, spielen', [], 1],
   ['src/lab/brainMap.js', '3D-Gehirnkarte: Kräfte, Formationen, Zoom, Knotengeburt', [], 1],
   ['src/lab/projectGraph.js', 'Erzeugt "Alle Knoten" aus Projektdaten (diese Datei)', [], 2],
   ['tools/serve.py', 'Dev-Server: Dateien, /env.js, /api/activity, POST /api/log, live.log-Nachlesen', [], 1],

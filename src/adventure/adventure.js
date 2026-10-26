@@ -3,7 +3,7 @@
 // erfüllt, öffnet sich die Ausgangstür in der Wand – hindurchgehen führt in den nächsten Raum.
 // Fragmente im Raum sind freiwillige Sammelstücke. Alle Regeln kommen aus push.js (vom Löser
 // geprüft); gezeichnet wird mit dem PixelRenderer inkl. Licht im Minecraft-Shader-Stil.
-import { parsePushLevel, createPushState, move, rotateFront, pushTrace, solvePush } from '../game/push.js';
+import { parsePushLevel, createPushState, move, rotateFront, pushTrace, solvePush, isPit } from '../game/push.js';
 import { ITEMS, SLOTS, GUIDE, getInv, count, owns, addCoins, addItem, useItem, isFound, markFound } from '../game/inventory.js';
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { DIRS, COLOR_INFO } from '../game/engine.js';
@@ -24,7 +24,8 @@ const STEP_MS = 130;   // Gleitdauer eines Schritts
 const REPEAT_MS = STEP_MS;
 const FRAG_KEY = 'prismara.fragments.v1';
 // Kraftleiste: Schieben kostet Kraft, Laufen und Verschnaufen laden sie wieder auf.
-const PUSH_COST = 0.34, STEP_REGEN = 0.1, IDLE_REGEN = 0.45, REST_MS = 900;
+// Nutzerwunsch „Ausdauer länger“: 6 Schübe am Stück statt 3, schnelleres Aufladen.
+const PUSH_COST = 0.16, STEP_REGEN = 0.15, IDLE_REGEN = 0.7, REST_MS = 700;
 
 // Lehrzimmer (#/adv/tutorial): ein eigener Raum, in dem eine Eule Schritt für Schritt Laufen,
 // Schieben, Kraft, Drehen, Licht-Ranke, Kristalle und den Ausgang erklärt. Lösung: 4 Schritte nach
@@ -186,7 +187,8 @@ export function mountAdventure(root, params, opts = {}) {
   const roomNo = chapter ? chapter.levels.indexOf(def.id) + 1 : 1;
   const themeId = opts.theme || (chapter ? CHAPTER_WORLD[chapter.id] : 'default');
   const theme = PIXEL_THEMES[themeId] || PIXEL_THEMES.default;
-  const exit = def.exit ? exitAt(level, def.exit) : findExit(level);
+  const exit0 = def.exit ? exitAt(level, def.exit) : findExit(level);
+  let exit = exit0; // die Tür kann umziehen, wenn sie zugestellt ist (relocateDoor)
   // Handy-Steuerung nur, wenn der Finger das Hauptzeigegerät ist (Handy/Tablet). Laptops mit
   // Touchscreen haben eine Maus als Hauptzeiger und behalten die Tastatur-Ansicht.
   const touch = matchMedia('(pointer: coarse)').matches;
@@ -199,7 +201,7 @@ export function mountAdventure(root, params, opts = {}) {
   const guide = roomGuide(level);
   const hasKeys = level.cells.some((c) => c.key);
   // Dauerhafte Ausrüstung aus dem Krämerladen
-  const pushCost = owns('gloves') ? 0.25 : PUSH_COST, stepRegen = owns('boots') ? STEP_REGEN * 2 : STEP_REGEN;
+  const pushCost = owns('gloves') ? 0.11 : PUSH_COST, stepRegen = owns('boots') ? STEP_REGEN * 2 : STEP_REGEN;
 
   // Vollbild-Spiel mit Ingame-HUD (wie Shell Shockers): keine Webseiten-Leiste, alle Anzeigen
   // liegen als Pixel-Panels direkt über dem Spielbild; Esc/⏸ öffnet das Pausenmenü.
@@ -283,6 +285,7 @@ export function mountAdventure(root, params, opts = {}) {
   function reset() {
     timers.forEach(clearTimeout); timers = [];
     stopCelebration();
+    exit = exit0;
     state = createPushState(level);
     tr = pushTrace(state);
     history = [];
@@ -306,6 +309,55 @@ export function mountAdventure(root, params, opts = {}) {
     if (hasKeys) $('#keys').textContent = state.keys || 0;
     root.querySelectorAll('.inv-slot').forEach((b) => { const n = count(b.dataset.item); b.querySelector('b').textContent = n; b.disabled = !n; });
     coach();
+  }
+
+  // ---------- Wandernde Tür: Ist die offene Tür zugestellt (Kiste davor) oder nicht erreichbar,
+  // zieht sie an die nächstgelegene freie, erreichbare Stelle der Außenwand um (Nutzerwunsch: „verschiebe
+  // einfach die Tür“ – im Dschungel hatte sich ein Spieler die Tür mit einer Kiste versperrt).
+  function relocateDoor() {
+    if (!exitOpen || !exit || done) return;
+    const { w, h, cells } = level;
+    const blockSet = new Set(state.blocks.map((b) => b.y * w + b.x));
+    const passable = (i) => {
+      const c = cells[i];
+      if (blockSet.has(i) || isPit(state, i)) return false;
+      if (c.type === 'door' || c.type === 'lock') return tr.open?.has(i);
+      return c.type === 'empty';
+    };
+    const reach = new Set([state.player.y * w + state.player.x]);
+    const q = [[state.player.x, state.player.y]];
+    while (q.length) {
+      const [x, y] = q.shift();
+      for (const [dx, dy] of DIRS) {
+        const nx = x + dx, ny = y + dy, k = ny * w + nx;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h || reach.has(k) || !passable(k)) continue;
+        reach.add(k); q.push([nx, ny]);
+      }
+    }
+    const usable = (x, y) => {
+      if (cells[y * w + x]?.type !== 'wall' || (x > 0 && y > 0 && x < w - 1 && y < h - 1)) return null;
+      if ((chest && chest.x === x && chest.y === y) || (sign && sign.x === x && sign.y === y)) return null;
+      for (const [dx, dy] of DIRS) {
+        const nx = x + dx, ny = y + dy, k = ny * w + nx;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const c = cells[k];
+        if (c.type === 'empty' && !c.hole && c.flow == null && reach.has(k)) return exitAt(level, [x, y]);
+      }
+      return null;
+    };
+    if (usable(exit.x, exit.y)) return;
+    let best = null;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const e = usable(x, y);
+      if (!e) continue;
+      const d = Math.abs(x - exit0.x) + Math.abs(y - exit0.y);
+      if (!best || d < best.d) best = { e, d };
+    }
+    if (!best) return;
+    exit = best.e;
+    play('door'); toast('🚪 Die Tür war zugestellt – sie ist umgezogen!');
+    for (let k = 0; k < 4; k++) dust.push({ x: exit.inX + 0.5, y: exit.inY + 0.5, a: k * 1.6, t0: performance.now() + k * 50 });
+    devlog('SPIEL', `${def.id}: Tür umgezogen nach (${exit.x},${exit.y})`);
   }
 
   // ---------- Fundstücke, Truhe, Schild, Inventar ----------
@@ -428,6 +480,7 @@ export function mountAdventure(root, params, opts = {}) {
     if (tr.solved && !exitOpen) { exitOpen = true; if (solveMoves == null || state.moves < solveMoves) solveMoves = state.moves; later(() => play('door'), 260); devlog('SPIEL', `${def.id}: Ausgang offen nach ${state.moves} Zügen`); }
     // Einmal aufgeblüht bleibt die Tür offen – sonst schlösse sie sich, wenn der Weg hinaus die Ranke kreuzt
     // (im Live-Test: w36, w37, w5). Nur Zurück/Neu schließen sie wieder.
+    relocateDoor();
     updateHud();
     if (state.dead) onCaught();
     return true;
@@ -475,6 +528,7 @@ export function mountAdventure(root, params, opts = {}) {
     state = history.pop(); anim = snap(state, 0); tr = pushTrace(state);
     exitOpen = tr.solved;
     if (caught) { caught = false; $('#win').hidden = true; }
+    relocateDoor();
     play('undo'); updateHud();
   }
 
