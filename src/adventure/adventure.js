@@ -206,9 +206,10 @@ export function mountAdventure(root, params, opts = {}) {
   // Vollbild-Spiel mit Ingame-HUD (wie Shell Shockers): keine Webseiten-Leiste, alle Anzeigen
   // liegen als Pixel-Panels direkt über dem Spielbild; Esc/⏸ öffnet das Pausenmenü.
   document.body.classList.add('ingame');
+  document.body.dataset.world = themeId; // Oberflächenfarben der Welt
   const worldName = tutorial ? '📖 Tutorial' : { beach: '🏖️ Sommerstrand', cherry: '🌸 Kirschblüte', jungle: '🌴 Dschungel', night: '🌙 Nachtwald', volcano: '🌋 Vulkanschmiede', temple: '🏜️ Wüstentempel', shadow: '🌑 Schattenreich', aurora: '❄️ Polarlicht', reef: '🐠 Korallenriff', castle: '🏰 Burgverlies', moor: '🌫️ Nebelmoor' }[themeId] || '';
   root.innerHTML = `
-    <section class="adv-full pixel-ui${touch ? ' touch' : ''}" style="--w1:${theme.ambient};--w2:${theme.dark};--w3:${theme.face}">
+    <section class="adv-full pixel-ui${touch ? ' touch' : ''}${tutorial ? ' has-coach' : ''}" style="--w1:${theme.ambient};--w2:${theme.dark};--w3:${theme.face}">
       <canvas id="board" class="pixel-canvas" tabindex="0" aria-label="Raum. WASD oder Pfeiltasten: ein Feld laufen und Kisten schieben, Leertaste: drehen. Sind alle Ziele beleuchtet, öffnet sich die Tür."></canvas>
 
       <div class="ihud ihud-tl pixel">
@@ -321,8 +322,9 @@ export function mountAdventure(root, params, opts = {}) {
     const passable = (i) => {
       const c = cells[i];
       if (blockSet.has(i) || isPit(state, i)) return false;
-      if (c.type === 'door' || c.type === 'lock') return tr.open?.has(i);
-      return c.type === 'empty';
+      // Licht- und Gittertore zählen als passierbar: sie gehen wieder auf. Sonst sprang die Tür hin und
+      // her, sobald der Spieler kurz ein Lichttor schloss (Durchspieltest w25).
+      return c.type === 'empty' || c.type === 'door' || c.type === 'lock';
     };
     const reach = new Set([state.player.y * w + state.player.x]);
     const q = [[state.player.x, state.player.y]];

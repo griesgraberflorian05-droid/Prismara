@@ -62,6 +62,7 @@ export function mountMenu(root, params = []) {
   const startCh = page === 'chapter' || page === 'chapters' ? Math.max(0, parseInt(params[1] ?? currentChapter(), 10) || 0) : currentChapter();
   // Welt-Seiten zeigen einen lebendigen Raum der Welt, alle anderen das eigene Titelbild
   const worldPage = page === 'chapter' || page === 'chapters';
+  document.body.dataset.world = themeOf(worldPage ? startCh : currentChapter()); // Oberflächenfarben der Welt
   const scene = worldPage ? mountScene(root.querySelector('.tm-scene'), themeOf(startCh)) : mountTitleArt(root.querySelector('.tm-scene'), themeOf(currentChapter())); // Titelbild im Stil der aktuellen Welt
   let cleanup = () => {};
 
@@ -171,6 +172,7 @@ function chaptersPage(el, start, scene) {
     const w = worldForChapter(info.ch.id);
     const pct = Math.round((info.solved / info.idx.length) * 100);
     scene.setTheme(themeOf(cur));
+    document.body.dataset.world = themeOf(cur);
     stage.innerHTML = `
       <a class="wcard ${dirClass}${info.open ? '' : ' locked'}${info.done ? ' done' : ''}" ${info.open ? `href="#/menu/chapter/${cur}"` : 'aria-disabled="true"'}>
         <span class="wframe"><canvas class="wthumb"></canvas>${info.open ? '' : '<span class="wlock">🔒</span>'}</span>

@@ -2043,6 +2043,67 @@
       "step": 20,
       "status": "open",
       "summary": "Spiel auf das neue GitHub-Konto laden und wieder auf die eigene Website bringen (altes Konto gesperrt). Anmeldung per Gerätecode durch den Nutzer."
+    },
+    {
+      "id": "req-worldui",
+      "type": "idea",
+      "label": "Wunsch: UI je Welt",
+      "step": 20,
+      "status": "passed",
+      "summary": "Rückmeldung: UI für jede Welt anpassen, Menü-Hintergrund im Stil der aktuellen Welt."
+    },
+    {
+      "id": "feat-worldtitle",
+      "type": "improvement",
+      "label": "Titelbild je Welt",
+      "step": 20,
+      "status": "built",
+      "summary": "11 Stile in TITLE_STYLES: Himmel, Sonne/Mond/Polarlicht/Lichtstrahlen, Bäume (Palme, Kirsche, Dschungel, tot, Kaktus, Koralle, Schneetanne), Turmsteine, Burgmauer, Pyramide, Lavasee, Moornebel, Teilchen (Möwen, Blüten, Glut, Schnee, Blasen, Irrlichter).",
+      "area": "src/ui/titleArt.js"
+    },
+    {
+      "id": "feat-worldcolors",
+      "type": "improvement",
+      "label": "UI-Farben je Welt",
+      "step": 20,
+      "status": "built",
+      "summary": "body[data-world]: Holz, Pergament und Hauptknopf je Welt (Treibholz/Türkis am Strand, Glutholz im Vulkan, Stahl/Gold in der Burg …) – im Menü, Karussell und im Spiel.",
+      "area": "src/styles.css"
+    },
+    {
+      "id": "req-shopname",
+      "type": "idea",
+      "label": "Wunsch: Shoppen, Erfolge weg",
+      "step": 20,
+      "status": "passed",
+      "summary": "Krämer soll „Shoppen“ heißen und scrollen, Erfolge entfernen, Helden-Menü passt nicht zu den Pixel-Texturen."
+    },
+    {
+      "id": "feat-heromenu",
+      "type": "improvement",
+      "label": "Helden-Menü im Pixel-Stil",
+      "step": 20,
+      "status": "built",
+      "summary": "Vorschau ist der echte Pixel-Held (läuft, dreht sich), Umhänge als Pixelmuster in erdigen Farben, Hüte direkt wählbar; Neon-Lichtblock entfernt.",
+      "area": "src/ui/menu.js"
+    },
+    {
+      "id": "fix-shopscroll",
+      "type": "improvement",
+      "label": "Fix: Shoppen scrollt",
+      "step": 20,
+      "status": "passed",
+      "summary": "Menüseiten wachsen mit dem Inhalt (flex 0 0 auto), Hintergrundbild bleibt fest stehen.",
+      "area": "src/styles.css"
+    },
+    {
+      "id": "fix-doorflip",
+      "type": "improvement",
+      "label": "Fix: Tür springt nicht mehr",
+      "step": 20,
+      "status": "passed",
+      "summary": "w25: Tür zog hin und her, sobald der Spieler ein Lichttor kurz schloss. Licht-/Gittertore zählen jetzt als passierbar.",
+      "area": "src/adventure/adventure.js"
     }
   ],
   "edges": [
@@ -4095,7 +4156,57 @@
       "from": "req-newgithub",
       "to": "req-github",
       "rel": "erneuert"
+    },
+    {
+      "from": "req-worldui",
+      "to": "feat-worldtitle",
+      "rel": "führte zu"
+    },
+    {
+      "from": "req-worldui",
+      "to": "feat-worldcolors",
+      "rel": "führte zu"
+    },
+    {
+      "from": "feat-worldtitle",
+      "to": "feat-titleart",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-worldcolors",
+      "to": "feat-woodui",
+      "rel": "erweitert"
+    },
+    {
+      "from": "req-shopname",
+      "to": "feat-heromenu",
+      "rel": "führte zu"
+    },
+    {
+      "from": "req-shopname",
+      "to": "fix-shopscroll",
+      "rel": "führte zu"
+    },
+    {
+      "from": "feat-heromenu",
+      "to": "feat-hero",
+      "rel": "zeigt"
+    },
+    {
+      "from": "fix-shopscroll",
+      "to": "feat-shop",
+      "rel": "verbessert"
+    },
+    {
+      "from": "fix-doorflip",
+      "to": "feat-movingdoor",
+      "rel": "verbessert"
+    },
+    {
+      "from": "test-chaos",
+      "to": "fix-doorflip",
+      "rel": "führte zu"
     }
   ],
-  "updated": "2026-10-27 00:15"
+  "updated": "2026-10-27 00:36"
 }

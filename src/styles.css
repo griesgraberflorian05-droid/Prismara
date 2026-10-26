@@ -837,6 +837,19 @@ html:has(body.wood) { overflow: hidden; overscroll-behavior: none; }
 body.wood { height: 100dvh; overflow: hidden; }
 body.wood .view { height: 100dvh; min-height: 0; overflow: hidden auto; overscroll-behavior: contain; }
 body.wood .tm, body.wood .tm-ui { min-height: 100dvh; }
+/* Welt-Farben: Holz, Pergament und Hauptknopf passen sich der aktuellen Welt an (body[data-world]) */
+body.wood[data-world="beach"]   { --wood-0: #3a2a1a; --wood-1: #5e4630; --wood-2: #8e6c48; --wood-3: #bc9666; --wood-4: #dcb886; --parch: #fff4dc; --parch-2: #f0dcb0; --leaf: #2a8aa8; --leaf-2: #4fb8d0; }
+body.wood[data-world="cherry"]  { --wood-0: #2a141a; --wood-1: #4a2630; --wood-2: #74404c; --wood-3: #a0606c; --wood-4: #c88a94; --parch: #fbe8ee; --parch-2: #f0cfd9; --leaf: #b05878; --leaf-2: #d887a2; }
+body.wood[data-world="jungle"]  { --wood-0: #1a1a0c; --wood-1: #33331a; --wood-2: #55522c; --wood-3: #7d7840; --wood-4: #a8a05a; --parch: #eef0d0; --parch-2: #d8dcae; --leaf: #3a7a2a; --leaf-2: #5ab845; }
+body.wood[data-world="castle"]  { --wood-0: #141418; --wood-1: #2a2a32; --wood-2: #45434e; --wood-3: #67646e; --wood-4: #8a8794; --parch: #ece8e0; --parch-2: #d4cfc4; --leaf: #8a6a2a; --leaf-2: #c9963f; }
+body.wood[data-world="moor"]    { --wood-0: #121812; --wood-1: #26302a; --wood-2: #3e4c42; --wood-3: #5e6e60; --wood-4: #7e8e7e; --parch: #e6ecdf; --parch-2: #ccd6c4; --leaf: #4a7a5a; --leaf-2: #6ea886; }
+body.wood[data-world="night"]   { --wood-0: #0c1018; --wood-1: #1c2434; --wood-2: #2e3a52; --wood-3: #465674; --wood-4: #647896; --parch: #e4eaf4; --parch-2: #c8d2e4; --leaf: #2e5a8a; --leaf-2: #4f86c0; }
+body.wood[data-world="volcano"] { --wood-0: #180808; --wood-1: #341414; --wood-2: #5a2420; --wood-3: #84382c; --wood-4: #ac5440; --parch: #f6e2d0; --parch-2: #e8c4a8; --leaf: #c0461e; --leaf-2: #ff7a3a; }
+body.wood[data-world="temple"]  { --wood-0: #2a1808; --wood-1: #4e3014; --wood-2: #7e5424; --wood-3: #b08040; --wood-4: #d8aa60; --parch: #fbefd2; --parch-2: #efd9a8; --leaf: #a86a1e; --leaf-2: #e0a040; }
+body.wood[data-world="aurora"]  { --wood-0: #10202c; --wood-1: #22384a; --wood-2: #3a5670; --wood-3: #5a7c98; --wood-4: #84a4bc; --parch: #f0f6fc; --parch-2: #d6e4f0; --leaf: #2a8a7a; --leaf-2: #4fd0b0; }
+body.wood[data-world="reef"]    { --wood-0: #08202a; --wood-1: #123a48; --wood-2: #1e5a6a; --wood-3: #2e7e8e; --wood-4: #4ea4b0; --parch: #e8f6f4; --parch-2: #c8e6e2; --leaf: #d0607a; --leaf-2: #ff8aa0; }
+body.wood[data-world="shadow"]  { --wood-0: #0e0818; --wood-1: #22163a; --wood-2: #382658; --wood-3: #54407c; --wood-4: #745ea0; --parch: #ece4f6; --parch-2: #d4c6e8; --leaf: #6a3ab0; --leaf-2: #9a6ae0; }
+
 /* Held: Pixel-Held als Vorschau, Umhang- und Hutfelder im Pixel-Stil */
 body.wood .kit-stage { padding: 8px; background: var(--wood-1); border: 3px solid var(--wood-0); align-self: start; }
 body.wood .kit-big { display: block; width: 192px; height: 192px; image-rendering: pixelated; border: 0; border-radius: 0; box-shadow: none; background: none; }
@@ -973,24 +986,39 @@ body.wood .view-community { overflow-y: auto; }
 
 /* ---------- Handy hochkant: feste Zonen, nichts überlappt (quer bleibt wie bisher) ---------- */
 @media (orientation: portrait) {
-  .adv-full.touch #board { top: 92px !important; height: calc(100% - 92px - 250px) !important; bottom: auto; }
+  .adv-full.touch #board { top: 92px !important; height: calc(100% - 92px - 272px) !important; bottom: auto; }
   .adv-full.touch .ihud-tl { top: 6px; left: 6px; transform: scale(0.78); transform-origin: top left; }
   .adv-full.touch .ihud-tr { top: 6px; right: 6px; }
   .adv-full.touch .ihud-tc { top: 58px; left: 50%; right: auto; bottom: auto; flex-direction: row; align-items: center; transform: translateX(-50%) scale(0.7); transform-origin: top center; white-space: nowrap; }
   /* Kraft, Züge, Inventar als flache Leiste über der Steuerung */
-  .adv-full.touch .ihud-bl { top: auto; bottom: 206px; left: 6px; right: 6px; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 6px 8px; transform: none; }
+  .adv-full.touch .ihud-bl { top: auto; bottom: 228px; left: 6px; right: 6px; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 6px 8px; transform: none; }
   .adv-full.touch .ihud-bl .ihud-label { display: none; }
   .adv-full.touch .ihud-bl .stamina-bar { flex: 1 1 60px; min-width: 50px; margin: 0; }
   .adv-full.touch .ihud-bl .ihud-moves { margin: 0; font-size: 0.5rem; white-space: nowrap; }
   .adv-full.touch .ihud-bl .inv { margin: 0; gap: 3px; }
   .adv-full.touch .ihud-bl .inv-slot { width: 30px; height: 30px; }
   /* Zurück & Neu in der Lücke zwischen Steuerkreuz und Drehen-Knopf */
-  .adv-full.touch .ihud-br { left: auto; right: 106px; bottom: 22px; transform: none; flex-direction: column; gap: 8px; }
+  .adv-full.touch .ihud-br { left: auto; right: 112px; bottom: 30px; transform: none; flex-direction: column; gap: 8px; }
   .adv-full.touch .ihud-br .ibtn { width: 42px; height: 42px; padding: 0; }
-  .adv-full.touch .dpad { bottom: 14px; left: 8px; grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); }
-  .adv-full.touch .tpad-rot { right: 10px; bottom: 30px; width: 88px; height: 88px; }
+  .adv-full.touch .dpad { bottom: 14px; left: 8px; grid-template-columns: repeat(3, 68px); grid-template-rows: repeat(3, 68px); } /* groß genug für Daumen */
+  .adv-full.touch .tpad-rot { right: 10px; bottom: 34px; width: 96px; height: 96px; }
+  /* Tutorial-Eule: oben unter den Anzeigen statt hinter Steuerkreuz und Drehen-Knopf; der Raum rückt nach unten */
+  .adv-full.touch .coach { top: 88px; bottom: auto; width: calc(100% - 12px); padding: 6px 8px; gap: 8px; }
+  .adv-full.touch .coach-owl { width: 36px; height: 36px; border-width: 2px; box-shadow: inset 0 -7px 0 #c99766; }
+  .adv-full.touch .coach-owl::before, .adv-full.touch .coach-owl::after { top: 7px; width: 10px; height: 10px; border-width: 2px; }
+  .adv-full.touch .coach-owl i { top: 19px; width: 4px; height: 4px; margin-left: -2px; }
+  .adv-full.touch .coach-step { font-size: 0.42rem; margin-bottom: 4px; }
+  .adv-full.touch .coach p { font-size: 0.5rem; line-height: 1.6; }
+  .adv-full.touch .coach-dots { margin-top: 5px; }
+  .adv-full.touch.has-coach #board { top: 190px !important; height: calc(100% - 190px - 272px) !important; }
+}
+/* Handy quer: Eule mittig zwischen Steuerkreuz und Drehen-Knopf */
+@media (orientation: landscape) {
+  .adv-full.touch .coach { left: 220px; right: 130px; width: auto; transform: none; bottom: 10px; padding: 6px 8px; }
+  .adv-full.touch .coach p { font-size: 0.5rem; line-height: 1.6; }
 }
 @media (orientation: portrait) and (max-width: 350px) {
-  .adv-full.touch .dpad { grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 50px); }
-  .adv-full.touch .tpad-rot { width: 76px; height: 76px; }
+  .adv-full.touch .dpad { grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); }
+  .adv-full.touch .tpad-rot { width: 80px; height: 80px; }
+  .adv-full.touch .ihud-br { right: 96px; }
 }
