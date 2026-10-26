@@ -103,7 +103,11 @@
                                       "success":  "Hellere Farbwelt mit sichtbarem Neon-Glühen und Hintergrundbewegung; Sieg löst Partikel/Lichtwellen über den ganzen Bildschirm aus; neue Level mit mindestens 13 Spalten; reduzierte Bewegung schaltet Effekte ab; Lesbarkeit der Symbole bleibt.",
                                       "check":  "Live-Spieltest im sichtbaren Browser inkl. Sieg; Löser für die neuen großen Level; Tests grün."
                                   },
-                      "backup":  "step-04-neon-teiler-portale-schloesser.zip"
+                      "backup":  "step-04-neon-teiler-portale-schloesser.zip",
+                      "observed":  [
+                                       "Neon-Design, Siegesfeuerwerk und größere Level umgesetzt (gesichert in step-04); später durch Pixel-Abenteuer und natürlichen Stil abgelöst."
+                                   ],
+                      "decision":  "Erfüllt und später weiterentwickelt (Schritte 13-14)."
                   },
                   {
                       "id":  5,
