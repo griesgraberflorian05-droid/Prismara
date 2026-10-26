@@ -88,10 +88,19 @@ function mainPage(el) {
   const fresh = !tutorialSeen(); // erstes Spiel: Spielen startet automatisch das Lehrzimmer
   const next = t.firstOpen >= 0 ? PUSH_LEVELS[t.firstOpen] : null;
   const daily = isSolved(`daily-${todayKey()}`);
+  // Reisetagebuch: aktuelle Welt mit Fortschritt und nächstem Raum
+  const ci = currentChapter(), info = chapterInfo(ci), wid = CHAPTER_WORLD[info.ch.id];
+  const world = worldForChapter(info.ch.id);
+  const pct = Math.round((info.solved / info.idx.length) * 100);
   el.innerHTML = `
     <header class="tm-sign" aria-label="Prismara"><i class="rope l"></i><i class="rope r"></i>
       <h1 class="logo-h1"><span class="sr">PRISMARA</span></h1><p>Ein Licht-Abenteuer</p></header>
-    <nav class="tm-menu" aria-label="Hauptmenü">
+    ${fresh ? '' : `<a class="tm-journey parch" href="#/menu/chapter/${ci}" data-world="${esc(wid || '')}">
+      <span class="tj-icon" aria-hidden="true">${world?.icon || info.ch.icon}</span>
+      <span class="tj-body"><span class="tj-kicker">WELT ${ci + 1} VON ${CHAPTERS.length}</span><span class="tj-name">${esc(world?.name || info.ch.name)}</span>
+        <span class="tj-bar" aria-label="${info.solved} von ${info.idx.length} Räumen"><i style="width:${pct}%"></i></span>
+        <span class="tj-meta">${info.solved}/${info.idx.length} Räume · ★ ${info.stars}/${info.idx.length * 3}${next ? ` · als Nächstes: ${esc(next.name)}` : ''}</span></span></a>`}
+    <nav class="tm-menu tm-board" aria-label="Hauptmenü">
       <a class="wbtn big" id="play" href="${fresh ? '#/adv/tutorial' : next ? `#/adv/${t.firstOpen}` : '#/menu/chapters'}">
         ▶ ${fresh ? 'ABENTEUER BEGINNEN' : 'SPIELEN'}<small>${fresh ? 'Mit dem Lehrzimmer' : next ? `Weiter: ${esc(next.name)}` : 'Alle Räume geschafft!'}</small></a>
       <div class="tm-grid">
@@ -101,6 +110,7 @@ function mainPage(el) {
         <a class="wbtn" href="#/menu/kit">🎨 Held</a>
         <a class="wbtn" href="#/menu/trophies">🏆 Erfolge</a>
         <a class="wbtn" href="#/menu/settings">⚙ Einstellungen</a>
+        <a class="wbtn sm wide tm-lab" href="#/lab">🧠 Gehirn Lab</a>
       </div>
     </nav>
     <footer class="tm-stats parch">

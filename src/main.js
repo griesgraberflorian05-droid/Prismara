@@ -1,6 +1,4 @@
-// Einstieg: einfacher Hash-Router zwischen Startseite, Spiel- und Lab-Ansichten.
-import { IS_DEV } from './config.js';
-import { mountHome } from './ui/homeView.js';
+// Einstieg: einfacher Hash-Router zwischen Spiel- und Lab-Ansichten. Ohne Adresse geht es direkt ins Hauptmenü.
 import { mountMenu } from './ui/menu.js';
 import { mountLab } from './lab/labView.js';
 import { mountPush } from './ui/pushView.js';
@@ -12,7 +10,6 @@ import { setFavicon } from './ui/logo.js';
 setFavicon();
 
 const routes = {
-  home: { tab: 'home', mount: mountHome },
   menu: { tab: 'game', mount: mountMenu },
   run: { tab: 'game', mount: mountPush },
   daily: { tab: 'game', mount: mountDaily },
@@ -23,8 +20,7 @@ const routes = {
   brain: { tab: 'lab', mount: (root) => mountLab(root, ['full', 'standalone']) },
   lab: { tab: 'lab', mount: mountLab },
 };
-// Lokal (Entwicklung) startet die App direkt im Spielmenü, die öffentliche Seite auf der Startseite.
-const DEFAULT_ROUTE = IS_DEV ? 'menu' : 'home';
+const DEFAULT_ROUTE = 'menu'; // alte Links auf #/home landen auch hier
 
 const view = document.getElementById('view');
 let unmount = null;

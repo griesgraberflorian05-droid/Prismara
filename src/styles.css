@@ -832,28 +832,37 @@ body.wood .ibtn { background: linear-gradient(var(--wood-3), var(--wood-2)); bor
 body.wood .adv-toast { background: var(--parch); color: var(--ink); border-color: var(--wood-1); }
 body.wood #exit-state.open { color: #2f7a2a; }
 
-/* ---------- Startseite (#/home) im Spielstil ---------- */
-.home-wood { position: relative; flex: 1; min-height: 100vh; overflow: hidden auto; }
-.home-scene { position: fixed; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
-.home-shade { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 40%, rgba(8, 4, 2, 0.25), rgba(8, 4, 2, 0.82) 85%); }
-.home-ui { position: relative; z-index: 1; width: min(1080px, 100%); margin: 0 auto; padding: clamp(18px, 5vw, 56px) 16px 28px; display: flex; flex-direction: column; gap: 22px; }
-.home-wood .parch { padding: clamp(16px, 3vw, 28px); }
-.home-hero { text-align: center; }
-.home-kicker, .home-card-index { font: 0.45rem/1.6 'Press Start 2P', monospace; color: var(--ink-2); letter-spacing: 0.06em; }
-.home-title { margin: 14px 0 6px; font: clamp(1.8rem, 7vw, 3.4rem)/1.1 'Press Start 2P', monospace; color: #e8a317; text-shadow: 0 4px 0 #7a4f00, 0 8px 0 rgba(0, 0, 0, 0.25); }
-.home-owner { margin: 0 0 10px; font: 0.6rem/1.8 'Press Start 2P', monospace; color: var(--leaf); }
-.home-lead { max-width: 640px; margin: 0 auto 18px; font: 1rem/1.65 var(--font); color: var(--ink); }
-.home-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-.home-facts { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; font: 0.45rem/1.6 'Press Start 2P', monospace; color: var(--ink-2); }
-.home-facts i { width: 6px; height: 6px; background: var(--wood-3); }
-.home-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.home-card { display: flex; flex-direction: column; transition: transform 0.08s steps(2); }
-.home-card:hover { transform: translateY(-3px); }
-.home-card h2 { margin: 12px 0 8px; font: 0.75rem/1.5 'Press Start 2P', monospace; color: var(--ink); }
-.home-card p { flex: 1; margin: 0 0 14px; font: 0.92rem/1.55 var(--font); color: var(--ink); }
-.home-card a, .home-footer a { font: 0.5rem/1.6 'Press Start 2P', monospace; color: #9b3d12; text-decoration: none; }
-.home-card a:hover, .home-footer a:hover { color: var(--leaf); text-decoration: underline; }
-.home-how h2 { margin: 0 0 12px; font: 0.75rem/1.5 'Press Start 2P', monospace; color: var(--ink-2); }
-.home-how ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; font: 0.95rem/1.55 var(--font); color: var(--ink); }
-.home-footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 4px; font: 0.82rem var(--font); color: var(--muted); text-shadow: 0 1px 0 #000; }
-@media (max-width: 760px) { .home-cards { grid-template-columns: 1fr; } }
+/* ---------- Hauptmenü: Reisetagebuch, Holzbrett, großes Format, kein Verrutschen ---------- */
+html:has(body.wood) { overflow: hidden; overscroll-behavior: none; }
+body.wood { height: 100dvh; overflow: hidden; }
+body.wood .view { height: 100dvh; min-height: 0; overflow: hidden auto; overscroll-behavior: contain; }
+body.wood .tm, body.wood .tm-ui { min-height: 100dvh; }
+.tm-journey { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; width: min(440px, 100%); padding: 12px 14px !important; text-decoration: none; transition: transform 0.08s steps(2); }
+.tm-journey:hover, .tm-journey:focus-visible { transform: translateY(-2px); filter: brightness(1.05); }
+.tj-icon { display: grid; place-items: center; width: 52px; height: 52px; font-size: 1.7rem; background: var(--wood-1); border: 3px solid var(--wood-0); box-shadow: inset 0 3px 0 rgba(255, 220, 160, 0.2); }
+.tj-body { display: grid; gap: 6px; min-width: 0; }
+.tj-kicker { font-size: 0.42rem; color: var(--ink-2); letter-spacing: 0.06em; }
+.tj-name { font-size: 0.75rem; color: var(--ink); }
+.tj-bar { display: block; height: 12px; background: var(--parch-2); border: 3px solid var(--wood-1); }
+.tj-bar i { display: block; height: 100%; background: repeating-linear-gradient(90deg, var(--leaf-2) 0 6px, var(--leaf) 6px 12px); }
+.tj-meta { font: 600 0.78rem/1.35 var(--font); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tm-board { position: relative; padding: 14px; background: linear-gradient(rgba(58, 36, 20, 0.88), rgba(35, 21, 11, 0.92)); border: 4px solid var(--wood-0); box-shadow: inset 0 3px 0 rgba(255, 220, 160, 0.15), 0 8px 0 rgba(0, 0, 0, 0.55); }
+.tm-board::before, .tm-board::after { content: ''; position: absolute; top: 6px; width: 6px; height: 6px; background: #c9a35a; box-shadow: 0 2px 0 #5a3d1a; }
+.tm-board::before { left: 6px; } .tm-board::after { right: 6px; }
+.tm-lab { font-size: 0.5rem !important; opacity: 0.92; }
+@media (min-width: 980px) {
+  .tm-main .tm-journey { width: clamp(440px, 30vw, 560px); }
+  .tm-main .tm-sign, .tm-main .tm-menu, .tm-main .tm-stats { width: clamp(440px, 30vw, 560px); }
+}
+@media (min-width: 1500px) {
+  .tm-menu .wbtn.big { font-size: 1.15rem; padding: 22px; }
+  .tm-main .tm-grid .wbtn { font-size: 0.7rem; padding: 15px 16px; }
+  .tm-main .tm-stats { font-size: 0.62rem; }
+  .logo-h1 .logo { width: min(460px, 78vw); }
+}
+@media (max-height: 760px) and (min-width: 980px) {
+  .tm-ui.tm-main { gap: 12px; padding-top: 20px; }
+  .tm-main .tm-sign { margin-top: 26px; }
+}
+.tm-main .tm-grid .wbtn { flex-direction: row; gap: 8px; white-space: nowrap; }
+@media (max-width: 380px) { .tm-main .tm-grid .wbtn { font-size: 0.5rem; padding: 12px 8px; } }
