@@ -1,46 +1,99 @@
 <div align="center">
-  <img src="assets/prismara-banner.svg" alt="Prismara — Licht in neuer Ordnung" width="100%">
-  <br><br>
-  <strong>PIXEL-ABENTEUER</strong>
-  &nbsp;·&nbsp;
-  <strong>LICHT-RÄTSEL</strong>
-  &nbsp;·&nbsp;
-  <strong>GEHIRN LAB</strong>
-  &nbsp;·&nbsp;
-  <strong>VON FLORIAN</strong>
+
+<img src="assets/prismara-banner.png" alt="Prismara – ein Licht-Abenteuer in Pixel-Art" width="100%">
+
+### Ein Escape-Room-Abenteuer mit Redstone-Licht – direkt im Browser
+
+**[▶ Jetzt spielen auf g2studio.net](https://g2studio.net)**
+
+`52 Räume` · `11 Welten` · `Level-Bauer` · `Community` · `Tagesrätsel` · `Handy & PC`
+
 </div>
 
-## Prismara
+---
 
-Prismara ist ein verwunschenes Licht-Abenteuer im Browser. Jeder Raum ist ein Escape-Rätsel: Schiebe Kisten und Spiegel, lass Ranken aus Licht zu den Blumentöpfen wachsen – blühen alle, öffnet sich die Tür in den nächsten Raum. Dazu kommt das **Gehirn Lab**, eine 3D-Karte mit hunderten Knoten, die zeigt, wie das Projekt gewachsen ist.
+<table>
+<tr>
+<td width="50%"><img src="assets/screens/menu.jpg" alt="Hauptmenü mit Holzschild und Laternenturm"></td>
+<td width="50%"><img src="assets/screens/nebelmoor.jpg" alt="Raum im Nebelmoor mit Redstone-Leitung"></td>
+</tr>
+<tr>
+<td width="50%"><img src="assets/screens/sommerstrand.jpg" alt="Raum am Sommerstrand"></td>
+<td width="50%"><img src="assets/screens/gehirnlab.jpg" alt="Gehirn Lab mit fast 500 Knoten"></td>
+</tr>
+</table>
 
-### Im Spiel
+## 🔦 Worum geht's?
 
-- **52 Räume in 11 Welten** – vom Sommerstrand über Burgverlies und Nebelmoor bis ins Schattenreich, jede Welt mit Meisterprüfung.
-- **Viele Elemente:** Spiegel, Prismen, Farbfilter, Eis, Strahlteiler, Portale, Lichtschlösser, Wanderlampen, Druckplatten, Farbwandler, Strömungen, Schlüssel & Gittertore, Schattenläufer, Moorgruben und morsches Holz.
-- **Pixel-Look mit Licht:** Lichtstufen breiten sich feldweise aus, Wände werfen Schatten, Fackeln und Laternen leuchten.
-- **Tagesrätsel**, Lehrzimmer mit Eule, Fragmente, Münzen, Truhen und Krämerladen.
-- Jedes Rätsel ist vom eingebauten Löser (Breitensuche) geprüft: Das Zugziel ist immer das echte Minimum.
+Jeder Raum ist ein Rätsel. Von jeder **Redstone-Fackel** läuft eine Leitung durch den Raum – lenke sie mit Spiegeln, Prismen und Strahlteilern zu den **Redstone-Lampen**. Leuchten alle Lampen in ihrer Farbe, öffnet sich die Tür und es geht in den nächsten Raum.
 
-### Gehirn Lab
+- **Schieben & drehen:** Kisten, Spiegel und Lampen rücken Feld für Feld, die Leertaste dreht den Spiegel vor dir.
+- **Farben mischen:** Rot + Grün = Gelb, Prismen zerlegen Weiß, Farbgläser lassen nur ihre Farbe durch.
+- **Jedes Rätsel ist geprüft:** Ein eingebauter Löser (Breitensuche) rechnet jedes Level durch – das Zugziel für ★★★ ist immer das echte Minimum.
 
-- Projektknoten als 3D-Karte oder Liste, sieben Anordnungen (Gehirn, DNA, Würfel, Kugel …), Farbpaletten, Wichtigkeitsfilter.
-- „Wachstum abspielen“ zeigt Knoten für Knoten, wie Prismara entstanden ist.
-- Zeichnet nur, was im Bild liegt – flüssig auch bei 400+ Knoten.
+## 🗺 Welten
 
-### Aufbau
+| | Welt | Neu in dieser Welt |
+|---|---|---|
+| 🏖️ | Sommerstrand | Spiegel schieben und drehen |
+| 🌸 | Kirschblüte | Farbfilter, Prisma, Mischlicht |
+| 🌴 | Dschungel | Eis, Strahlteiler, Portale |
+| 🏰 | Burgverlies | Schlüssel & Gittertore |
+| 🌫️ | Nebelmoor | Moorgruben füllen, morsches Holz trägt nur einmal |
+| 🌙 | Nachtwald | Wanderlampen, die du trägst |
+| 🌋 | Vulkanschmiede | Druckplatten & Kippspiegel |
+| 🏜️ | Wüstentempel | Lichtschlösser |
+| 🌑 | Schattenreich | Schattenläufer – Licht ist deine Waffe |
+| ❄️ | Polarlicht | Farbwandler |
+| 🐠 | Korallenriff | Strömungen |
 
-| Ordner | Aufgabe |
-| --- | --- |
-| `src/game/` | Spielregeln, Löser, Levelschmiede, Pixel-Renderer, Raumausstattung |
-| `src/adventure/` | Escape-Raum: Bewegung, Tür, Fundstücke, Ingame-HUD |
-| `src/ui/` | Startseite, Menü, Tagesrätsel |
+Jede Welt endet mit einer 👑 **Meisterprüfung**.
+
+## 🔓 Freischalten
+
+Du startest im Abenteuer. Mit jedem geschafften Raum öffnen sich neue Modi:
+
+`🗺 Welten` (3 Räume) → `🎨 Held` (5) → `📅 Tagesrätsel` (6) → `🛒 Krämer` (8) → `🏆 Erfolge` (10) → `🔨 Level-Bauer` & `🌍 Community` (12)
+
+## 🔨 Level-Bauer & 🌍 Community
+
+Baue eigene Räume mit allen Bauteilen, lass den Löser prüfen, ob sie lösbar sind, und spiele sie sofort. Mit **Veröffentlichen** landet dein Raum als [Issue mit dem Titel `[Level] …`](https://github.com/griesgraberflorian/Prismara/issues) in diesem Repo – der **Community-Tab** im Spiel lädt alle Räume von dort, sortiert nach 👍.
+
+> Mit 👍 auf einem Level-Issue empfiehlst du einen Raum. Geschlossene Issues verschwinden aus der Community.
+
+## 🎮 Steuerung
+
+| PC | Handy |
+|---|---|
+| `WASD` / Pfeiltasten – laufen & schieben | Steuerkreuz oder Wischen |
+| `Leertaste` – drehen | grüner Drehen-Knopf |
+| `Z` – Zug zurück · `R` – Raum neu | ↶ / ⟲ |
+| `Esc` – Pause | ⏸ |
+
+## 🧠 Gehirn Lab
+
+Prismara ist offen gebaut: Das **Gehirn Lab** zeigt fast 500 Knoten – jede Idee, jedes Level, jede Datei und jede Entscheidung – als 3D-Karte oder Liste, mit Wachstums-Wiedergabe, Farbpaletten und Wichtigkeitsfilter.
+
+## 🛠 Technik
+
+Reine ES-Module ohne Build-Schritt und ohne Abhängigkeiten. Pixel-Renderer mit Minecraft-artigem Licht (Lichtstufen, Schatten, Bloom), Löser per Breitensuche, Levelschmiede für Tagesrätsel.
+
+| Ordner | Inhalt |
+|---|---|
+| `src/game/` | Regeln, Löser, Levelschmiede, Pixel-Renderer, Welten, Freischalten |
+| `src/adventure/` | Escape-Raum, HUD, Handy-Steuerung |
+| `src/ui/` | Menü, Tagesrätsel, Level-Bauer, Community |
 | `src/lab/` | Gehirn Lab und 3D-Karte |
-| `lab/` | Gespeicherte Knoten, Verbindungen und Arbeitsschritte |
-| `assets/` | Symbol und Banner |
+| `lab/` | Knoten, Verbindungen und Arbeitsschritte |
 
-### Lokal ansehen
+Lokal ansehen: `python -m http.server` im Repo-Ordner, dann `http://localhost:8000`.
 
-Reine statische Dateien, kein Build-Schritt: den Ordner mit einem beliebigen lokalen Webserver ausliefern (z. B. `python -m http.server`) oder per GitHub Pages veröffentlichen. Die Domain steht in `CNAME`.
+---
 
-Der Quellcode ist öffentlich einsehbar. Eine separate Lizenzdatei ist derzeit nicht enthalten; daraus sollte keine weitergehende Nutzungserlaubnis abgeleitet werden.
+<div align="center">
+
+Ein Projekt von **Florian** · gespielt auf **[g2studio.net](https://g2studio.net)**
+
+<sub>Der Quellcode ist öffentlich einsehbar. Eine separate Lizenzdatei ist derzeit nicht enthalten; daraus sollte keine weitergehende Nutzungserlaubnis abgeleitet werden.</sub>
+
+</div>
