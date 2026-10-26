@@ -76,13 +76,22 @@ export function logoCanvas() {
 }
 
 /** Setzt das Wappen als Favicon. */
+/** Browser-Symbol: leuchtende Redstone-Lampe (wie assets/icon.svg), Kacheln in Rot, Grün, Blau, Gold.
+ *  Die Kacheln glimmen abwechselnd nach, damit der Tab lebendig wirkt (alle 1,2 s, nicht auf Akkukosten). */
 export function setFavicon() {
-  const c = document.createElement('canvas');
-  c.width = 32; c.height = 40;
-  drawEmblem(c.getContext('2d'));
   const sq = document.createElement('canvas'); sq.width = 64; sq.height = 64;
-  const g = sq.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(c, 6, 0, 51, 64);
+  const g = sq.getContext('2d');
   let link = document.querySelector('link[rel="icon"]');
   if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
-  link.href = sq.toDataURL('image/png');
+  const tiles = [[2, 2, '#ff4d6d', '#ffb3c1'], [9, 2, '#3ddc97', '#b6f5d9'], [2, 9, '#4da3ff', '#bcdcff'], [9, 9, '#ffd166', '#fff0c2']];
+  const draw = (k) => {
+    const p = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x * 4, y * 4, w * 4, h * 4); };
+    p(0, 0, 16, 16, '#2a1a10'); p(1, 1, 14, 14, '#7a3a10'); p(1, 1, 14, 1, '#4a3424');
+    tiles.forEach(([x, y, c, hi], i) => { p(x, y, 5, 5, i === k ? hi : c); p(x, y, 2, 2, hi); });
+    p(7, 7, 2, 2, '#fff6d0');
+    link.href = sq.toDataURL('image/png');
+  };
+  let k = 0;
+  draw(-1);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { if (!document.hidden) draw(k++ % 4); }, 1200);
 }

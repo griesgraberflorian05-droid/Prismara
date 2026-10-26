@@ -199,49 +199,42 @@ export class PixelRenderer {
     this.crate(X, Y);
   }
 
-  // Lichtquelle als alte Laterne: Messingdach, Glas mit flackernder Flamme in der Lichtfarbe,
-  // ein kleiner Trieb zeigt, in welche Richtung die Ranke wächst.
+  // Lichtquelle als Redstone-Fackel: Holzstiel, glühender Kopf in der Signalfarbe mit Funken;
+  // ein Staubpunkt auf dem Boden zeigt, in welche Richtung die Leitung läuft.
   emitter(x, y, c, t = 0) {
     const px = x * T, py = y * T, hex = COLOR_INFO[c.color]?.hex || '#fff';
-    this.r(px + 7, py, 2, 2, '#3a2a14');                         // Aufhängung
-    this.r(px + 4, py + 2, 8, 2, '#b8893a'); this.r(px + 5, py + 1, 6, 1, '#d9a94e'); // Dach
-    this.r(px + 4, py + 4, 8, 8, '#3a2a14');                      // Rahmen
-    this.r(px + 5, py + 4, 6, 7, shade(hex, -0.55));             // Glas
-    const fl = Math.floor(t / 140) % 3;
-    this.r(px + 7, py + 6 + (fl === 1 ? 1 : 0), 2, 4 - (fl === 1 ? 1 : 0), hex); // Flamme
-    this.r(px + 7, py + 8, 2, 2, '#fff6b0');
-    this.r(px + 4, py + 12, 8, 2, '#b8893a');                     // Boden
-    const [dx, dy] = DIRS[c.dir];                                 // Trieb in Wuchsrichtung
-    this.r(px + 7 + dx * 6, py + 8 + dy * 6, 2, 2, '#5fae4a');
+    const [dx, dy] = DIRS[c.dir];
+    this.r(px + 7 + dx * 6, py + 8 + dy * 6, 2, 2, shade(hex, -0.2)); // Leitungsansatz
+    this.r(px + 5, py + 13, 6, 2, '#3a3a3a'); this.r(px + 5, py + 13, 6, 1, '#6a6a6a'); // Steinsockel
+    this.r(px + 7, py + 6, 2, 7, '#5a3a1a'); this.r(px + 7, py + 6, 1, 7, '#8a5a2a'); // Stiel
+    const fl = Math.floor(t / 160) % 3;
+    this.r(px + 6, py + 2, 4, 4, shade(hex, -0.45));                // Kopf (dunkler Rand)
+    this.r(px + 7, py + 3, 2, 2, fl === 1 ? shade(hex, 0.35) : hex); // glühender Kern
+    this.r(px + 7, py + 1 - (fl === 2 ? 1 : 0), 1, 1, shade(hex, 0.5)); // aufsteigender Funke
+    if (fl === 0) this.r(px + 9, py, 1, 1, hex);
   }
 
-  // Ziel = Blumentopf: geschlossene Knospe (zeigt die gewünschte Farbe als Formsymbol am Topf);
-  // richtiges Licht → Blüte öffnet sich in der Farbe; falsches Licht → Blüte welkt (hängt, grau-rot).
+  // Ziel = Redstone-Lampe: Steinrahmen mit Glaskacheln. Aus: dunkles Glas, die Wunschfarbe als
+  // Symbol. Richtiges Signal: die Lampe leuchtet in der Farbe. Falsches Signal: sie flackert matt.
   target(x, y, c, info, t) {
     const px = x * T, py = y * T, hex = COLOR_INFO[c.need]?.hex || '#fff';
     const ok = info?.ok, wrong = info && info.got && !info.ok;
-    // Topf aus Terrakotta
-    this.r(px + 3, py + 10, 10, 5, '#5a2e1c'); this.r(px + 4, py + 10, 8, 4, '#b5623a'); this.r(px + 3, py + 9, 10, 2, '#d17a4a');
-    this.r(px + 4, py + 9, 8, 1, '#3a2010');
-    this.glyphs(px + 8, py + 12, c.need, '#ffe0c8'); // Wunschfarbe als Symbol am Topf
-    // Stängel
-    const sway = Math.floor(t / 700) % 2;
-    const stemTop = wrong ? py + 6 : py + 4;
-    this.r(px + 7 + (wrong ? 1 : 0), stemTop, 2, py + 9 - stemTop, '#2f6b2a');
-    this.r(px + 5, py + 7, 2, 1, '#4f9e3c'); this.r(px + 9, py + 6, 2, 1, '#4f9e3c');
+    const flick = wrong && Math.floor(t / 180) % 3 === 0;
+    this.r(px + 1, py + 1, 14, 14, '#2a1a10');                       // Rahmen außen
+    this.r(px + 2, py + 2, 12, 12, ok ? shade(hex, -0.15) : flick ? '#5a3a2a' : '#4a2c18'); // Glas
+    // Kachelfugen
+    const fug = ok ? shade(hex, -0.45) : '#2a1a10';
+    this.r(px + 7, py + 2, 2, 12, fug); this.r(px + 2, py + 7, 12, 2, fug);
     if (ok) {
-      // offene Blüte: Blätter in der Lichtfarbe, heller Kern
-      const cx = px + 8 + (sway ? 0 : 0), cy = py + 3;
-      this.r(cx - 4, cy - 1, 8, 3, hex); this.r(cx - 2, cy - 3, 4, 7, hex);
-      this.r(cx - 3, cy - 2, 1, 1, shade(hex, 0.4)); this.r(cx + 2, cy + 1, 1, 1, shade(hex, -0.3));
-      this.r(cx - 1, cy, 2, 2, '#fff6b0');
-    } else if (wrong) {
-      // welke, hängende Blüte
-      this.r(px + 9, py + 6, 3, 3, '#7a5a5e'); this.r(px + 10, py + 9, 2, 1, '#5a3a3e');
+      // glühende Kacheln mit hellem Kern
+      for (const [ox, oy] of [[3, 3], [10, 3], [3, 10], [10, 10]]) this.r(px + ox, py + oy, 3, 3, shade(hex, 0.45));
+      this.r(px + 7, py + 7, 2, 2, '#fff6d0');
     } else {
-      // geschlossene Knospe mit Farbspitze
-      this.r(px + 6, py + 2, 4, 4, '#3f8f34'); this.r(px + 7, py + 1, 2, 2, hex);
+      // dunkles Glas mit Wunschfarbe als Formsymbol in der Mitte
+      for (const [ox, oy] of [[3, 3], [10, 10]]) this.r(px + ox, py + oy, 2, 1, '#6a4428');
+      this.glyphs(px + 8, py + 8, c.need, wrong ? '#c0a090' : shade(hex, -0.1));
     }
+    this.r(px + 1, py + 1, 14, 1, '#4a3424');                        // Oberkante
   }
 
   sensor(x, y, c, info) {
@@ -417,36 +410,36 @@ export class PixelRenderer {
     else { this.r(cx - 2, y + 1, 1, 1, c); this.r(cx - 1, y + 2, 1, 1, c); this.r(cx, y + 1, 1, 1, c); this.r(cx + 1, y + 2, 1, 1, c); this.r(cx + 2, y + 1, 1, 1, c); }
   }
 
-  /** Statt Feuerwerk: Beim Entkommen sprießen Blumen aus dem Boden rund um die Figur und
-   *  Blütenblätter steigen von den Zielen und der Tür auf (bloom = { t0, cx, cy, sources }). */
+  /** Beim Entkommen: eine Redstone-Welle läuft von der Tür über den Boden (Staubfunken schalten
+   *  nacheinander an) und rote Redstone-Partikel steigen von den Lampen und der Tür auf
+   *  (bloom = { t0, cx, cy, sources }). */
   bloomFx(bloom, t) {
     const { level } = this;
     const k = (t - bloom.t0) / 1000;
     if (k < 0 || k > 3) return;
-    // sprießende Blumen auf freien Bodenfeldern im ganzen Raum – zuerst nahe der Tür, dann nach außen
-    for (let n = 0; n < 40; n++) {
+    // Staubfunken auf freien Bodenfeldern – zuerst nahe der Tür, dann nach außen
+    for (let n = 0; n < 48; n++) {
       const fx = 1 + Math.floor(hash(n, 3) * (level.w - 2)), fy = 1 + Math.floor(hash(n, 5) * (level.h - 2));
       const c = level.cells[fy * level.w + fx];
       if (!c || c.type !== 'empty') continue;
-      const delay = Math.hypot(fx - bloom.cx, fy - bloom.cy) * 0.09 + hash(n, 9) * 0.2;
-      const g = Math.max(0, Math.min(1, (k - delay) / 0.4));
-      if (!g) continue;
-      const px = fx * T + 3 + Math.floor(hash(n, 11) * 10), py = fy * T + 12;
-      const h = Math.round(g * 5);
-      this.r(px, py - h, 1, h, '#2f6b2a');
-      if (g >= 1) {
-        const col = ['#ff9cc8', '#fff6b0', '#ffffff', '#c9a7ff', '#ffb36b'][n % 5];
-        this.r(px - 1, py - h - 1, 3, 1, col); this.r(px, py - h - 2, 1, 3, col); this.r(px, py - h - 1, 1, 1, '#ffd166');
-      }
+      const delay = Math.hypot(fx - bloom.cx, fy - bloom.cy) * 0.08 + hash(n, 9) * 0.15;
+      const g = (k - delay) / 0.6;
+      if (g < 0 || g > 2.2) continue;
+      const px = fx * T + 3 + Math.floor(hash(n, 11) * 10), py = fy * T + 6 + Math.floor(hash(n, 13) * 7);
+      const on = g < 1;
+      this.ctx.globalAlpha = Math.max(0, Math.min(1, 2.2 - g));
+      this.r(px - 1, py, 3, 1, on ? '#ff3a2a' : '#7a1010'); this.r(px, py - 1, 1, 3, on ? '#ff3a2a' : '#7a1010');
+      if (on) this.r(px, py, 1, 1, '#ffd0c0');
+      this.ctx.globalAlpha = 1;
     }
-    // Blütenblätter steigen auf und trudeln
+    // Redstone-Partikel steigen auf (wie über aktivem Redstone)
     for (const s of bloom.sources) {
-      for (let n = 0; n < 7; n++) {
+      for (let n = 0; n < 8; n++) {
         const ph = k * 0.8 + hash(n, s.x * 7 + s.y) * 0.5;
         if (ph > 1.6) continue;
-        const px = s.x * T + 8 + Math.sin(ph * 6 + n) * 6 + (hash(n, 2) - 0.5) * 10, py = s.y * T + 6 - ph * 28;
+        const px = s.x * T + 8 + Math.sin(ph * 4 + n) * 4 + (hash(n, 2) - 0.5) * 12, py = s.y * T + 8 - ph * 26;
         this.ctx.globalAlpha = Math.max(0, 1 - ph / 1.6);
-        this.r(px, py, 2, 1, n % 2 ? '#ff9cc8' : '#ffd6e7'); this.r(px + (Math.floor(ph * 10) % 2), py + 1, 1, 1, '#ff7ab6');
+        this.r(px, py, 2, 2, n % 3 ? '#ff2a1a' : '#ff8a6a'); if (n % 2) this.r(px, py, 1, 1, '#ffe0d0');
         this.ctx.globalAlpha = 1;
       }
     }
@@ -603,14 +596,15 @@ export class PixelRenderer {
     this.r(px + 7, py + 3, 2, 1, '#ffffff'); this.r(px + 6, py + 4, 4, 5, '#9ff6ff'); this.r(px + 7, py + 9, 2, 2, '#4fc3d8'); this.r(px + 7, py + 5, 1, 2, '#ffffff');
   }
 
-  // Licht als leuchtende Ranken: Statt Laserstrahlen wächst aus jeder Lampe eine Ranke den Lichtweg
-  // entlang – Stängel mit leichtem Schwung, Blätter abwechselnd links/rechts, leuchtende Blüten in der
-  // Lichtfarbe (Form je Farbe: Rot ▲, Grün ●, Blau ■). grow = sichtbare Länge in Feldern (Wachsen).
+  // Licht als Redstone-Leitung: Aus jeder Fackel breitet sich Redstone-Staub den Lichtweg entlang aus –
+  // dunkler Staubkern, glitzernde Körnchen links/rechts, ein Signalpuls wandert von der Quelle weg.
+  // Farbe = Signalfarbe (Rot klassisch, Grün/Blau/Mischfarben getönt); alle 15 px ein Formsymbol
+  // (Rot ▲, Grün ●, Blau ■) für Farbenblinde. grow = sichtbare Länge in Feldern (Ausbreiten).
   beams(beams, t, grow = Infinity) {
     for (const beam of beams) {
       const hex = COLOR_INFO[beam.color]?.hex || '#fff';
+      const dark = shade(hex, -0.55), mid = shade(hex, -0.2), hi = shade(hex, 0.45);
       const comps = [1, 2, 4].filter((c) => beam.color & c);
-      const seed = Math.floor((beam.points[0][0] * 7 + beam.points[0][1] * 13) * 10);
       let dist = 0;
       const limit = grow * T;
       for (let i = 1; i < beam.points.length && dist < limit; i++) {
@@ -618,28 +612,30 @@ export class PixelRenderer {
         const sx = x0 * T, sy = y0 * T, ex = x1 * T, ey = y1 * T;
         const len = Math.hypot(ex - sx, ey - sy);
         const ux = (ex - sx) / (len || 1), uy = (ey - sy) / (len || 1);
-        const nx = -uy, ny = ux; // quer zur Wuchsrichtung
+        const nx = -uy, ny = ux; // quer zur Laufrichtung
         for (let s = 0; s <= len && dist < limit; s += 1, dist += 1) {
-          const sway = Math.round(Math.sin((dist + seed) / 5) * 1.5 + Math.sin(t / 900 + dist / 9) * 0.5);
-          const px = Math.round(sx + ux * s + nx * sway), py = Math.round(sy + uy * s + ny * sway);
-          this.r(px - 1, py - 1, 2, 2, '#1f4a22');            // Stängel
-          this.r(px - 1, py - 1, 1, 1, '#5fae4a');            // Lichtkante
+          const px = Math.round(sx + ux * s), py = Math.round(sy + uy * s);
           const k = Math.round(dist);
-          if (k % 7 === 3) {                                   // Blatt, abwechselnd links/rechts
-            const side = (k / 7) % 2 < 1 ? 1 : -1;
-            const lx = px + nx * side * 2, ly = py + ny * side * 2;
-            this.r(lx - 1, ly - 1, 3, 2, '#3f8f34'); this.r(lx, ly - 1, 1, 1, '#8fd16a');
-          }
-          if (k % 15 === 9) {                                  // leuchtende Blüte in der Lichtfarbe
-            const pulse = Math.floor(t / 400 + k) % 2;
-            comps.forEach((c, j) => this.glyph(px + nx * (j * 4 - (comps.length - 1) * 2) + nx * 3, py + ny * (j * 4 - (comps.length - 1) * 2) + ny * 3, c, pulse ? hex : shade(hex, 0.35)));
+          // Signalpuls: helle Welle läuft von der Quelle weg
+          const wave = Math.sin((dist - t * 0.05) / 5);
+          this.r(px - 2, py - 2, 4, 4, dark);                       // breite Staubspur
+          this.r(px - 1, py - 1, 2, 2, wave > 0.55 ? hi : mid);     // glimmende Mitte
+          // verstreute Staubkörner an den Rändern (fest je Pixel, damit nichts zappelt)
+          const g = hash(k, i * 13 + beam.points[0][0]);
+          if (g > 0.5) { const side = g > 0.75 ? 1 : -1; this.r(px + nx * side * 3, py + ny * side * 3, 1, 1, wave > 0.2 ? mid : dark); }
+          if (g > 0.9) this.r(px - nx * 4, py - ny * 4, 1, 1, hi);
+          if (k % 15 === 9 && wave > 0) {                           // Farbsymbol, pulsiert mit
+            comps.forEach((c, j) => this.glyph(px + nx * (j * 4 - (comps.length - 1) * 2) + nx * 4, py + ny * (j * 4 - (comps.length - 1) * 2) + ny * 4, c, hi));
           }
         }
-        // Ranke rollt sich an Spiegeln/Ecken kurz ein
-        if (i < beam.points.length - 1 && dist < limit) { const cx = Math.round(ex), cy = Math.round(ey); this.r(cx - 2, cy - 2, 4, 1, '#5fae4a'); this.r(cx + 1, cy - 2, 1, 3, '#5fae4a'); }
+        // Knotenpunkt an Spiegeln/Ecken: Staubkreuz wie bei Redstone-Abzweigungen
+        if (i < beam.points.length - 1 && dist < limit) {
+          const cx = Math.round(ex), cy = Math.round(ey);
+          this.r(cx - 3, cy - 3, 6, 6, dark); this.r(cx - 2, cy - 2, 4, 4, mid); this.r(cx - 1, cy - 1, 2, 2, Math.sin(t / 250 + i) > 0 ? hi : mid);
+        }
       }
-      // Wachstumsspitze: heller Trieb
-      if (dist < limit) continue;
+      // Spitze beim Ausbreiten: ein heller Funke
+      if (dist < limit || !beam.points.length) continue;
     }
   }
 

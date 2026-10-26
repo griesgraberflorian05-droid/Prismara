@@ -14,11 +14,14 @@ import { play, isMuted, toggleMute } from '../game/sound.js';
 import { prefersReducedMotion } from '../settings.js';
 import { stopCelebration } from '../ui/celebrate.js';
 import { devlog } from '../devlog.js';
+import { isUnlocked, solvedCount, unlockedBetween } from '../game/unlocks.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KEYS = { ArrowUp: 0, w: 0, W: 0, ArrowRight: 1, d: 1, D: 1, ArrowDown: 2, s: 2, S: 2, ArrowLeft: 3, a: 3, A: 3 };
 const STEP_MS = 130;   // Gleitdauer eines Schritts
-const REPEAT_MS = 150; // Taste halten: so oft wird weitergelaufen
+// Taste halten: der nächste Schritt schließt nahtlos an (gleich lang wie ein Schritt, gleichmäßige
+// Geschwindigkeit) – vorher gab es nach jedem Schritt eine kleine Pause, das wirkte ruckelig.
+const REPEAT_MS = STEP_MS;
 const FRAG_KEY = 'prismara.fragments.v1';
 // Kraftleiste: Schieben kostet Kraft, Laufen und Verschnaufen laden sie wieder auf.
 const PUSH_COST = 0.34, STEP_REGEN = 0.1, IDLE_REGEN = 0.45, REST_MS = 900;
@@ -184,6 +187,8 @@ export function mountAdventure(root, params, opts = {}) {
   const themeId = opts.theme || (chapter ? CHAPTER_WORLD[chapter.id] : 'default');
   const theme = PIXEL_THEMES[themeId] || PIXEL_THEMES.default;
   const exit = def.exit ? exitAt(level, def.exit) : findExit(level);
+  // Handy-Steuerung nur, wenn der Finger das Hauptzeigegerät ist (Handy/Tablet). Laptops mit
+  // Touchscreen haben eine Maus als Hauptzeiger und behalten die Tastatur-Ansicht.
   const touch = matchMedia('(pointer: coarse)').matches;
   const frags = loadFrags();
   const fragments = placeFragments(level, def).map((f, i) => ({ ...f, got: (frags[def.id] || []).includes(i), i }));
@@ -201,7 +206,7 @@ export function mountAdventure(root, params, opts = {}) {
   document.body.classList.add('ingame');
   const worldName = tutorial ? '📖 Tutorial' : { beach: '🏖️ Sommerstrand', cherry: '🌸 Kirschblüte', jungle: '🌴 Dschungel', night: '🌙 Nachtwald', volcano: '🌋 Vulkanschmiede', temple: '🏜️ Wüstentempel', shadow: '🌑 Schattenreich', aurora: '❄️ Polarlicht', reef: '🐠 Korallenriff', castle: '🏰 Burgverlies', moor: '🌫️ Nebelmoor' }[themeId] || '';
   root.innerHTML = `
-    <section class="adv-full pixel-ui" style="--w1:${theme.ambient};--w2:${theme.dark};--w3:${theme.face}">
+    <section class="adv-full pixel-ui${touch ? ' touch' : ''}" style="--w1:${theme.ambient};--w2:${theme.dark};--w3:${theme.face}">
       <canvas id="board" class="pixel-canvas" tabindex="0" aria-label="Raum. WASD oder Pfeiltasten: ein Feld laufen und Kisten schieben, Leertaste: drehen. Sind alle Ziele beleuchtet, öffnet sich die Tür."></canvas>
 
       <div class="ihud ihud-tl pixel">
@@ -249,12 +254,14 @@ export function mountAdventure(root, params, opts = {}) {
           <button class="btn btn-primary" id="p-resume">▶ Weiter</button>
           <button class="btn" id="p-undo">↶ Zug zurück</button>
           <button class="btn" id="p-reset">⟲ Raum neu</button>
-          <a class="btn" href="#/menu/chapter/${Math.max(0, chIndex)}">🗺 Weltkarte</a>
+          ${isUnlocked('worlds') ? `<a class="btn" href="#/menu/chapter/${Math.max(0, chIndex)}">🗺 Weltkarte</a>` : ''}
+          ${opts.back ? `<a class="btn" href="${esc(opts.back)}">${esc(opts.backLabel || 'Zurück')}</a>` : ''}
           <a class="btn" href="#/menu">⌂ Hauptmenü</a>
           <p class="pause-keys">WASD/Pfeile laufen &amp; schieben · Leertaste drehen · Z zurück · R neu · Esc Pause</p>
         </div>
       </div>
-      ${touch ? `<div class="dpad" aria-hidden="true"><button data-d="0">▲</button><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button></div>` : ''}
+      ${touch ? `<div class="dpad" aria-hidden="true"><button data-d="0">▲</button><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button><i class="dpad-hub"></i></div>
+      <button class="tpad-rot" id="tpad-rot" aria-label="Drehen">⟳<small>DREHEN</small></button>` : ''}
     </section>`;
 
   const $ = (s) => root.querySelector(s);
@@ -355,9 +362,9 @@ export function mountAdventure(root, params, opts = {}) {
     { text: `Willkommen im Lehrzimmer! Lauf mit ${touch ? 'dem Steuerkreuz' : 'WASD oder den Pfeiltasten'} ein paar Schritte.`, done: () => state.moves >= 2, mark: () => null },
     { text: 'Siehst du den Spiegel? Stell dich unter ihn und lauf dagegen – so schiebst du ihn nach oben.', done: () => mirror().y < 4, mark: () => ({ x: 6, y: 5 }) },
     { text: 'Schieb ihn bis ganz nach oben an die Wand. Schieben kostet KRAFT (unten links) – ist sie leer, verschnaufst du kurz.', done: () => mirror().y === 1, mark: () => ({ x: 6, y: 1 }) },
-    { text: `${touch ? '⟳' : 'Leertaste'} dreht den Spiegel, auf den du schaust. Dreh ihn, damit die Ranke nach unten wächst.`, done: () => mirror().y === 1 && mirror().orient === '\\', mark: () => mirror() },
-    { text: 'Die Ranke wächst zu dir! Tritt zur Seite, damit sie den Blumentopf erreicht.', done: () => tr.solved, mark: () => ({ x: 6, y: 6 }) },
-    { text: 'Der Topf blüht – die Tür ist offen! Hol dir noch einen Kristall, wenn du magst, und geh dann durch die Tür.', done: () => done, mark: () => exit },
+    { text: `${touch ? '⟳' : 'Leertaste'} dreht den Spiegel, auf den du schaust. Dreh ihn, damit die Leitung nach unten läuft.`, done: () => mirror().y === 1 && mirror().orient === '\\', mark: () => mirror() },
+    { text: 'Die Leitung läuft zu dir! Tritt zur Seite, damit sie die Redstone-Lampe erreicht.', done: () => tr.solved, mark: () => ({ x: 6, y: 6 }) },
+    { text: 'Die Lampe leuchtet – die Tür ist offen! Hol dir noch einen Kristall, wenn du magst, und geh dann durch die Tür.', done: () => done, mark: () => exit },
   ];
   let tutStep = 0, tutShown = -1, bumps = 0;
   function coach() {
@@ -478,7 +485,9 @@ export function mountAdventure(root, params, opts = {}) {
     state = { ...state, player: { ...state.player, x: exit.x, y: exit.y, dir: d } };
     const prevBest = tutorial ? null : bestMoves(def.id);
     const counted = solveMoves ?? state.moves;
+    const solvedBefore = solvedCount();
     const improved = !tutorial && recordSolve(def.id, counted);
+    const unlockedNow = custom ? [] : unlockedBetween(solvedBefore, solvedCount());
     if (tutorial) { try { localStorage.setItem(TUT_SEEN, '1'); } catch { /* blockiert */ } }
     // Münzen fürs Entkommen: erstes Mal viel, Verbesserung etwas, Wiederholung ein bisschen
     const firstTime = !tutorial && prevBest == null;
@@ -496,11 +505,12 @@ export function mountAdventure(root, params, opts = {}) {
       <div class="win-card pixel-card">
         <div class="win-stars" aria-label="${stars} von 3 Sternen">${[1, 2, 3].map((i) => `<span class="${i <= stars ? 'on' : ''}" style="--i:${i}">★</span>`).join('')}</div>
         <h2 id="win-title" class="pixel">${tutorial ? 'TUTORIAL GESCHAFFT!' : lastInWorld ? 'WELT GESCHAFFT!' : 'ENTKOMMEN!'}</h2>
-        ${tutorial ? '<p>Du kannst laufen, schieben, drehen und Ranken zum Blühen bringen. Jetzt wartet der Sommerstrand!</p>' : ''}
+        ${tutorial ? '<p>Du kannst laufen, schieben, drehen und Redstone-Lampen zum Leuchten bringen. Jetzt wartet der Sommerstrand!</p>' : ''}
         <p class="win-coins">🪙 +${reward} Münzen · im Beutel ${getInv().coins}</p>
+        ${unlockedNow.map((m) => `<p class="win-unlock">🔓 Neu freigeschaltet: ${m.icon} <b>${esc(m.name)}</b></p>`).join('')}
         <p>Rätsel in ${counted} Zügen · Ziel ≤ ${def.par}${improved && prevBest != null ? ' · neue Bestleistung' : ''} · Fragmente ${fragments.filter((f) => f.got).length}/${fragments.length}</p>
         <div class="win-actions">
-          ${tutorial ? '<a class="btn btn-primary" href="#/adv/0" id="win-next">Los geht’s: Raum 1 →</a>' : nextIndex != null ? `<a class="btn btn-primary" href="#/adv/${nextIndex}" id="win-next">${lastInWorld ? 'Nächste Welt →' : 'Nächster Raum →'}</a>` : (custom ? '<a class="btn btn-primary" href="#/menu" id="win-next">Zurück zum Menü</a>' : '<a class="btn btn-primary" href="#/menu" id="win-next">Alle Räume geschafft!</a>')}
+          ${tutorial ? '<a class="btn btn-primary" href="#/adv/0" id="win-next">Los geht’s: Raum 1 →</a>' : nextIndex != null ? `<a class="btn btn-primary" href="#/adv/${nextIndex}" id="win-next">${lastInWorld ? 'Nächste Welt →' : 'Nächster Raum →'}</a>` : (custom ? `<a class="btn btn-primary" href="${esc(opts.back || '#/menu')}" id="win-next">${esc(opts.backLabel || 'Zurück zum Menü')}</a>` : '<a class="btn btn-primary" href="#/menu" id="win-next">Alle Räume geschafft!</a>')}
           <button class="btn" id="win-retry">Nochmal (R)</button>
         </div>
       </div>`;
@@ -569,17 +579,36 @@ export function mountAdventure(root, params, opts = {}) {
       const up = () => { if (held === d) held = null; };
       b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up); b.addEventListener('pointercancel', up);
     });
+    $('#tpad-rot').addEventListener('pointerdown', (ev) => { ev.preventDefault(); rotate(); if (navigator.vibrate) navigator.vibrate(12); });
+    // Wischen übers Spielfeld: ein Feld in Wischrichtung (Tippen fokussiert nur)
+    let swipe = null;
+    canvas.addEventListener('pointerdown', (ev) => { swipe = { x: ev.clientX, y: ev.clientY }; });
+    canvas.addEventListener('pointerup', (ev) => {
+      if (!swipe) return;
+      const dx = ev.clientX - swipe.x, dy = ev.clientY - swipe.y;
+      swipe = null;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+      stepDir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0));
+    });
   }
 
   // ---------- Zeichnen ----------
-  let running = true;
+  let running = true, shownStamina = '';
+  const staminaEl = $('#stamina');
   const lerp = (a, b, k) => a + (b - a) * k;
   function frame(t) {
     if (!running) return;
-    if (held != null && t - lastStep > REPEAT_MS && (!anim.t0 || t - anim.t0 > STEP_MS)) { stepDir(held); lastStep = t; }
+    if (held != null && t - lastStep >= REPEAT_MS && (!anim.t0 || t - anim.t0 >= STEP_MS)) {
+      // Anschluss genau am Ende des vorigen Schritts (nicht erst beim nächsten Bild) → keine Lücke
+      const chainT0 = anim.t0 && t - anim.t0 < STEP_MS + 60 ? anim.t0 + STEP_MS : 0;
+      const before = anim;
+      stepDir(held); lastStep = t;
+      if (anim !== before && anim.t0 && chainT0) { anim.t0 = chainT0; anim.chain = true; }
+    }
     const reduced = prefersReducedMotion();
     const k = reduced || !anim.t0 ? 1 : Math.min(1, (t - anim.t0) / STEP_MS);
-    const e = 1 - Math.pow(1 - k, 3);
+    // gehaltene Taste: gleichmäßig laufen; einzelner Schritt: weich ausbremsen
+    const e = anim.chain ? k : 1 - Math.pow(1 - k, 3);
     // Kraft lädt sich beim Verschnaufen auf; nach der Pause mindestens für einen Schub
     if (t - lastInput > 350 && stamina < 1) stamina = Math.min(1, stamina + IDLE_REGEN * (1 / 60));
     if (restUntil && t >= restUntil) { stamina = Math.max(stamina, pushCost + 0.02); restUntil = 0; }
@@ -596,7 +625,8 @@ export function mountAdventure(root, params, opts = {}) {
       yawn: !done && !caught && idle > 8000 && (idle % 9000) < 1800,
     };
     dust = dust.filter((d) => t - d.t0 < 450);
-    $('#stamina').style.setProperty('--k', stamina.toFixed(2));
+    const kStr = stamina.toFixed(2);
+    if (kStr !== shownStamina) { shownStamina = kStr; staminaEl.style.setProperty('--k', kStr); }
     const blocks = state.blocks.map((b, i) => {
       const sq = squash && squash.i === i && !reduced ? Math.max(0, 1 - (t - squash.t0) / 220) : 0;
       return { ...b, x: lerp(anim.blocks[i].x, b.x, e), y: lerp(anim.blocks[i].y, b.y, e), squash: sq ? Math.sin(sq * Math.PI) * 0.15 : 0, squashDir: state.player.dir };

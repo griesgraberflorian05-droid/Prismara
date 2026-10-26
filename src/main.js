@@ -5,6 +5,8 @@ import { mountPush } from './ui/pushView.js';
 import { mountDaily } from './ui/dailyView.js';
 import { mountAdventure } from './adventure/adventure.js';
 import { mountTextures } from './adventure/textureSheet.js';
+import { mountBuilder } from './ui/builderView.js';
+import { mountCommunity } from './ui/communityView.js';
 import { setFavicon } from './ui/logo.js';
 
 setFavicon();
@@ -15,6 +17,8 @@ const routes = {
   daily: { tab: 'game', mount: mountDaily },
   adv: { tab: 'game', mount: mountAdventure },
   textures: { tab: 'game', mount: mountTextures },
+  build: { tab: 'game', mount: mountBuilder },
+  community: { tab: 'game', mount: mountCommunity },
   play: { tab: 'game', mount: mountPush }, // alte Links des entfernten Setz-Modus
   // Eigenständige Seite nur mit der Gehirnkarte (für ein zweites Fenster)
   brain: { tab: 'lab', mount: (root) => mountLab(root, ['full', 'standalone']) },

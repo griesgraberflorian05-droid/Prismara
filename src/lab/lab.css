@@ -268,3 +268,4 @@ body.lab-wood .map-card.is-full { position: fixed; inset: 0; z-index: 50; border
   body.lab-wood .livelog.open .livelog-body { width: min(70vw, 300px); }
   body.lab-wood .map-tools input[type="search"] { width: 100%; }
 }
+@media (max-height: 760px) { body.lab-wood .map-card.is-full .map-tool-heading, body.lab-wood .map-card.is-full .importance-controls { display: none; } body.lab-wood .map-card.is-full .map-toolbar { gap: 6px; padding: 8px 10px; } }

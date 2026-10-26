@@ -1869,6 +1869,103 @@
                       "type":  "decision",
                       "summary":  "Portables Git + GitHub-CLI (ohne Admin). Repo bekommt das ganze aktuelle Spiel + Lab; PIN-Sperre, Intro und Domain bleiben.",
                       "status":  "testing"
+                  },
+                  {
+                      "id":  "req-redstone",
+                      "type":  "idea",
+                      "label":  "Wunsch: Redstone statt Pflanzen",
+                      "step":  19,
+                      "status":  "built",
+                      "summary":  "Nutzer: das mit den Pflanzen zu Redstone umbauen."
+                  },
+                  {
+                      "id":  "feat-redstone",
+                      "type":  "improvement",
+                      "label":  "Redstone-Optik",
+                      "step":  19,
+                      "status":  "passed",
+                      "summary":  "Lichtwege als Redstone-Staub mit Signalpuls, Ziele als Redstone-Lampen, Quellen als Redstone-Fackeln, Entkommen als Redstone-Welle. Farben bleiben (Rätsel brauchen sie); Texte im Raumführer und Lehrzimmer angepasst.",
+                      "area":  "src/game/pixelRender.js"
+                  },
+                  {
+                      "id":  "fix-walksmooth",
+                      "type":  "improvement",
+                      "label":  "Fix: flüssiges Laufen",
+                      "step":  19,
+                      "status":  "passed",
+                      "summary":  "Nutzer: ruckelt. Gehaltene Taste: Schritte schließen nahtlos an (vorher 20 ms Pause + Abbremsen je Feld), gleichmäßige Geschwindigkeit; Kraftleiste schreibt Stil nur bei Änderung.",
+                      "area":  "src/adventure/adventure.js"
+                  },
+                  {
+                      "id":  "feat-menu2",
+                      "type":  "improvement",
+                      "label":  "Hauptmenü überarbeitet",
+                      "step":  19,
+                      "status":  "passed",
+                      "summary":  "Startseite entfernt, sofort Hauptmenü; Reisetagebuch (Welt, Fortschritt, nächster Raum), Holzbrett, Gehirn-Lab-Knopf; Seite passt ins Fenster, kein Scrollen.",
+                      "area":  "#/menu"
+                  },
+                  {
+                      "id":  "req-modes",
+                      "type":  "idea",
+                      "label":  "Wunsch: Modi freischalten, Handy, Bauer",
+                      "step":  19,
+                      "status":  "built",
+                      "summary":  "Nutzer: Handy-Steuerung nur auf dem Handy, Browser-Icon neu, nur Hauptmodus zu Beginn, andere Modi freischalten, Level-Bauer; gebaute Level in einem Community-Tab über GitHub veröffentlichen."
+                  },
+                  {
+                      "id":  "feat-unlocks",
+                      "type":  "mechanic",
+                      "label":  "Freischalten der Modi",
+                      "step":  19,
+                      "status":  "passed",
+                      "summary":  "Start nur mit Abenteuer. Welten ab 3 Räumen, Held 5, Tagesrätsel 6, Krämer 8, Erfolge 10, Level-Bauer und Community 12. Gesperrte Knöpfe mit Schloss, Siegeskarte und Menü melden Neues.",
+                      "area":  "src/game/unlocks.js"
+                  },
+                  {
+                      "id":  "feat-builder",
+                      "type":  "mechanic",
+                      "label":  "Level-Bauer",
+                      "step":  19,
+                      "status":  "passed",
+                      "summary":  "Raster-Editor mit 16 Bauteilen, Größe und Welt wählbar, Vorschau im echten Renderer, Löser prüft Lösbarkeit + Zugziel, Spielen im Abenteuer, Speichern, Teilen-Link.",
+                      "area":  "#/build"
+                  },
+                  {
+                      "id":  "feat-community",
+                      "type":  "mechanic",
+                      "label":  "Community-Tab",
+                      "step":  19,
+                      "status":  "passed",
+                      "summary":  "Veröffentlichen öffnet ein vorausgefülltes GitHub-Issue [Level] mit Code-Block; #/community liest offene Issues über die öffentliche GitHub-API, sortiert nach 👍, Spielen mit Rücksprung. Moderation: Issue schließen.",
+                      "result":  "Beispielraum „Moorwächter“ als Issue #1 veröffentlicht und von der Seite geladen und gespielt.",
+                      "area":  "#/community"
+                  },
+                  {
+                      "id":  "obs-ghcache",
+                      "type":  "observation",
+                      "label":  "GitHub-API zwischengespeichert",
+                      "step":  19,
+                      "status":  "passed",
+                      "summary":  "Neues Issue erschien erst nicht: GitHub hält API-Antworten ~60 s vor. Abfrage jetzt mit Minuten-Zeitstempel + no-cache, Liste 5 min lokal gespeichert (Limit 60/h)."
+                  },
+                  {
+                      "id":  "feat-touch",
+                      "type":  "improvement",
+                      "label":  "Handy-Steuerung",
+                      "step":  19,
+                      "status":  "passed",
+                      "summary":  "Nur bei Finger als Hauptzeiger: Holz-Steuerkreuz, großer Drehen-Knopf, Wischen übers Feld; HUD rückt nach oben, Spielfeld bekommt unten Platz.",
+                      "area":  "src/adventure/adventure.js"
+                  },
+                  {
+                      "id":  "feat-favicon",
+                      "type":  "improvement",
+                      "label":  "Neues Browser-Icon",
+                      "step":  19,
+                      "status":  "built",
+                      "summary":  "Redstone-Lampe in Pixel-Art mit Kacheln in Rot, Grün, Blau, Gold; im Tab glimmt reihum eine Kachel nach.",
+                      "area":  "assets/icon.svg"
                   }
               ],
     "edges":  [
@@ -3776,6 +3873,91 @@
                       "from":  "feat-github",
                       "to":  "lvl-moor",
                       "rel":  "veröffentlicht"
+                  },
+                  {
+                      "from":  "req-redstone",
+                      "to":  "feat-redstone",
+                      "rel":  "führt zu"
+                  },
+                  {
+                      "from":  "feat-redstone",
+                      "to":  "req-redstone",
+                      "rel":  "erfüllt"
+                  },
+                  {
+                      "from":  "feat-menu2",
+                      "to":  "feat-homewood",
+                      "rel":  "ersetzt"
+                  },
+                  {
+                      "from":  "feat-github",
+                      "to":  "feat-menu2",
+                      "rel":  "veröffentlicht"
+                  },
+                  {
+                      "from":  "feat-github",
+                      "to":  "feat-redstone",
+                      "rel":  "veröffentlicht"
+                  },
+                  {
+                      "from":  "req-modes",
+                      "to":  "feat-unlocks",
+                      "rel":  "führt zu"
+                  },
+                  {
+                      "from":  "req-modes",
+                      "to":  "feat-builder",
+                      "rel":  "führt zu"
+                  },
+                  {
+                      "from":  "req-modes",
+                      "to":  "feat-touch",
+                      "rel":  "führt zu"
+                  },
+                  {
+                      "from":  "req-modes",
+                      "to":  "feat-favicon",
+                      "rel":  "führt zu"
+                  },
+                  {
+                      "from":  "req-modes",
+                      "to":  "feat-community",
+                      "rel":  "führt zu"
+                  },
+                  {
+                      "from":  "feat-builder",
+                      "to":  "feat-community",
+                      "rel":  "veröffentlicht in"
+                  },
+                  {
+                      "from":  "feat-unlocks",
+                      "to":  "feat-builder",
+                      "rel":  "schaltet frei"
+                  },
+                  {
+                      "from":  "feat-unlocks",
+                      "to":  "feat-menu2",
+                      "rel":  "steuert"
+                  },
+                  {
+                      "from":  "feat-community",
+                      "to":  "obs-ghcache",
+                      "rel":  "fand"
+                  },
+                  {
+                      "from":  "feat-builder",
+                      "to":  "file-solver",
+                      "rel":  "nutzt"
+                  },
+                  {
+                      "from":  "feat-community",
+                      "to":  "feat-github",
+                      "rel":  "nutzt"
+                  },
+                  {
+                      "from":  "fix-walksmooth",
+                      "to":  "feat-advrooms",
+                      "rel":  "verbessert"
                   }
               ],
     "updated":  "2026-10-26 18:05"

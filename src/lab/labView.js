@@ -383,7 +383,7 @@ export function mountLab(root, params = []) {
   }
 
   let lastStamp = '';
-  let firstLoad = true;
+  let firstLoad = true, disposed = false;
   let prevStepStatus = null;
   async function refresh() {
     try {
@@ -392,6 +392,7 @@ export function mountLab(root, params = []) {
         fetchJson('lab/brain.json'),
         pref.mode === 'all' ? loadLevelsFresh() : Promise.resolve(null),
       ]);
+      if (disposed) return; // Lab wurde während des Ladens verlassen
       // Prüfsumme über alle Inhalte: jede Änderung an Protokoll, Karte oder Leveln wird erkannt.
       const raw = JSON.stringify([lab, curated, levels]);
       let sum = 0;
@@ -426,6 +427,7 @@ export function mountLab(root, params = []) {
       }
       $('#lab-updated').textContent = `Stand: ${lab.updated || '–'}`;
     } catch (err) {
+      if (disposed) return;
       $('#lab-updated').textContent = IS_DEV ? 'Lab-Daten nicht erreichbar – läuft der Server (start.bat)?' : 'Lab-Daten konnten nicht geladen werden';
     }
   }
@@ -603,6 +605,7 @@ export function mountLab(root, params = []) {
   refresh();
   const timer = setInterval(refresh, POLL_MS);
   return () => {
+    disposed = true;
     clearInterval(timer);
     clearInterval(activityTimer);
     clearInterval(pulseTimer);

@@ -3,10 +3,12 @@
 // Gebaut wird im Web Worker (Animation läuft weiter); ohne Worker-Unterstützung im Hauptthread.
 import { cachedDaily, storeDaily, dailyLevel, todayKey } from '../game/daily.js';
 import { mountAdventure } from '../adventure/adventure.js';
+import { isUnlocked, lockedHtml } from '../game/unlocks.js';
 
 const DAILY_WORLDS = ['beach', 'cherry', 'jungle', 'castle', 'moor', 'night', 'volcano', 'temple', 'aurora', 'reef', 'shadow'];
 
 export function mountDaily(root) {
+  if (!isUnlocked('daily')) { root.innerHTML = `<section class="tm sub"><div class="tm-ui" style="justify-content:center">${lockedHtml('daily')}</div></section>`; return () => {}; }
   const key = todayKey();
   const theme = DAILY_WORLDS[[...key].reduce((n, c) => n + c.charCodeAt(0), 0) % DAILY_WORLDS.length];
   let unmount = null;

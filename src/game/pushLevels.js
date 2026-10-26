@@ -839,19 +839,19 @@ ALL_LEVELS.push(
 ALL_LEVELS.push(
   {
     id: 'w45', name: 'Der erste Schlüssel', par: 8,
-    hint: 'Neu: Ein Gittertor sperrt die Ranke. Hol den Schlüssel und lauf gegen das Tor – es schwingt auf. Dann geh der Ranke aus dem Weg!',
+    hint: 'Neu: Ein Gittertor unterbricht die Leitung. Hol den Schlüssel und lauf gegen das Tor – es schwingt auf. Dann geh der Leitung aus dem Weg!',
     legend: { a: R_E, 1: { type: 'target', color: 'R' } },
     rows: ['#########', '#a...L.1#', '#.......#', '#.@...K.#', '#########'],
   },
   {
     id: 'w46', name: 'Schlüsselbund', par: 21,
-    hint: 'Zwei Tore halten die Ranke auf, ein drittes sperrt die Kammer mit den Schlüsseln. Welches Tor öffnest du zuerst?',
+    hint: 'Zwei Tore unterbrechen die Leitung, ein drittes sperrt die Kammer mit den Schlüsseln. Welches Tor öffnest du zuerst?',
     legend: { a: R_E, 1: { type: 'target', color: 'R' } },
     rows: ['##########', '#a.L.L..1#', '#####.####', '#KK.L....#', '#...#.@.K#', '##########'],
   },
   {
     id: 'w47', name: 'Spiegelkammer', par: 20,
-    hint: 'Der Spiegel steckt hinter Gittern. Schließ auf, hol ihn heraus und schick die Ranke nach unten zum Topf.',
+    hint: 'Der Spiegel steckt hinter Gittern. Schließ auf, hol ihn heraus und schick die Leitung nach unten zur Lampe.',
     legend: { a: R_E, 1: { type: 'target', color: 'R' } },
     rows: ['##########', '#a.......#', '#.......##', '#.@..L.n.#', '#K...#...#', '#..1.#...#', '##########'],
   },

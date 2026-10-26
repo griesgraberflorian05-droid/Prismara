@@ -13,6 +13,7 @@
   <title>Prismara</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <style id="boot-bg">html, body { background: #120b06; } body.wood .topbar, body.wood .bg-fx { display: none; }</style>
   <link rel="stylesheet" href="src/styles.css?v={{ site.github.build_revision }}">
   <script>
     (() => {
@@ -63,13 +64,16 @@
         "/src/game/roomDecor.js": "/src/game/roomDecor.js?v={{ site.github.build_revision }}",
         "/src/game/skins.js": "/src/game/skins.js?v={{ site.github.build_revision }}",
         "/src/game/sound.js": "/src/game/sound.js?v={{ site.github.build_revision }}",
+        "/src/game/unlocks.js": "/src/game/unlocks.js?v={{ site.github.build_revision }}",
         "/src/game/worlds.js": "/src/game/worlds.js?v={{ site.github.build_revision }}",
         "/src/lab/brainMap.js": "/src/lab/brainMap.js?v={{ site.github.build_revision }}",
         "/src/lab/labView.js": "/src/lab/labView.js?v={{ site.github.build_revision }}",
         "/src/lab/projectGraph.js": "/src/lab/projectGraph.js?v={{ site.github.build_revision }}",
         "/src/main.js": "/src/main.js?v={{ site.github.build_revision }}",
         "/src/settings.js": "/src/settings.js?v={{ site.github.build_revision }}",
+        "/src/ui/builderView.js": "/src/ui/builderView.js?v={{ site.github.build_revision }}",
         "/src/ui/celebrate.js": "/src/ui/celebrate.js?v={{ site.github.build_revision }}",
+        "/src/ui/communityView.js": "/src/ui/communityView.js?v={{ site.github.build_revision }}",
         "/src/ui/dailyView.js": "/src/ui/dailyView.js?v={{ site.github.build_revision }}",
         "/src/ui/logo.js": "/src/ui/logo.js?v={{ site.github.build_revision }}",
         "/src/ui/menu.js": "/src/ui/menu.js?v={{ site.github.build_revision }}",
@@ -81,7 +85,7 @@
   </script>
   <script type="module" src="src/main.js?v={{ site.github.build_revision }}"></script>
 </head>
-<body>
+<body class="wood">
   <div class="bg-fx" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="grid"></span></div>
   <header class="topbar">
     <a class="brand" href="#/menu" aria-label="Prismara Hauptmenü">

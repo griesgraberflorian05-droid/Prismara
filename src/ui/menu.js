@@ -11,6 +11,7 @@ import { todayKey } from '../game/daily.js';
 import { tutorialSeen, fragmentCount } from '../adventure/adventure.js';
 import { ITEMS, HATS, getInv, buy, buyHat, wearHat, hat, ownsHat, crystalsSpent } from '../game/inventory.js';
 import { PixelRenderer } from '../game/pixelRender.js';
+import { MODES, isUnlocked, solvedCount, takeNewUnlocks, lockedHtml } from '../game/unlocks.js';
 
 /** Vorschau: der Pixel-Held mit Hut (gleicher Sprite wie im Spiel). */
 function drawHatPreview(canvas, id) {
@@ -64,7 +65,10 @@ export function mountMenu(root, params = []) {
   const scene = worldPage ? mountScene(root.querySelector('.tm-scene'), themeOf(startCh)) : mountTitleArt(root.querySelector('.tm-scene'));
   let cleanup = () => {};
 
-  if (page === 'chapters') cleanup = chaptersPage(ui, parseInt(params[1] ?? '-1', 10), scene);
+  // Gesperrte Modi: Hinweis statt Inhalt (Welten-Seiten zählen als Modus „worlds“)
+  const lockId = { chapters: 'worlds', chapter: 'worlds', kit: 'kit', shop: 'shop', trophies: 'trophies' }[page];
+  if (lockId && !isUnlocked(lockId)) ui.innerHTML = lockedHtml(lockId);
+  else if (page === 'chapters') cleanup = chaptersPage(ui, parseInt(params[1] ?? '-1', 10), scene);
   else if (page === 'chapter') chapterPage(ui, parseInt(params[1] || '0', 10));
   else if (page === 'kit') cleanup = kitPage(ui);
   else if (page === 'shop') shopPage(ui);
@@ -92,7 +96,9 @@ function mainPage(el) {
   const ci = currentChapter(), info = chapterInfo(ci), wid = CHAPTER_WORLD[info.ch.id];
   const world = worldForChapter(info.ch.id);
   const pct = Math.round((info.solved / info.idx.length) * 100);
+  const newModes = takeNewUnlocks(), freshModes = new Set(newModes.map((m) => m.id));
   el.innerHTML = `
+    ${newModes.length ? `<div class="tm-unlock parch" role="status">🔓 Neu freigeschaltet: <b>${newModes.map((m) => `${m.icon} ${esc(m.name)}`).join(', ')}</b></div>` : ''}
     <header class="tm-sign" aria-label="Prismara"><i class="rope l"></i><i class="rope r"></i>
       <h1 class="logo-h1"><span class="sr">PRISMARA</span></h1><p>Ein Licht-Abenteuer</p></header>
     ${fresh ? '' : `<a class="tm-journey parch" href="#/menu/chapter/${ci}" data-world="${esc(wid || '')}">
@@ -103,14 +109,14 @@ function mainPage(el) {
     <nav class="tm-menu tm-board" aria-label="Hauptmenü">
       <a class="wbtn big" id="play" href="${fresh ? '#/adv/tutorial' : next ? `#/adv/${t.firstOpen}` : '#/menu/chapters'}">
         ▶ ${fresh ? 'ABENTEUER BEGINNEN' : 'SPIELEN'}<small>${fresh ? 'Mit dem Lehrzimmer' : next ? `Weiter: ${esc(next.name)}` : 'Alle Räume geschafft!'}</small></a>
-      <div class="tm-grid">
-        <a class="wbtn" href="#/menu/chapters/${currentChapter()}">🗺 Welten</a>
-        <a class="wbtn${daily ? '' : ' glow'}" href="#/daily">📅 Tagesrätsel${daily ? ' ✓' : ''}</a>
-        <a class="wbtn" href="#/menu/shop">🛒 Krämer</a>
-        <a class="wbtn" href="#/menu/kit">🎨 Held</a>
-        <a class="wbtn" href="#/menu/trophies">🏆 Erfolge</a>
+      <div class="tm-grid">${MODES.map((m) => {
+        const href = { worlds: `#/menu/chapters/${currentChapter()}`, kit: '#/menu/kit', daily: '#/daily', shop: '#/menu/shop', trophies: '#/menu/trophies', builder: '#/build', community: '#/community' }[m.id];
+        if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn locked" aria-disabled="true" title="${esc(m.info)}">🔒 ${m.name}<small>ab ${m.need} Räumen</small></span>`;
+        const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
+        return `<a class="wbtn${glow ? ' glow' : ''}" href="${href}">${m.icon} ${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</a>`;
+      }).join('')}
         <a class="wbtn" href="#/menu/settings">⚙ Einstellungen</a>
-        <a class="wbtn sm wide tm-lab" href="#/lab">🧠 Gehirn Lab</a>
+        <a class="wbtn sm tm-lab" href="#/lab">🧠 Gehirn Lab</a>
       </div>
     </nav>
     <footer class="tm-stats parch">

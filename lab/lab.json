@@ -1,11 +1,11 @@
 {
     "project":  "Prismara",
-    "updated":  "2026-10-26 18:05",
+    "updated":  "2026-10-26 19:10",
     "current":  {
                     "step":  19,
                     "phase":  "Schritt 19 - Lab im Spielstil, Nebelmoor, GitHub",
                     "status":  "in_progress",
-                    "workingOn":  "Hochladen auf GitHub",
+                    "workingOn":  "Testreihe, dann Upload auf GitHub",
                     "question":  "Läuft die öffentliche Seite mit dem ganzen neuen Spiel?",
                     "next":  "Danach Schritte 15-18 (Reaktionen, Bogen, Bomben, Fußspuren)."
                 },
@@ -355,9 +355,9 @@
                   },
                   {
                       "id":  19,
-                      "title":  "Lab im Spielstil, schnelle Karte, Nebelmoor, GitHub",
+                      "title":  "Lab im Spielstil, Nebelmoor, Redstone, Modi freischalten, Level-Bauer, Community, GitHub",
                       "status":  "in_progress",
-                      "goal":  "Lab und Startseite im Holz-/Pergament-Stil mit allen Funktionen; Gehirnkarte flüssig bei 400+ Knoten; neue Welt Nebelmoor; ganzes Projekt auf GitHub.",
+                      "goal":  "Lab und Menü im Spielstil; schnelle Karte; Welt Nebelmoor; Redstone statt Pflanzen; flüssiges Laufen; nur Hauptmodus zu Beginn, Rest freischalten; Level-Bauer mit Community über GitHub; Handy-Steuerung; neues Icon; alles auf GitHub.",
                       "quality":  {
                                       "problem":  "Lab sah anders aus als das Spiel und ruckelte bei 467 Knoten; GitHub zeigte noch den alten Stand.",
                                       "fit":  "Ein Stil für alles; die Karte ist das Fenster in die Entwicklung.",
@@ -372,7 +372,12 @@
                                 ],
                       "observed":  [
                                        "Zeichnen 4,3 ms statt 10,6 ms (467 Knoten).",
-                                       "Moor-Räume 10/12/13/21/26, alle durchgespielt; Nebelbank-Tür korrigiert."
+                                       "Moor-Räume 10/12/13/21/26, alle durchgespielt; Nebelbank-Tür korrigiert.",
+                                       "Laufen: Pause zwischen Schritten entfernt, gleichmäßige Geschwindigkeit bei gehaltener Taste.",
+                                       "Freischalten getestet: mit 5 Räumen Welten+Held offen, Rest gesperrt.",
+                                       "Level-Bauer: Prüfen/Spielen/Speichern im Browser geprüft; Nutzer hat selbst gebaut.",
+                                       "Community: Issue #1 von der Seite geladen und gespielt; GitHub-API-Cache gefunden und umgangen.",
+                                       "Handy: Steuerkreuz bewegt den Helden, HUD überlappt nicht."
                                    ]
                   }
               ]
