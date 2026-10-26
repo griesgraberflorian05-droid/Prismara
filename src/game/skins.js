@@ -3,10 +3,11 @@
 import { getSettings, updateSettings } from '../settings.js';
 
 export const SKIN_COLORS = [
-  { id: 'gold', name: 'Sonnengold', stops: ['#fff6d6', '#ffd166', '#ff9f5a'], glow: '#ffe9a8', stars: 0 },
-  { id: 'cyan', name: 'Eiscyan', stops: ['#e9fdff', '#4ff0ff', '#2f8cff'], glow: '#9ff6ff', stars: 6 },
-  { id: 'pink', name: 'Neonpink', stops: ['#fff0fb', '#ff4fd8', '#a63dff'], glow: '#ff9ce9', stars: 12 },
-  { id: 'lime', name: 'Lichtgrün', stops: ['#f4ffe6', '#7dff6a', '#1fbf8f'], glow: '#c4ff9f', stars: 20 },
+  // Umhangfarben des Pixel-Helden: erdig statt Neon (Körper = stops[1], Saum/Brosche = stops[0])
+  { id: 'gold', name: 'Sonnengold', stops: ['#fff6d6', '#e8b04a', '#b8742a'], glow: '#ffe9a8', stars: 0 },
+  { id: 'cyan', name: 'Seeblau', stops: ['#d8f0f8', '#3f8ab0', '#24587a'], glow: '#9ff6ff', stars: 6 },
+  { id: 'pink', name: 'Kirschrosa', stops: ['#ffe6f0', '#d0708f', '#8a3a5a'], glow: '#ff9ce9', stars: 12 },
+  { id: 'lime', name: 'Moosgrün', stops: ['#e8f4d8', '#5a9a44', '#2f5e2a'], glow: '#c4ff9f', stars: 20 },
   { id: 'ruby', name: 'Rubinrot', stops: ['#fff0f2', '#ff4d6d', '#c2185b'], glow: '#ff9fb0', stars: 30 },
   { id: 'prism', name: 'Regenbogen', stops: ['#ff4d6d', '#ffd166', '#3ddc97', '#4da3ff', '#b18cff'], glow: '#ffffff', stars: 45 },
 ];

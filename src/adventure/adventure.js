@@ -200,7 +200,7 @@ export function mountAdventure(root, params, opts = {}) {
   const sign = plan.sign && { ...plan.sign, read: isFound(def.id, 'sign') };
   const guide = roomGuide(level);
   const hasKeys = level.cells.some((c) => c.key);
-  // Dauerhafte Ausrüstung aus dem Krämerladen
+  // Dauerhafte Ausrüstung aus dem Shop
   const pushCost = owns('gloves') ? 0.11 : PUSH_COST, stepRegen = owns('boots') ? STEP_REGEN * 2 : STEP_REGEN;
 
   // Vollbild-Spiel mit Ingame-HUD (wie Shell Shockers): keine Webseiten-Leiste, alle Anzeigen

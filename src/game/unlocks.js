@@ -7,8 +7,8 @@ export const MODES = [
   { id: 'worlds', name: 'Welten', icon: '🗺', need: 3, info: 'Jeden geschafften Raum erneut spielen, Welten durchblättern.' },
   { id: 'kit', name: 'Held', icon: '🎨', need: 5, info: 'Farben, Zeichen und Hüte für deinen Helden.' },
   { id: 'daily', name: 'Tagesrätsel', icon: '📅', need: 6, info: 'Jeden Tag ein neues, garantiert lösbares Rätsel.' },
-  { id: 'shop', name: 'Krämer', icon: '🛒', need: 8, info: 'Münzen gegen Brot, Lupen, Dietriche und mehr.' },
-  { id: 'trophies', name: 'Erfolge', icon: '🏆', need: 10, info: 'Deine Abzeichen und Rekorde.' },
+  { id: 'shop', name: 'Shoppen', icon: '🛒', need: 8, info: 'Münzen gegen Brot, Lupen, Dietriche und mehr – Hüte gegen Kristalle.' },
+  // Erfolge auf Nutzerwunsch entfernt (2026-10-27)
   // Level-Bauer und Community auf Nutzerwunsch entfernt (2026-10-27)
 ];
 const SEEN_KEY = 'prismara.unlocks.v1';

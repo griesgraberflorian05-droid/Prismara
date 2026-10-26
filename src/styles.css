@@ -781,7 +781,7 @@ a.room:hover { transform: translateY(-3px); filter: brightness(1.05); }
 .rstars b, .wcard .rstars b { color: rgba(42, 26, 8, 0.2); } .rstars b.on { color: #e8a317; }
 .rmeta { font-size: 0.42rem; color: var(--ink-2); }
 
-/* Krämer */
+/* Shoppen */
 .shop { display: grid; gap: 14px; width: min(760px, 100%); }
 .shop-keeper { display: flex; gap: 14px; align-items: center; padding: 14px; }
 .shop-face { font-size: 2.6rem; animation: owl-bob 1.4s steps(2) infinite; }
@@ -837,6 +837,16 @@ html:has(body.wood) { overflow: hidden; overscroll-behavior: none; }
 body.wood { height: 100dvh; overflow: hidden; }
 body.wood .view { height: 100dvh; min-height: 0; overflow: hidden auto; overscroll-behavior: contain; }
 body.wood .tm, body.wood .tm-ui { min-height: 100dvh; }
+/* Held: Pixel-Held als Vorschau, Umhang- und Hutfelder im Pixel-Stil */
+body.wood .kit-stage { padding: 8px; background: var(--wood-1); border: 3px solid var(--wood-0); align-self: start; }
+body.wood .kit-big { display: block; width: 192px; height: 192px; image-rendering: pixelated; border: 0; border-radius: 0; box-shadow: none; background: none; }
+body.wood .kit-swatch small { font: 0.42rem/1.4 'Press Start 2P', monospace; color: var(--ink); text-shadow: none; }
+body.wood .kit-swatch:disabled { opacity: 0.55; cursor: not-allowed; }
+body.wood .ks-cloak { width: 36px; height: 36px; image-rendering: pixelated; }
+body.wood .ks-hat { width: 48px; height: 56px; image-rendering: pixelated; background: var(--parch); border: 2px solid var(--wood-1); }
+/* Lange Seiten (Shoppen, Welten) scrollen: die Seite wächst mit dem Inhalt, das Hintergrundbild bleibt stehen */
+body.wood .tm { flex: 0 0 auto; overflow: visible; }
+body.wood .tm-scene, body.wood .tm-shade { position: fixed; }
 .tm-journey { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; width: min(440px, 100%); padding: 12px 14px !important; text-decoration: none; transition: transform 0.08s steps(2); }
 .tm-journey:hover, .tm-journey:focus-visible { transform: translateY(-2px); filter: brightness(1.05); }
 .tj-icon { display: grid; place-items: center; width: 52px; height: 52px; font-size: 1.7rem; background: var(--wood-1); border: 3px solid var(--wood-0); box-shadow: inset 0 3px 0 rgba(255, 220, 160, 0.2); }

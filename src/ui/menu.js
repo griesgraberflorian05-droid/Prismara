@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_SYMBOLS, getSkin, setSkin, drawPlayerBlock } from '../game/skins.js';
+import { SKIN_COLORS, getSkin, setSkin } from '../game/skins.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
 import { worldForChapter, CHAPTER_WORLD } from '../game/worlds.js';
@@ -66,14 +66,13 @@ export function mountMenu(root, params = []) {
   let cleanup = () => {};
 
   // Gesperrte Modi: Hinweis statt Inhalt (Welten-Seiten zählen als Modus „worlds“)
-  const lockId = { chapters: 'worlds', chapter: 'worlds', kit: 'kit', shop: 'shop', trophies: 'trophies' }[page];
+  const lockId = { chapters: 'worlds', chapter: 'worlds', kit: 'kit', shop: 'shop' }[page];
   if (lockId && !isUnlocked(lockId)) ui.innerHTML = lockedHtml(lockId);
   else if (page === 'chapters') cleanup = chaptersPage(ui, parseInt(params[1] ?? '-1', 10), scene);
   else if (page === 'chapter') chapterPage(ui, parseInt(params[1] || '0', 10));
   else if (page === 'kit') cleanup = kitPage(ui);
   else if (page === 'shop') shopPage(ui);
   else if (page === 'settings') settingsPage(ui);
-  else if (page === 'trophies') trophiesPage(ui);
   else { ui.classList.add('tm-main'); mainPage(ui); }
 
   const onKey = (e) => {
@@ -110,7 +109,7 @@ function mainPage(el) {
       <a class="wbtn big" id="play" href="${fresh ? '#/adv/tutorial' : next ? `#/adv/${t.firstOpen}` : '#/menu/chapters'}">
         ▶ ${fresh ? 'ABENTEUER BEGINNEN' : 'SPIELEN'}<small>${fresh ? 'Mit dem Lehrzimmer' : next ? `Weiter: ${esc(next.name)}` : 'Alle Räume geschafft!'}</small></a>
       <div class="tm-grid">${MODES.map((m) => {
-        const href = { worlds: `#/menu/chapters/${currentChapter()}`, kit: '#/menu/kit', daily: '#/daily', shop: '#/menu/shop', trophies: '#/menu/trophies' }[m.id];
+        const href = { worlds: `#/menu/chapters/${currentChapter()}`, kit: '#/menu/kit', daily: '#/daily', shop: '#/menu/shop' }[m.id];
         if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn locked" aria-disabled="true" title="${esc(m.info)}">🔒 ${m.name}<small>ab ${m.need} Räumen</small></span>`;
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
         return `<a class="wbtn${glow ? ' glow' : ''}" href="${href}">${m.icon} ${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</a>`;
@@ -130,38 +129,6 @@ function mainPage(el) {
   el.querySelector('.logo-h1').prepend(logo);
   el.querySelector('#play').focus();
   el.querySelector('#play').addEventListener('click', () => play('play'));
-}
-
-// ---------- Erfolge: werden aus dem Spielstand berechnet ----------
-export function trophies() {
-  const t = totals(), inv = getInv();
-  const found = Object.values(inv.found || {});
-  const chests = found.filter((f) => f.includes('chest')).length, signs = found.filter((f) => f.includes('sign')).length;
-  const worlds = CHAPTERS.filter((_, i) => chapterInfo(i).done).length;
-  const perfect = CHAPTERS.some((_, i) => { const c = chapterInfo(i); return c.stars === c.idx.length * 3; });
-  return [
-    ['📖', 'Erste Schritte', 'Das Lehrzimmer abschließen', tutorialSeen()],
-    ['🚪', 'Entkommen!', 'Den ersten Raum verlassen', t.solved >= 1],
-    ['🥾', 'Wanderer', '10 Räume schaffen', t.solved >= 10],
-    ['🗺', 'Weltenbummler', '3 Welten abschließen', worlds >= 3],
-    ['🌍', 'Alle Welten', 'Jede Welt abschließen', worlds === CHAPTERS.length],
-    ['★', 'Sternensammler', '50 Sterne sammeln', t.stars >= 50],
-    ['🌟', 'Perfektionist', 'Alle Sterne einer Welt', perfect],
-    ['🧰', 'Schatzjäger', '5 Truhen öffnen', chests >= 5],
-    ['📜', 'Leseratte', '10 Raumführer lesen', signs >= 10],
-    ['💎', 'Kristallsucher', '20 Kristalle finden', fragmentCount() >= 20],
-    ['🪙', 'Wohlstand', '300 Münzen verdienen', (inv.earned || 0) >= 300],
-    ['🎩', 'Modebewusst', 'Einen Hut kaufen', (inv.hats || []).length > 0],
-    ['🗝', 'Schlüsselmeister', '„Schlüsselbund“ lösen', isSolved('w46')],
-    ['📅', 'Tagesheld', 'Das heutige Tagesrätsel lösen', isSolved(`daily-${todayKey()}`)],
-  ];
-}
-
-function trophiesPage(el) {
-  const list = trophies();
-  el.innerHTML = `
-    ${head('#/menu', '🏆 Erfolge', `${list.filter((x) => x[3]).length}/${list.length}`)}
-    <ul class="trophies">${list.map(([icon, name, how, got]) => `<li class="parch trophy${got ? ' got' : ''}"><span class="tr-icon">${got ? icon : '🔒'}</span><b>${esc(name)}</b><small>${esc(how)}</small></li>`).join('')}</ul>`;
 }
 
 // ---------- Einstellungen: Ton, Bewegung, Tutorial nochmal ----------
@@ -261,12 +228,12 @@ function chapterPage(el, ci) {
   (el.querySelector('.room.next') || el.querySelector('a.room'))?.focus();
 }
 
-// ---------- Krämerladen ----------
+// ---------- Shoppen ----------
 function shopPage(el) {
   const render = (msg = '') => {
     const inv = getInv();
     el.innerHTML = `
-      ${head('#/menu', '🛒 Krämer', purse())}
+      ${head('#/menu', '🛒 Shoppen', purse())}
       <div class="shop">
         <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">🧙</span><p>${msg || 'Willkommen, Lichtläufer! Münzen findest du in Räumen und Truhen – und fürs Entkommen gibt’s auch welche.'}</p></div>
         <ul class="shop-list">${Object.entries(ITEMS).map(([id, it]) => {
@@ -299,60 +266,74 @@ function shopPage(el) {
   render();
 }
 
-// ---------- Held: Farbe und Abzeichen ----------
+// ---------- Held: Umhangfarbe und Hut – Vorschau ist der echte Pixel-Held aus dem Spiel ----------
 function kitPage(el) {
   const { stars } = totals();
   const render = () => {
-    const skin = getSkin();
+    const skin = getSkin(), worn = hat();
+    const owned = Object.entries(HATS).filter(([id]) => ownsHat(id));
     el.innerHTML = `
       ${head('#/menu', '🎨 Held', `★ ${stars}`)}
       <div class="kit parch">
-        <canvas class="kit-big" width="180" height="180" aria-label="Vorschau: ${esc(skin.color.name)}, ${esc(skin.symbol.name)}"></canvas>
+        <div class="kit-stage"><canvas class="kit-big" width="48" height="48" aria-label="Vorschau deines Helden: Umhang ${esc(skin.color.name)}${worn ? `, ${esc(HATS[worn].name)}` : ''}"></canvas></div>
         <div>
-          <h3>Farbe</h3>
-          <div class="kit-row">${SKIN_COLORS.map((c) => swatch(c, 'color', skin.color.id === c.id, stars, `background:linear-gradient(135deg,${c.stops.join(',')})`)).join('')}</div>
-          <h3>Abzeichen</h3>
-          <div class="kit-row">${SKIN_SYMBOLS.map((s) => swatch(s, 'symbol', skin.symbol.id === s.id, stars, '')).join('')}</div>
-          <p class="small">Neue Farben und Abzeichen schaltest du mit Sternen frei.</p>
+          <h3>Umhang</h3>
+          <div class="kit-row">${SKIN_COLORS.map((c) => {
+            const locked = stars < c.stars, active = skin.color.id === c.id;
+            return `<button class="kit-swatch${active ? ' active' : ''}" ${locked ? 'disabled' : `data-pick="color" data-id="${c.id}"`} aria-pressed="${active}" title="${esc(c.name)}${locked ? ` – ab ★ ${c.stars}` : ''}">
+              <canvas class="ks-cloak" data-color="${c.id}" width="12" height="12"></canvas><small>${locked ? `🔒 ★${c.stars}` : esc(c.name)}</small></button>`;
+          }).join('')}</div>
+          <h3>Hut</h3>
+          <div class="kit-row">
+            <button class="kit-swatch${worn ? '' : ' active'}" data-hat="" aria-pressed="${!worn}"><canvas class="ks-hat" data-hat="" width="24" height="28"></canvas><small>Ohne</small></button>
+            ${owned.map(([id, h]) => `<button class="kit-swatch${worn === id ? ' active' : ''}" data-hat="${id}" aria-pressed="${worn === id}"><canvas class="ks-hat" data-hat="${id}" width="24" height="28"></canvas><small>${esc(h.name)}</small></button>`).join('')}
+          </div>
+          <p class="small">Neue Umhänge schaltest du mit Sternen frei, Hüte gibt es im Shop gegen Kristalle 💎.</p>
         </div>
       </div>`;
+    el.querySelectorAll('.ks-cloak').forEach((c) => drawCloak(c, SKIN_COLORS.find((s) => s.id === c.dataset.color)));
+    el.querySelectorAll('.ks-hat').forEach((c) => drawHatPreview(c, c.dataset.hat)); // '' = ohne Hut
     el.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
-      setSkin({ [b.dataset.pick]: b.dataset.id });
-      play('ui');
-      render();
+      setSkin({ color: b.dataset.id }); play('ui'); render();
       el.querySelector(`[data-id="${b.dataset.id}"]`)?.focus();
     }));
+    el.querySelectorAll('button[data-hat]').forEach((b) => b.addEventListener('click', () => {
+      wearHat(b.dataset.hat || null); play('ui'); render();
+      el.querySelector(`button[data-hat="${b.dataset.hat}"]`)?.focus();
+    }));
     stop?.();
-    stop = animatePreview(el.querySelector('.kit-big'), 180);
+    stop = animateHero(el.querySelector('.kit-big'));
   };
   let stop = null;
   render();
   return () => stop?.();
 }
 
-function swatch(item, kind, active, stars, style) {
-  const locked = stars < item.stars;
-  return `<button class="kit-swatch${active ? ' active' : ''}" ${locked ? 'disabled' : `data-pick="${kind}" data-id="${item.id}"`}
-    aria-pressed="${active}" title="${esc(item.name)}${locked ? ` – ab ★ ${item.stars}` : ''}">
-    <span class="ks-face" style="${style}">${kind === 'symbol' ? symbolGlyph(item.id) : ''}</span>
-    <small>${locked ? `🔒 ★${item.stars}` : esc(item.name)}</small></button>`;
+/** Umhang-Muster als kleines Pixelbild (Körper, Saum, Brosche) statt Neon-Verlauf. */
+function drawCloak(canvas, c) {
+  const g = canvas.getContext('2d'), body = c.stops[Math.min(1, c.stops.length - 1)], light = c.stops[0];
+  g.fillStyle = '#120a1c'; g.fillRect(0, 0, 12, 12);
+  g.fillStyle = body; g.fillRect(1, 1, 10, 10);
+  g.fillStyle = light; g.fillRect(1, 1, 10, 2); g.fillRect(5, 5, 2, 2);
+  g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(1, 9, 10, 2);
 }
 
-const symbolGlyph = (id) => ({ prism: '△', ring: '◎', star: '★', diamond: '◇', eye: '◉', bolt: 'ϟ' }[id] || '?');
-
-/** Animierte Vorschau des Helden-Blocks (schaut reihum in alle Richtungen). */
-function animatePreview(canvas, size) {
+/** Der echte Pixel-Held auf einem Bodenstück: läuft auf der Stelle und dreht sich reihum. */
+function animateHero(canvas) {
   if (!canvas) return () => {};
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = size * dpr; canvas.height = size * dpr;
+  const g = canvas.getContext('2d');
+  const pr = Object.create(PixelRenderer.prototype); pr.ctx = g;
   let run = true;
   const frame = (t) => {
     if (!run) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, size, size);
     const reduced = prefersReducedMotion();
-    drawPlayerBlock(ctx, size / 2, size / 2, size * 0.95, { dir: reduced ? 1 : Math.floor(t / 900) % 4, t, reduced });
+    g.clearRect(0, 0, 48, 48);
+    for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) { g.fillStyle = (x + y) % 2 ? '#6b4a32' : '#5a3d29'; g.fillRect(x * 16, y * 16, 16, 16); g.fillStyle = '#43301f'; g.fillRect(x * 16, y * 16 + 15, 16, 1); }
+    const dir = reduced ? 2 : [2, 1, 0, 3][Math.floor(t / 1400) % 4];
+    const walk = reduced ? null : ((t / 520) % 1);
+    g.save(); g.translate(16, 14);
+    pr.player({ x: 0, y: 0, dir, walk, stamina: 1, yawn: !reduced && Math.floor(t / 1400) % 9 === 8 }, t);
+    g.restore();
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

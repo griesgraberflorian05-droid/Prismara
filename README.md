@@ -4,9 +4,7 @@
 
 ### Ein Escape-Room-Abenteuer mit Redstone-Licht – direkt im Browser
 
-**[▶ Jetzt spielen auf g2studio.net](https://g2studio.net)**
-
-`52 Räume` · `11 Welten` · `Level-Bauer` · `Community` · `Tagesrätsel` · `Handy & PC`
+`52 Räume` · `11 Welten` · `Shoppen` · `Tagesrätsel` · `Handy & PC`
 
 </div>
 
@@ -53,13 +51,7 @@ Jede Welt endet mit einer 👑 **Meisterprüfung**.
 
 Du startest im Abenteuer. Mit jedem geschafften Raum öffnen sich neue Modi:
 
-`🗺 Welten` (3 Räume) → `🎨 Held` (5) → `📅 Tagesrätsel` (6) → `🛒 Krämer` (8) → `🏆 Erfolge` (10) → `🔨 Level-Bauer` & `🌍 Community` (12)
-
-## 🔨 Level-Bauer & 🌍 Community
-
-Baue eigene Räume mit allen Bauteilen, lass den Löser prüfen, ob sie lösbar sind, und spiele sie sofort. Mit **Veröffentlichen** landet dein Raum als [Issue mit dem Titel `[Level] …`](https://github.com/griesgraberflorian/Prismara/issues) in diesem Repo – der **Community-Tab** im Spiel lädt alle Räume von dort, sortiert nach 👍.
-
-> Mit 👍 auf einem Level-Issue empfiehlst du einen Raum. Geschlossene Issues verschwinden aus der Community.
+`🗺 Welten` (3 Räume) → `🎨 Held` (5) → `📅 Tagesrätsel` (6) → `🛒 Shoppen` (8)
 
 ## 🎮 Steuerung
 
@@ -82,7 +74,7 @@ Reine ES-Module ohne Build-Schritt und ohne Abhängigkeiten. Pixel-Renderer mit 
 |---|---|
 | `src/game/` | Regeln, Löser, Levelschmiede, Pixel-Renderer, Welten, Freischalten |
 | `src/adventure/` | Escape-Raum, HUD, Handy-Steuerung |
-| `src/ui/` | Menü, Tagesrätsel, Level-Bauer, Community |
+| `src/ui/` | Menü, Tagesrätsel, Shoppen |
 | `src/lab/` | Gehirn Lab und 3D-Karte |
 | `lab/` | Knoten, Verbindungen und Arbeitsschritte |
 
@@ -92,7 +84,7 @@ Lokal ansehen: `python -m http.server` im Repo-Ordner, dann `http://localhost:80
 
 <div align="center">
 
-Ein Projekt von **Florian** · gespielt auf **[g2studio.net](https://g2studio.net)**
+Ein Projekt von **Florian**
 
 <sub>Der Quellcode ist öffentlich einsehbar. Eine separate Lizenzdatei ist derzeit nicht enthalten; daraus sollte keine weitergehende Nutzungserlaubnis abgeleitet werden.</sub>
 

@@ -1,9 +1,9 @@
 // Inventar und Münzen (Spielstand im Browser). Münzen findet man in Räumen und Truhen und
-// bekommt sie fürs Entkommen; ausgeben kann man sie beim Krämer. Gegenstände liegen in Räumen
+// bekommt sie fürs Entkommen; ausgeben kann man sie im Shop. Gegenstände liegen in Räumen
 // oder werden gekauft und im Raum über die Inventarleiste (Tasten 1–4) benutzt.
 const KEY = 'prismara.inventory.v1';
 
-/** Alle Gegenstände: Symbol (Pixel-Emoji im HUD), Name, Erklärung, Preis beim Krämer. */
+/** Alle Gegenstände: Symbol (Pixel-Emoji im HUD), Name, Erklärung, Preis im Shop. */
 export const ITEMS = {
   bread: { icon: '🍞', name: 'Kraftbrot', info: 'Füllt die Kraftleiste sofort ganz auf.', price: 15 },
   scroll: { icon: '📜', name: 'Wegrolle', info: 'Zeigt dir den nächsten richtigen Zug (der Löser rechnet mit).', price: 0 },
