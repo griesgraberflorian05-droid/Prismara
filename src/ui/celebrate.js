@@ -2,7 +2,7 @@
 // Ein gemeinsames Canvas über allem (pointer-events: none), das sich selbst entfernt.
 import { prefersReducedMotion } from '../settings.js';
 
-const NEON = ['#fff', '#ddd', '#bbb', '#999', '#777'];
+const NEON = ['#ff4fd8', '#4ff0ff', '#ffe14f', '#7dff6a', '#ff7a4f', '#a07bff', '#ffffff'];
 let layer = null;
 
 function getLayer() {
@@ -100,6 +100,13 @@ export function sparkle(x, y, color) {
   start(L);
 }
 
+/** Bricht laufendes Feuerwerk sofort ab (Neustart, Zurück, Levelwechsel). */
+export function stopCelebration() {
+  if (!layer) return;
+  layer.gen = (layer.gen || 0) + 1;
+  layer.parts.length = 0; layer.rings.length = 0; layer.flash = 0; layer.pending = false;
+}
+
 /** Siegesfeuerwerk über den ganzen Bildschirm. origins: [{x, y, color}] (z. B. die Ziele). */
 export function celebrate(origins = []) {
   if (prefersReducedMotion()) return;
@@ -112,9 +119,10 @@ export function celebrate(origins = []) {
   }
   // Raketen über den ganzen Bildschirm verteilt
   L.pending = true;
+  const gen = (L.gen = (L.gen || 0) + 1);
   let n = 0;
   const burst = () => {
-    if (!layer) return;
+    if (!layer || L.gen !== gen) return; // abgebrochen (z. B. Neustart)
     const x = L.w * (0.1 + Math.random() * 0.8), y = L.h * (0.12 + Math.random() * 0.5);
     const c = NEON[(Math.random() * NEON.length) | 0];
     spawn(L, x, y, 55, [c, '#ffffff', NEON[(n * 3) % NEON.length]], 8, 1.6);
@@ -125,4 +133,3 @@ export function celebrate(origins = []) {
   burst();
   start(L);
 }
-

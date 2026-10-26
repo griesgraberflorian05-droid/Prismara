@@ -4,6 +4,8 @@
 // Leveldaten gelesen, Objekte/Animationen/Texturen entsprechen den Zeichenfunktionen in
 // src/game/render.js, Schritte kommen aus lab/lab.json, Dateien aus dem Projektordner.
 import { COLOR_INFO, parseColor } from '../game/engine.js';
+import { CHAPTERS } from '../game/pushLevels.js';
+import { WORLDS, CHAPTER_WORLD } from '../game/worlds.js';
 
 /** Lädt die Leveldatei jedes Mal frisch (Cache umgangen), damit neue Level sofort als Knoten erscheinen. */
 export async function loadLevelsFresh() {
@@ -22,6 +24,14 @@ const OBJECTS = [
   { id: 'ice', step: 3, label: 'Eisfeld', summary: 'Spieler und geschobene Blöcke rutschen, bis etwas im Weg ist.' },
   { id: 'splitter', step: 5, label: 'Strahlteiler', summary: 'Schiebbarer, drehbarer Halbspiegel: ein Teil des Lichts läuft geradeaus weiter, ein Teil wird um 90° gespiegelt.' },
   { id: 'portal', step: 5, label: 'Lichtportal', summary: 'Fester Ring mit Buchstabe; Licht tritt am Partnerportal (gleicher Buchstabe) in derselben Richtung aus. Nicht begehbar.' },
+  { id: 'sensor', step: 6, label: 'Lichtschloss-Sensor', summary: 'Feste Raute mit Schlüsselloch: Fällt Licht in genau ihrer Farbe darauf, öffnet sich das Tor mit demselben Buchstaben. Zählt nicht als Ziel.' },
+  { id: 'door', step: 6, label: 'Lichttor', summary: 'Geschlossen massiv für Licht und Bewegung (Gitterstäbe). Offen, solange sein Sensor leuchtet – oder solange etwas darin steht (verklemmt).' },
+  { id: 'lamp', step: 7, label: 'Wanderlampe', summary: 'Schiebbare Lichtquelle; die Leertaste dreht ihre Leuchtrichtung um 90° im Uhrzeigersinn. Gezeichnet wie ein Emitter auf einem Block.' },
+  { id: 'enemy', step: 12, label: 'Schattenläufer', summary: 'Gegner: dunkle Geistgestalt mit leuchtenden Augen; geht mit jedem Zug einen Schritt (z waagrecht, y senkrecht), kehrt an Hindernissen um. Berührung = erwischt, Licht löst ihn auf.' },
+  { id: 'flow', step: 11, label: 'Strömung', summary: 'Einbahnfeld mit wandernden Chevrons: nur in Pfeilrichtung betretbar – für Spieler und Blöcke. Licht fließt frei darüber.' },
+  { id: 'shifter', step: 10, label: 'Farbwandler', summary: 'Schiebbarer Glaskreis: schaltet jede Farbe eins weiter (Rot→Grün→Blau→Rot), Weiß bleibt Weiß, Magenta wird Gelb.' },
+  { id: 'plate', step: 8, label: 'Druckplatte', summary: 'Runder Knopf im Boden mit Buchstabe; gedrückt, solange der Spieler oder ein Block darauf steht (leuchtet türkis).' },
+  { id: 'flip', step: 8, label: 'Kippspiegel', summary: 'Fest verankerter Spiegel mit Buchstabe; kippt, solange seine Druckplatte gedrückt ist. Massiv für Bewegung.' },
   { id: 'player', step: 2, label: 'Lichtblock (Spieler)', summary: 'Vom Spieler gesteuerter Block; wirft Schatten und zeigt die Blickrichtung.' },
   { id: 'wall', step: 2, label: 'Wand', summary: 'Stoppt Strahlen und Bewegung.' },
   { id: 'floor', step: 2, label: 'Boden', summary: 'Begehbares Feld.' },
@@ -35,10 +45,34 @@ const ANIMATIONS = [
   { id: 'targetpulse', label: 'Ziel-Puls', summary: 'Erfüllte Ziele pulsieren und leuchten.', objects: ['target'] },
   { id: 'slide', label: 'Block-Gleiten', summary: 'Spieler und Blöcke gleiten in 110 ms zum neuen Feld.', objects: ['player', 'mirrorblock', 'stone', 'prism', 'filter', 'splitter'] },
   { id: 'bob', label: 'Spieler-Schweben', summary: 'Der Lichtblock schwebt sanft auf und ab.', objects: ['player'] },
+  { id: 'herowalk', label: 'Held: Laufzyklus', summary: '4-Phasen-Schritt, schwingende Arme, Neigung in Laufrichtung.', objects: ['player'], file: 'pixelRender' },
+  { id: 'heropush', label: 'Held: Schiebe-Pose', summary: 'Lehnt sich in den Block, Arme gestreckt, hinteres Bein stemmt, Zittern, Staubwölkchen.', objects: ['player', 'mirrorblock'], file: 'pixelRender' },
+  { id: 'herosweat', label: 'Held: Schweiß & Keuchen', summary: 'Schweißtropfen beim Schieben, Atemwölkchen und „~“-Blase bei Erschöpfung.', objects: ['player'], file: 'pixelRender' },
+  { id: 'heroidle', label: 'Held: Atmen, Blinzeln, Gähnen', summary: 'Im Stand atmet die Figur, blinzelt; nach 8 s Warten gähnt sie mit „?“.', objects: ['player'], file: 'pixelRender' },
+  { id: 'herobump', label: 'Held: Rückstoß', summary: 'Gegen eine Wand: kurzer Rückprall mit Staub.', objects: ['player', 'wall'], file: 'pixelRender' },
+  { id: 'herojoy', label: 'Held: Freudensprung', summary: 'Springt am Ausgang dreimal vor Freude.', objects: ['player'], file: 'pixelRender' },
+  { id: 'mclight', label: 'Minecraft-Licht', summary: 'Lichtstufen 0–15 breiten sich feldweise aus, Wände werfen Schatten, weich hochskaliert + Bloom.', objects: ['beam', 'emitter', 'lamp', 'target'], file: 'pixelRender' },
+  { id: 'reflect', label: 'Boden-Reflexionen', summary: 'Glänzende Böden spiegeln Lichtquellen und Strahlen als gerasterte Streifen.', objects: ['floor', 'beam'], file: 'pixelRender' },
+  { id: 'enemywobble', label: 'Schatten-Wabern', summary: 'Schattenläufer schweben, ihre Unterkante wabert, die Augen blinzeln und schauen in Laufrichtung.', objects: ['enemy'] },
+  { id: 'dissolve', label: 'Auflösen im Licht', summary: 'Funkenring und verblassende Fetzen, wenn ein Schattenläufer in einen Strahl gerät.', objects: ['enemy', 'beam'] },
+  { id: 'dock', label: 'Andock-Klammern', summary: 'Steht der Lichtblock vor einem Block, schnappen leuchtende Klammern an dessen Seite (mit Klick-Ton und Welle).', objects: ['player', 'mirrorblock'] },
+  { id: 'squash', label: 'Schub-Stauchen', summary: 'Geschobene Blöcke federn kurz in Schubrichtung.', objects: ['mirrorblock', 'stone', 'prism', 'filter'] },
+  { id: 'trail', label: 'Leuchtspur', summary: 'Verblassende Lichtpunkte hinter dem Lichtblock.', objects: ['player'] },
+  { id: 'sensorpulse', label: 'Sensor-Puls', summary: 'Beleuchtete Sensoren pulsieren in ihrer Farbe.', objects: ['sensor'] },
+  { id: 'plateglow', label: 'Platten-Leuchten', summary: 'Gedrückte Druckplatten leuchten türkis, ihre Kippspiegel bekommen einen türkisen Rahmen.', objects: ['plate', 'flip'] },
+  { id: 'chapterbar', label: 'Kapitel-Fortschritt', summary: 'Pink-Cyan-Balken und Sterne je Kapitel im Menü.', objects: [], file: 'menu' },
   { id: 'portalspin', label: 'Portal-Wirbel', summary: 'Drei Bögen kreisen um den Portalbuchstaben.', objects: ['portal'] },
   { id: 'framerun', label: 'Neon-Rahmen', summary: 'Pink-Violett-Cyan-Verlauf wandert um das Spielfeld (3 s pro Runde).', objects: ['wall'] },
   { id: 'sparkle', label: 'Ziel-Funken', summary: 'Funken, sobald ein einzelnes Ziel neu aufleuchtet.', objects: ['target'], file: 'celebrate' },
   { id: 'fireworks', label: 'Siegesfeuerwerk', summary: 'Blitz, Lichtwellen von jedem Ziel und Raketen über den ganzen Bildschirm.', objects: ['target'], file: 'celebrate' },
+  { id: 'vinegrow', label: 'Wachsende Ranke', summary: 'Der Lichtweg wächst als Ranke aus der Laterne (16 Felder/s), wiegt sich, Blätter und Blüten in der Lichtfarbe – ersetzt den Laserstrahl.', objects: ['beam', 'emitter'], file: 'pixelRender' },
+  { id: 'potbloom', label: 'Topf blüht auf', summary: 'Blumentopf-Ziel: Knospe öffnet sich in der Lichtfarbe, bei falscher Farbe welkt sie.', objects: ['target'], file: 'pixelRender' },
+  { id: 'lanternflicker', label: 'Laternenflamme', summary: 'Messing-Laterne mit flackernder Flamme und grünem Trieb in Wuchsrichtung.', objects: ['emitter'], file: 'pixelRender' },
+  { id: 'meadow', label: 'Blütenmeer', summary: 'Beim Entkommen sprießen 40 Blumen wellenartig ab der Tür durch den Raum, Blütenblätter steigen auf – ersetzt das Feuerwerk.', objects: ['target'], file: 'pixelRender' },
+  { id: 'torchflicker', label: 'Fackeln & Kerzen', summary: 'Flammen an Rückwand, Seitenwänden und Theken flackern in 3 Bildern, warmes Leuchten und echtes Licht in den Raum.', objects: ['wall'], file: 'roomDecor' },
+  { id: 'motes', label: 'Schwebende Teilchen', summary: 'Je Welt: Staub im Licht, Blütenblätter, Glühwürmchen, Glut, Schnee, Blasen, Falter, Schattenfunken.', objects: ['floor'], file: 'roomDecor' },
+  { id: 'windowshaft', label: 'Lichtschacht', summary: 'Durch die Fenster fällt eine schräge, sanft pulsierende Lichtbahn auf den Boden.', objects: ['wall', 'floor'], file: 'roomDecor' },
+  { id: 'tutarrow', label: 'Tutorial-Pfeil', summary: 'Hüpfender Pfeil mit blinkendem Rahmen über dem nächsten Ziel; die Eule wippt, Schritt-Punkte füllen sich.', objects: ['player'], file: 'adventure' },
   { id: 'starpop', label: 'Sterne-Pop', summary: 'Sterne springen nacheinander ins Siegfenster.', objects: [], file: 'pushView' },
   { id: 'logflow', label: 'Live-Log-Fluss', summary: 'Einträge gleiten gestaffelt ins Live-Log (90 ms, bei Stau 12–35 ms), farbig nach Art.', objects: [], file: 'labView' },
   { id: 'nodebirth', label: 'Knoten-Geburt', summary: 'Neue Knoten wachsen ein und senden eine Lichtwelle aus.', objects: [], file: 'brainMap' },
@@ -51,6 +85,8 @@ const TEXTURES = [
   { id: 'glass', label: 'Spiegelglas', summary: 'Silberner Verlauf mit Schein auf der Spiegelfläche.', objects: ['mirrorblock'] },
   { id: 'splitglass', label: 'Teilerglas', summary: 'Gestrichelte, cyan leuchtende Glasfläche = halbdurchlässig.', objects: ['splitter'] },
   { id: 'portalring', label: 'Portalring', summary: 'Radialer Verlauf mit Paarfarbe (A pink, B mint, C orange) und Buchstabe.', objects: ['portal'] },
+  { id: 'keyhole', label: 'Schlüsselloch-Raute', summary: 'Sensor als Raute mit Schlüsselloch, Torbuchstabe und Farbsymbol.', objects: ['sensor'] },
+  { id: 'bars', label: 'Leuchtgitter', summary: 'Geschlossenes Tor: drei goldene Gitterstäbe; offen: gestrichelter Rahmen.', objects: ['door'] },
   { id: 'rivets', label: 'Block-Nieten', summary: 'Vier Eckpunkte kennzeichnen schiebbare Lichtblöcke.', objects: ['mirrorblock', 'prism', 'filter', 'splitter'] },
   { id: 'rainbow', label: 'Regenbogenkante', summary: 'Prisma-Dreieck mit Rot-Grün-Blau-Verlauf.', objects: ['prism'] },
   { id: 'tint', label: 'Farbglas', summary: 'Halbtransparente Filterfläche mit Formsymbol.', objects: ['filter'] },
@@ -61,13 +97,24 @@ const TEXTURES = [
 
 // [Pfad, Beschreibung, implementierte Objekte, Schritt]
 const FILES = [
-  ['src/game/engine.js', 'Strahlverfolgung, Farben, Prisma, Filter, Strahlteiler, Portale', ['beam', 'emitter', 'target', 'prism', 'filter', 'splitter', 'portal'], 2],
-  ['src/game/push.js', 'Lichtläufer: Bewegen, Schieben, Drehen, Eis, Löser (Breitensuche)', ['player', 'mirrorblock', 'stone', 'ice', 'splitter'], 2],
+  ['src/game/engine.js', 'Strahlverfolgung, Farben, Prisma, Filter, Strahlteiler, Portale, Sensoren', ['beam', 'emitter', 'target', 'prism', 'filter', 'splitter', 'portal', 'sensor'], 2],
+  ['src/game/push.js', 'Lichtläufer: Bewegen, Schieben, Drehen, Eis, Lichttore, Wanderlampen, Druckplatten, Löser (Breitensuche)', ['player', 'mirrorblock', 'stone', 'ice', 'splitter', 'door', 'lamp', 'plate', 'flip'], 2],
   ['src/game/pushLevels.js', 'Alle Level als Textraster + Legende + Zugziel', [], 2],
   ['src/game/render.js', 'Zeichnen aller Objekte, Strahlen, Animationen', ['beam', 'player', 'wall', 'floor', 'ice', 'portal', 'splitter'], 2],
   ['src/game/progress.js', 'Fortschritt und Bestleistungen (localStorage)', [], 2],
+  ['src/game/forge.js', 'Levelschmiede: forge() verteilt Blöcke zufällig, climb() verbessert per Bergsteigen – Löser bewertet', [], 11],
+  ['src/game/daily.js', 'Tagesrätsel: Datum → Startwert → Grundriss + Schmiede; Zwischenspeicher je Tag', [], 11],
+  ['src/game/dailyWorker.js', 'Web Worker: baut das Tagesrätsel abseits des Hauptthreads', [], 11],
+  ['src/ui/dailyView.js', 'Seite #/daily: Amboss-Animation, dann das Rätsel', [], 11],
+  ['src/game/worlds.js', 'Welten: Strand, Kirschblüte, Dschungel, Nachtwald, Vulkan, Tempel, Polarlicht – Wände, Böden, Rahmen, Teilchen', ['wall', 'floor'], 10],
+  ['src/game/pixelRender.js', 'Pixel-Renderer: Schrägsicht-Wände, Böden je Welt, Sprites, Minecraft-Licht, Reflexionen, animierter Held', ['wall', 'floor', 'player', 'beam'], 13],
+  ['src/adventure/adventure.js', 'Escape-Raum: Raster-Bewegung, Ausgangstür, Fragmente, Kraftleiste, Animationen, Handy-Steuerung, Tutorial-Eule (#/adv/tutorial)', ['player'], 13],
+  ['src/game/roomDecor.js', 'Raumausstattung: hohe Rückwand (Fenster, Fackeln, Bilder, Regale), Möbel aus Innenwänden, Teppiche, Streugut, Außenwelt, Teilchen je Welt', ['wall', 'floor'], 15],
+  ['src/adventure/textureSheet.js', 'Texturbogen #/textures: alle Sprites in jeder Welt', [], 13],
+  ['src/game/sound.js', 'Klang-System: alle Geräusche live mit Web Audio synthetisiert, Ton an/aus', [], 9],
+  ['src/game/skins.js', 'Lichtblock-Kit: Farben/Symbole, Freischaltung mit Sternen, drawPlayerBlock()', ['player'], 8],
   ['src/ui/pushView.js', 'Spielansicht Lichtläufer: Eingabe, HUD, Sieg, Live-Log der Züge', [], 2],
-  ['src/ui/menu.js', 'Startmenü mit Fortschritt und Level-Auswahl', [], 2],
+  ['src/ui/menu.js', 'Arcade-Menü: Play-Knopf, Kapitel-Karussell, Kapitelseite, Lichtblock-Kit', [], 2],
   ['src/ui/celebrate.js', 'Siegesfeuerwerk und Ziel-Funken', [], 4],
   ['src/main.js', 'Router: #/menu, #/run/N, #/lab, #/brain', [], 1],
   ['src/config.js', 'Umgebung aus /env.js (IS_DEV)', [], 1],
@@ -87,6 +134,20 @@ const FILES = [
   ['docs/SYSTEM.md', 'Systembeschreibung für neue Sitzungen', [], 5],
 ];
 const fileId = (path) => `g-file-${path.split('/').pop().replace(/\.(js|json|py|css|md|log)$/, '')}`;
+
+// Klänge aus src/game/sound.js (live synthetisiert) und die Objekte, die sie auslösen
+const SOUNDS = [
+  ['step', 'Schritt', 'Kurzer Dreiecks-Tick mit leicht zufälliger Tonhöhe.', ['player']],
+  ['bump', 'Anstoßen', 'Dumpfer Rechteck-Ton beim Laufen gegen Wand oder blockierten Block.', ['wall']],
+  ['push', 'Schieben', 'Gefiltertes Rauschen + tiefer Ton.', ['mirrorblock', 'stone', 'prism', 'filter', 'splitter', 'lamp']],
+  ['slide', 'Rutschen', 'Helles Rauschen, wenn Spieler oder Block über Eis gleitet.', ['ice']],
+  ['rotate', 'Drehen', 'Zwei kurze hohe Klicks.', ['mirrorblock', 'splitter', 'lamp']],
+  ['target', 'Ziel-Akkord', 'Rot = C, Grün = E, Blau = G; Mischfarben erklingen als Akkord.', ['target']],
+  ['door', 'Tor öffnet', 'Aufsteigender Sägezahn-Sweep mit Rauschen.', ['door', 'sensor']],
+  ['plate', 'Platte', 'Zwei Töne, wenn sich gedrückte Platten ändern.', ['plate', 'flip']],
+  ['win', 'Sieg-Fanfare', 'C-E-G-C aufsteigend, Kapitelende mit längerer Fanfare.', ['target']],
+  ['ui', 'Menü-Klänge', 'Blip, Wisch-Geräusch im Karussell, Start-Akkord am Play-Knopf.', []],
+];
 
 // Quellen im Live-Log (Spalte nach der Uhrzeit) und wer sie schreibt
 const LOG_SOURCES = [
@@ -112,6 +173,9 @@ function levelUses(def, rows) {
   }
   if (chars.has('m') || chars.has('n')) used.add('mirrorblock');
   if (chars.has('h') || chars.has('k')) used.add('splitter');
+  if (chars.has('x')) used.add('shifter');
+  if (['>', '<', '^', 'v'].some((c) => chars.has(c))) used.add('flow');
+  if (chars.has('z') || chars.has('y')) used.add('enemy');
   if (chars.has('o')) used.add('stone');
   if (chars.has('P')) used.add('prism');
   if (chars.has('~')) used.add('ice');
@@ -130,7 +194,13 @@ const CONTROLS = [
   ['enter', 'Enter – Weiter', 'Im Siegfenster: nächstes Level.', []],
 ];
 const ROUTES = [
-  ['menu', '#/menu', 'Startmenü', 'Spielen, Fortschritt, Level-Auswahl, Lab-Zugang.', 'menu'],
+  ['menu', '#/menu', 'Startmenü', 'Arcade-Hauptseite: Play-Knopf, Lichtblock, Lab, Statistik.', 'menu'],
+  ['chapters', '#/menu/chapters', 'Kapitel-Karussell', 'Große Kapitelkarten zum Durchblättern.', 'menu'],
+  ['chapter', '#/menu/chapter/N', 'Kapitelseite', 'Große Level-Kacheln eines Kapitels.', 'menu'],
+  ['kit', '#/menu/kit', 'Lichtblock-Kit', 'Farbe und Symbol des Spielerblocks wählen.', 'menu'],
+  ['adv', '#/adv/N', 'Escape-Raum', 'Pixel-Abenteuer: Raum N mit Ausgangstür und Fragmenten.', 'adventure'],
+  ['textures', '#/textures', 'Texturbogen', 'Alle Pixel-Sprites in jeder Welt.', 'textureSheet'],
+  ['daily', '#/daily', 'Tagesrätsel', 'Jeden Tag ein neues Rätsel aus der Levelschmiede.', 'dailyView'],
   ['run', '#/run/N', 'Spielseite', 'Level N im Modus Lichtläufer.', 'pushView'],
   ['lab', '#/lab', 'Lab-Seite', 'Aktueller Abschnitt, Arbeitsschritte, Gehirnkarte, Live-Log.', 'labView'],
   ['labfull', '#/lab/full', 'Lab Vollansicht', 'Gehirnkarte über das ganze Fenster mit Live-Log rechts.', 'labView'],
@@ -161,10 +231,17 @@ const UNIT_TESTS = [
   ['splitter', 'Test: Strahlteiler', ['splitter']],
   ['portal', 'Test: Portal-Durchgang', ['portal']],
   ['portalwalk', 'Test: Portal blockiert Bewegung', ['portal', 'player']],
+  ['lock', 'Test: Lichtschloss', ['sensor', 'door', 'player']],
+  ['lamp', 'Test: Wanderlampe', ['lamp', 'player']],
+  ['plate', 'Test: Druckplatte', ['plate', 'flip', 'player']],
+  ['shift', 'Test: Farbwandler', ['shifter']],
+  ['flow', 'Test: Strömung', ['flow', 'player', 'mirrorblock']],
+  ['daily', 'Test: Tagesrätsel', []],
+  ['enemy', 'Test: Schattenläufer', ['enemy', 'player', 'beam']],
 ];
 const BACKUPS = [
   [1, 'step-01-grundlage-lab.zip'], [2, 'step-02-prototyp-lichtlaeufer.zip'], [3, 'step-03-lichtlaeufer-ausbau.zip'],
-  [4, 'step-04-neon-feier-gross.zip'], [5, 'step-05-teiler-portale.zip'],
+  [4, 'step-04-neon-teiler-portale-schloesser.zip'], [5, 'step-05-wanderlampen.zip'], [6, 'step-06-schaltwerk-menue-sound.zip'], [7, 'step-07-welten-meister.zip'], [8, 'step-08-riff-tagesraetsel.zip'], [9, 'step-09-schatten-gegner.zip'], [10, 'step-10-pixel-abenteuer.zip'], [11, 'step-11-ranken-hud.zip'], [12, 'step-12-raeume-tutorial.zip'],
 ];
 
 const TIERS = [
@@ -197,6 +274,19 @@ export function buildProjectGraph(PUSH_LEVELS) {
   link('g-obj-ice', 'g-obj-player', 'lässt rutschen');
   link('g-obj-emitter', 'g-obj-beam', 'sendet');
   link('g-obj-beam', 'g-obj-target', 'trifft');
+  link('g-obj-beam', 'g-obj-sensor', 'beleuchtet');
+  link('g-obj-sensor', 'g-obj-door', 'öffnet');
+  link('g-obj-beam', 'g-obj-enemy', 'löst auf');
+  link('g-obj-enemy', 'g-obj-player', 'jagt');
+  link('g-obj-plate', 'g-obj-flip', 'kippt');
+  link('g-obj-flip', 'g-obj-beam', 'lenkt um');
+  link('g-obj-player', 'g-obj-plate', 'drückt');
+  link('g-obj-stone', 'g-obj-plate', 'beschwert');
+  link('g-obj-lamp', 'g-obj-beam', 'sendet');
+  link('g-obj-lamp', 'g-obj-emitter', 'bewegliche Form von');
+  link('g-obj-player', 'g-obj-lamp', 'schiebt/dreht');
+  link('g-obj-player', 'g-obj-sensor', 'beschattet');
+  link('g-obj-door', 'g-obj-player', 'sperrt/lässt durch');
 
   // Dateien
   for (const [path, summary, objs, step] of FILES) {
@@ -209,6 +299,12 @@ export function buildProjectGraph(PUSH_LEVELS) {
     ['push', 'engine', 'nutzt'], ['render', 'engine', 'nutzt'], ['pushView', 'push', 'nutzt'], ['pushView', 'render', 'zeichnet mit'],
     ['pushView', 'pushLevels', 'lädt'], ['pushView', 'progress', 'speichert in'], ['pushView', 'celebrate', 'feiert mit'],
     ['pushView', 'devlog', 'meldet an'], ['menu', 'pushLevels', 'listet'], ['menu', 'progress', 'liest'],
+    ['menu', 'skins', 'wählt'], ['forge', 'push', 'löst mit'], ['daily', 'forge', 'baut mit'], ['dailyWorker', 'daily', 'rechnet'],
+    ['dailyView', 'dailyWorker', 'startet'], ['dailyView', 'pushView', 'spielt in'], ['main', 'dailyView', 'zeigt'], ['menu', 'daily', 'zeigt Status'],
+    ['tests', 'daily', 'prüft'],
+    ['adventure', 'push', 'Regeln aus'], ['adventure', 'pixelRender', 'zeichnet mit'], ['pixelRender', 'skins', 'färbt Held mit'],
+    ['pixelRender', 'worlds', 'Welt-Paletten wie'], ['main', 'adventure', 'zeigt'], ['main', 'textureSheet', 'zeigt'], ['menu', 'adventure', 'startet'],
+    ['adventure', 'sound', 'spielt ab mit'], ['textureSheet', 'pixelRender', 'zeigt'], ['render', 'skins', 'zeichnet Spieler mit'], ['skins', 'settings', 'speichert in'],
     ['main', 'menu', 'zeigt'], ['main', 'pushView', 'zeigt'], ['main', 'labView', 'zeigt'], ['labView', 'brainMap', 'enthält'],
     ['labView', 'projectGraph', 'nutzt'], ['projectGraph', 'pushLevels', 'liest'], ['labView', 'brain', 'lädt'], ['labView', 'lab', 'lädt'],
     ['devlog', 'serve', 'POST /api/log'], ['serve', 'live', 'schreibt/liest'], ['labView', 'serve', 'fragt /api/activity'],
@@ -229,6 +325,14 @@ export function buildProjectGraph(PUSH_LEVELS) {
     add({ id: `g-tex-${tx.id}`, type: 'texture', group: 'textures', label: tx.label, summary: tx.summary, area: 'src/game/render.js' });
     for (const o of tx.objects) link(`g-tex-${tx.id}`, `g-obj-${o}`, 'gestaltet');
   }
+
+  // Klänge
+  for (const [id, label, summary, objs] of SOUNDS) {
+    add({ id: `g-snd-${id}`, type: 'animation', group: 'sounds', label: `Klang: ${label}`, summary, area: 'src/game/sound.js', step: 9 });
+    link(F('sound'), `g-snd-${id}`, 'synthetisiert');
+    for (const o of objs) link(`g-obj-${o}`, `g-snd-${id}`, 'erklingt als');
+  }
+  link(F('pushView'), F('sound'), 'spielt ab mit'); link(F('menu'), F('sound'), 'spielt ab mit'); link(F('sound'), F('settings'), 'Lautstärke aus');
 
   // Live-Log-Quellen
   for (const [src, summary, file] of LOG_SOURCES) {
@@ -254,7 +358,7 @@ export function buildProjectGraph(PUSH_LEVELS) {
     link(F('brainMap'), `g-form-${id}`, 'ordnet als');
   }
   for (const [id, label, objs] of UNIT_TESTS) {
-    const step = ['splitter', 'portal', 'portalwalk'].includes(id) ? 5 : ['prism', 'filter', 'ice'].includes(id) ? 3 : 2;
+    const step = id === 'enemy' ? 12 : ['flow', 'daily'].includes(id) ? 11 : id === 'shift' ? 10 : id === 'plate' ? 8 : id === 'lamp' ? 7 : id === 'lock' ? 6 : ['splitter', 'portal', 'portalwalk'].includes(id) ? 5 : ['prism', 'filter', 'ice'].includes(id) ? 3 : 2;
     add({ id: `g-test-${id}`, type: 'test', group: 'tests', label, summary: 'Einzeltest der Browser-Testseite tests/index.html.', area: 'tests/index.html', status: 'passed', step });
     link(F('tests'), `g-test-${id}`, 'enthält');
     for (const o of objs) link(`g-test-${id}`, `g-obj-${o}`, 'prüft');
@@ -265,6 +369,16 @@ export function buildProjectGraph(PUSH_LEVELS) {
     link(F('backup'), `g-bak-${n}`, 'erzeugte');
     if (i > 0) link(`g-bak-${BACKUPS[i - 1][0]}`, `g-bak-${n}`, 'Vorgänger von');
   });
+
+  // Welten (Orte) – je Kapitel eine Welt mit eigenen Texturen und Teilchen
+  CHAPTERS.forEach((ch, i) => {
+    const wid = CHAPTER_WORLD[ch.id], w = WORLDS[wid];
+    if (!w) return;
+    add({ id: `g-world-${wid}`, type: 'step', group: 'worlds', label: `Welt ${i + 1}: ${w.icon} ${w.name}`, summary: `${ch.name} – ${ch.summary} ${ch.levels.length} Level.`, area: `#/menu/chapter/${i}`, step: 10, status: 'passed' });
+    link(F('worlds'), `g-world-${wid}`, 'zeichnet');
+    if (i > 0) link(`g-world-${CHAPTER_WORLD[CHAPTERS[i - 1].id]}`, `g-world-${wid}`, 'führt weiter nach');
+  });
+  link(F('render'), F('worlds'), 'zeichnet Welten mit'); link(F('pushView'), F('worlds'), 'wählt Welt'); link(F('menu'), F('worlds'), 'färbt Karten mit');
 
   // Schwierigkeitsstufen
   for (const t of TIERS) add({ id: `g-tier-${t.id}`, type: 'tier', group: 'tiers', label: t.label, summary: 'Level nach Mindestzügen laut Löser.' });
@@ -277,7 +391,7 @@ export function buildProjectGraph(PUSH_LEVELS) {
     const { used, colors } = levelUses(def, def.rows);
     const w = Math.max(...def.rows.map((r) => r.length)), h = def.rows.length;
     const blocks = [...def.rows.join('')].filter((c) => 'mnhkoP'.includes(c) || def.legend?.[c]?.type === 'filter').length;
-    add({ id, type: 'level', group: 'levels-run', label: `${i + 1}. ${def.name}`, summary: `${def.hint} Feld ${w}×${h}, ${blocks} Blöcke, Zugziel ${def.par ?? '–'}.`, area: `#/run/${i}`, status: 'passed', step: Number(def.id.slice(1)) >= 11 ? 5 : Number(def.id.slice(1)) >= 10 ? 4 : Number(def.id.slice(1)) >= 6 ? 3 : 2 });
+    add({ id, type: 'level', group: 'levels-run', label: `${i + 1}. ${def.name}`, summary: `${def.hint} Feld ${w}×${h}, ${blocks} Blöcke, Zugziel ${def.par ?? '–'}.`, area: `#/run/${i}`, status: 'passed', step: Number(def.id.slice(1)) >= 42 ? 12 : Number(def.id.slice(1)) >= 33 ? 11 : Number(def.id.slice(1)) >= 26 ? 10 : Number(def.id.slice(1)) >= 23 ? 8 : Number(def.id.slice(1)) >= 20 ? 7 : Number(def.id.slice(1)) >= 16 ? 6 : Number(def.id.slice(1)) >= 11 ? 5 : Number(def.id.slice(1)) >= 10 ? 4 : Number(def.id.slice(1)) >= 6 ? 3 : 2 });
     link('g-mode-run', id, 'enthält');
     if (i > 0) link(`g-lvl-${PUSH_LEVELS[i - 1].id}`, id, 'führt zu');
     for (const o of used) {
@@ -287,6 +401,8 @@ export function buildProjectGraph(PUSH_LEVELS) {
       introduced.add(o);
     }
     for (const c of colors) link(id, `g-col-${c}`, 'nutzt Farbe');
+    const chap = CHAPTERS.find((c) => c.levels.includes(def.id));
+    if (chap && CHAPTER_WORLD[chap.id]) link(id, `g-world-${CHAPTER_WORLD[chap.id]}`, def.master ? 'Meisterprüfung in' : 'spielt in');
     const tier = TIERS.find((t) => (def.par ?? 0) <= t.max);
     link(`g-tier-${tier.id}`, id, 'umfasst');
     link('g-file-pushLevels', id, 'definiert');
@@ -326,6 +442,30 @@ export function mergeGraphs(curated, generated, lab = null) {
     ['mech-splitter', 'g-obj-splitter', 'ist'],
     ['mech-portal', 'g-obj-portal', 'ist'],
     ['goal', 'g-mode-run', 'Hauptmodus'],
+    ['mech-lock', 'g-obj-sensor', 'ist'],
+    ['mech-lock', 'g-obj-door', 'ist'],
+    ['lvl-lock', 'g-lvl-w16', 'enthält'],
+    ['lvl-lock', 'g-lvl-w17', 'enthält'],
+    ['lvl-lock', 'g-lvl-w18', 'enthält'],
+    ['lvl-lock', 'g-lvl-w19', 'enthält'],
+    ['mech-prism', 'g-lvl-w18', 'Schlüssel in'],
+    ['mech-lamp', 'g-obj-lamp', 'ist'],
+    ['mech-plate', 'g-obj-plate', 'ist'],
+    ['mech-plate', 'g-obj-flip', 'ist'],
+    ['lvl-plate', 'g-lvl-w23', 'enthält'],
+    ['lvl-plate', 'g-lvl-w24', 'enthält'],
+    ['lvl-plate', 'g-lvl-w25', 'enthält'],
+    ['feat-arcade', 'g-file-menu', 'umgesetzt in'],
+    ['feat-kit', 'g-file-skins', 'umgesetzt in'],
+    ['feat-sound', 'g-file-sound', 'umgesetzt in'],
+    ['feat-chapters', 'g-file-pushLevels', 'umgesetzt in'],
+    ['lvl-lamp', 'g-lvl-w20', 'enthält'],
+    ['lvl-lamp', 'g-lvl-w21', 'enthält'],
+    ['lvl-lamp', 'g-lvl-w22', 'enthält'],
+    ['mech-lock', 'g-lvl-w22', 'Schloss in'],
+    ['test-lamp', 'g-test-lamp', 'ist'],
+    ['mech-ice', 'g-lvl-w19', 'Hindernis in'],
+    ['test-lock', 'g-test-lock', 'ist'],
     ['feat-livelog', 'g-file-live', 'zeigt'],
     ['feat-logbus', 'g-file-devlog', 'umgesetzt in'],
     ['feat-logcolor', 'g-anim-logflow', 'gestaltet'],

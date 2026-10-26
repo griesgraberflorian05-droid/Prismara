@@ -1,0 +1,270 @@
+/* =====================================================================
+   Prismara Lab im Spielstil: Holzbretter, Pergament, Pixel-Schrift,
+   Laternenlicht über einer Nachthimmel-Karte. Alle Regeln hängen an
+   body.lab-wood (von labView.js gesetzt), damit das alte Lab-CSS in
+   styles.css als Grundgerüst bleibt und hier nur überschrieben wird.
+   ===================================================================== */
+/* ---------- Grundlayout der Kartenwerkzeuge (aus der GitHub-Fassung übernommen) ---------- */
+.map-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-items: stretch; padding: 12px 14px; }
+.map-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.map-tools { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr); align-items: stretch; gap: 10px; width: 100%; }
+.map-tool-section { display: flex; flex-direction: column; justify-content: center; gap: 8px; min-width: 0; padding: 10px 12px; }
+.map-tool-row { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; min-width: 0; }
+.map-choice { display: grid; gap: 3px; }
+.map-node-tools .map-choice { flex: 0 1 132px; min-width: 112px; }
+.map-node-tools .map-choice select { width: 100%; min-width: 0; }
+.map-growth-row { align-items: stretch; }
+.map-growth-row > .btn { align-self: center; }
+.growth-stack { display: grid; gap: 6px; flex: 1 1 190px; min-width: 170px; }
+.growth-stack > #growth-play { width: 100%; }
+.growth-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; width: 100%; }
+.growth-control { display: grid; gap: 3px; min-width: 0; margin: 0; font-size: 0.66rem; }
+.growth-control span { display: flex; justify-content: space-between; gap: 10px; }
+.growth-control output { font-variant-numeric: tabular-nums; }
+.growth-control input[type="range"] { width: 100%; min-height: 22px; margin: 0; padding: 0; cursor: pointer; }
+.growth-control input[type="range"]:disabled { opacity: 0.45; cursor: default; }
+.importance-controls { display: flex; align-items: center; gap: 10px 16px; width: 100%; flex-wrap: wrap; padding: 8px 2px 0; }
+.importance-heading { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.importance-heading button { padding: 4px 8px; cursor: pointer; }
+.importance-options { display: flex; gap: 6px; flex-wrap: wrap; }
+.importance-btn { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; cursor: pointer; }
+.importance-number { display: inline-grid; width: 19px; height: 19px; place-items: center; }
+.importance-count { min-width: 1.4em; text-align: right; font-variant-numeric: tabular-nums; }
+.map-growth-caption { position: absolute; z-index: 3; top: 16px; left: 50%; width: min(92%, 460px); min-height: 82px; transform: translateX(-50%); overflow: hidden; pointer-events: none; }
+.growth-caption-layer { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 12px 18px; opacity: 0; transform: translateY(8px); transition: opacity 0.38s ease, transform 0.48s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.growth-caption-layer.is-active { opacity: 1; transform: translateY(0); }
+.growth-caption-layer strong { overflow: hidden; font-size: clamp(0.95rem, 2.3vw, 1.2rem); line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.growth-caption-layer small { font-size: 0.72rem; }
+.map-node-list { position: absolute; inset: 0; overflow: auto; padding: 12px; }
+.node-list-row { display: grid; grid-template-columns: 20px minmax(150px, 1.5fr) minmax(110px, 1fr) 28px minmax(95px, 0.7fr); align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 7px 10px; border: 0; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.node-list-row .lg-shape { justify-self: center; width: 12px; height: 12px; }
+.node-list-name { font-weight: 650; }
+.node-list-type, .node-list-status { font-size: 0.78rem; }
+.node-list-level { display: inline-grid; place-items: center; width: 22px; height: 22px; font-size: 0.72rem; }
+.node-list-empty { margin: 24px; text-align: center; }
+.map-legend-toggle { display: none; }
+.view-list .brain-only, .view-list .map-legend, .view-list .map-hint { display: none !important; }
+.view-list .map-tools { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1100px) {
+  .map-tools { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .map-tool-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .map-node-tools .map-tool-row > .seg { grid-column: 1 / -1; display: flex; width: 100%; }
+  .map-node-tools .map-tool-row > .seg .seg-btn { flex: 1; }
+  .map-node-tools .map-choice { min-width: 0; }
+  .map-tools input[type="search"] { grid-column: 1 / -1; }
+  .map-growth-row { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; }
+  .map-growth-row > .btn { width: 100%; min-width: 0; }
+  .map-growth-row .growth-stack { grid-column: 1 / -1; width: 100%; min-width: 0; }
+  .node-list-row { grid-template-columns: 18px minmax(0, 1fr) 26px; gap: 7px; }
+  .node-list-type, .node-list-status { display: none; }
+  .map-legend-toggle { display: inline-flex; justify-self: start; width: max-content; }
+  .map-legend { display: none; }
+  .map-legend.is-open { display: flex; z-index: 6; max-height: min(34dvh, 240px); overflow: auto; pointer-events: auto; }
+}
+
+body.lab-wood {
+  --wood-0:#1e1209; --wood-1: #3a2414; --wood-2: #6b4426; --wood-3: #9b6a3e; --wood-4: #c99766;
+  --parch: #f3e1b8; --parch-2: #e6cd98; --parch-3: #d8b97a; --ink: #2a1a08; --ink-2: #6b4a22;
+  --leaf: #4a8a3a; --leaf-2: #6cb455; --gold: #ffd166; --ember: #f4a259; --rose: #e07a5f;
+  --text: #fff3d6; --muted: #e8d6b0; --line: rgba(255, 230, 180, 0.18);
+  --pix: 'Press Start 2P', monospace;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 18% -10%, rgba(255, 190, 100, 0.16), transparent 45%),
+    radial-gradient(ellipse at 90% 110%, rgba(110, 160, 90, 0.12), transparent 50%),
+    linear-gradient(#1a1009, #0e0905 70%);
+}
+body.lab-wood .bg-fx, body.lab-wood .topbar { display: none !important; }
+body.lab-wood .muted { color: var(--muted); }
+body.lab-wood :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+body.lab-wood code { color: inherit; }
+
+/* ---------- Kopf: Holzschild mit Titel ---------- */
+body.lab-wood .lab { padding: 16px 18px 18px; gap: 14px; }
+body.lab-wood .lab-head {
+  align-items: center; gap: 14px; padding: 12px 16px;
+  background: linear-gradient(var(--wood-3), var(--wood-2));
+  border: 3px solid var(--wood-0);
+  box-shadow: inset 0 3px 0 rgba(255, 220, 160, 0.3), inset 0 -4px 0 rgba(0, 0, 0, 0.3), 0 5px 0 #000;
+}
+body.lab-wood .lab-title { flex: 1; min-width: 220px; }
+body.lab-wood .lab-head h1 { font: 1.15rem/1.3 var(--pix); color: var(--gold); text-shadow: 0 3px 0 #000; letter-spacing: 0.02em; }
+body.lab-wood .lab-head p { color: #fbe9c4; font-size: 0.85rem; text-shadow: 0 1px 0 #000; }
+body.lab-wood .lab-head-meta { background: rgba(0, 0, 0, 0.28); padding: 6px 10px; border: 2px solid var(--wood-0); }
+body.lab-wood .live-dot { border-radius: 0; background: var(--leaf-2); box-shadow: 0 0 8px var(--leaf-2); }
+body.lab-wood .env-badge { border-radius: 0; font: 0.5rem/1 var(--pix); padding: 6px 8px; background: var(--parch); color: var(--ink); border: 2px solid var(--wood-0); }
+
+/* ---------- Knöpfe: Holzbretter ---------- */
+body.lab-wood .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 9px 12px; border-radius: 0; border: 3px solid var(--wood-0);
+  background: linear-gradient(var(--wood-3), var(--wood-2)); color: var(--text);
+  box-shadow: inset 0 3px 0 rgba(255, 220, 160, 0.35), inset 0 -4px 0 rgba(0, 0, 0, 0.3), 0 3px 0 #000;
+  font: 0.55rem/1.4 var(--pix); text-decoration: none; text-shadow: 0 2px 0 #000; cursor: pointer;
+  transition: transform 0.08s steps(2), filter 0.1s;
+}
+body.lab-wood .btn:hover:not(:disabled) { filter: brightness(1.15); transform: translateY(-1px); background: linear-gradient(var(--wood-4), var(--wood-3)); border-color: var(--wood-0); }
+body.lab-wood .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.3), 0 1px 0 #000; }
+body.lab-wood .btn-full[aria-pressed="true"] { background: linear-gradient(var(--leaf-2), var(--leaf)); }
+body.lab-wood .lab-back { align-self: center; }
+body.lab-wood .map-legend-toggle { display: none; }
+@media (max-width: 700px) { body.lab-wood .map-legend-toggle { display: inline-flex; justify-self: start; } }
+
+/* Umschalter (Gehirn/Liste, Haupt/Alle): Brett mit eingelassenen Feldern */
+body.lab-wood .seg { border: 3px solid var(--wood-0); border-radius: 0; background: var(--wood-1); box-shadow: 0 3px 0 #000; gap: 0; }
+body.lab-wood .seg-btn { font: 0.5rem/1.4 var(--pix); color: var(--muted); padding: 8px 10px; border-radius: 0; text-shadow: 0 1px 0 #000; }
+body.lab-wood .seg-btn + .seg-btn { border-left: 2px solid var(--wood-0); }
+body.lab-wood .seg-btn:hover { color: var(--text); background: rgba(255, 220, 160, 0.08); }
+body.lab-wood .seg-btn[aria-pressed="true"] { background: linear-gradient(var(--leaf-2), var(--leaf)); color: #fff; box-shadow: inset 0 2px 0 rgba(220, 255, 200, 0.4); }
+
+/* Auswahl- und Suchfelder: Pergamentzettel */
+body.lab-wood .map-choice { color: var(--parch-2); font: 0.45rem/1.4 var(--pix); letter-spacing: 0.02em; text-transform: none; }
+body.lab-wood .map-choice select, body.lab-wood .map-tools input[type="search"] {
+  border-radius: 0; border: 3px solid var(--wood-0); background: var(--parch); color: var(--ink);
+  font: 600 0.82rem var(--font); padding: 6px 8px; box-shadow: inset 0 -3px 0 var(--parch-3);
+}
+body.lab-wood .map-tools input[type="search"] { width: 180px; }
+body.lab-wood .map-tools input::placeholder { color: var(--ink-2); }
+body.lab-wood .map-choice option { color: var(--ink); background: var(--parch); }
+
+/* ---------- Karten (Seitenleiste): Pergament ---------- */
+body.lab-wood .card {
+  background: var(--parch); color: var(--ink); border: 3px solid var(--wood-1); border-radius: 0;
+  box-shadow: inset 0 0 0 3px var(--parch-2), 0 5px 0 #000; backdrop-filter: none;
+}
+body.lab-wood .lab-side .muted, body.lab-wood .lab-side .kicker { color: var(--ink-2); }
+body.lab-wood .card h2 { font: 0.7rem/1.5 var(--pix); color: var(--ink-2); }
+body.lab-wood .now h2 { font: 0.62rem/1.7 var(--pix); color: var(--ink); }
+body.lab-wood .kicker { font: 0.45rem/1.4 var(--pix); letter-spacing: 0.04em; }
+body.lab-wood .now-list dt { color: var(--ink-2); font-weight: 700; }
+body.lab-wood .now-list dd { color: var(--ink); }
+body.lab-wood .lab-side { scrollbar-color: var(--wood-2) transparent; }
+body.lab-wood .step details { border: 2px solid var(--parch-3); border-radius: 0; background: rgba(255, 250, 235, 0.55); }
+body.lab-wood .step details[open] { background: #fff6df; border-color: var(--wood-3); }
+body.lab-wood .step summary:hover { background: rgba(107, 68, 38, 0.08); }
+body.lab-wood .step-title { color: var(--ink); }
+body.lab-wood .step.st-planned .step-title { color: var(--ink-2); }
+body.lab-wood .step.st-passed .step-icon { color: var(--leaf); }
+body.lab-wood .step.st-in_progress .step-icon { color: #c27a00; }
+body.lab-wood .step-body { color: var(--ink); }
+body.lab-wood .step-body h4 { color: var(--ink-2); }
+body.lab-wood .quality { border-left: 3px solid var(--ember); }
+body.lab-wood .status-chip { border-radius: 0; border: 2px solid var(--wood-1); font-size: 0.68rem; background: var(--parch-2); color: var(--ink); }
+body.lab-wood .status-chip.st-passed { background: #cfe8b8; color: #234d17; border-color: #3f7a2c; }
+body.lab-wood .status-chip.st-in_progress, body.lab-wood .status-chip.st-testing { background: #ffe3a1; color: #6b4200; border-color: #b07a10; }
+body.lab-wood .status-chip.st-open, body.lab-wood .status-chip.st-failed { background: #ffd0c2; color: #7a2410; border-color: #b0442a; }
+body.lab-wood .status-chip.st-planned, body.lab-wood .status-chip.st-idea { background: #efe4cc; color: var(--ink-2); }
+
+/* ---------- Gehirnkarte: Holzrahmen um einen Nachthimmel ---------- */
+body.lab-wood .map-card {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr);
+  padding: 0; overflow: hidden; min-height: max(600px, calc(100vh - 130px));
+  background: var(--wood-1); color: var(--text);
+  border: 4px solid var(--wood-0);
+  box-shadow: inset 0 0 0 3px var(--wood-2), 0 6px 0 #000;
+}
+body.lab-wood .map-toolbar {
+  grid-column: 1 / -1;
+  background: linear-gradient(var(--wood-2), #573620);
+  border-bottom: 4px solid var(--wood-0);
+  box-shadow: inset 0 3px 0 rgba(255, 220, 160, 0.18);
+}
+body.lab-wood .map-toolbar h2 { font: 0.75rem/1.5 var(--pix); color: var(--gold); text-shadow: 0 2px 0 #000; }
+body.lab-wood .map-toolbar h2 .small { font: 600 0.75rem var(--font); color: var(--parch-2); text-shadow: none; }
+body.lab-wood .map-tool-section { border-radius: 0; border: 2px solid var(--wood-0); background: rgba(30, 18, 9, 0.35); box-shadow: inset 0 2px 0 rgba(255, 220, 160, 0.08); }
+body.lab-wood .map-tool-heading { font: 0.45rem/1.4 var(--pix); color: var(--gold); letter-spacing: 0.04em; text-shadow: 0 1px 0 #000; }
+body.lab-wood .growth-control { color: var(--parch-2); font-weight: 700; }
+body.lab-wood .growth-control output { color: var(--gold); }
+body.lab-wood .growth-control input[type="range"] { accent-color: var(--leaf-2); }
+
+body.lab-wood .importance-controls { border-top: 2px dashed rgba(255, 220, 160, 0.2); }
+body.lab-wood .importance-heading strong { font: 0.5rem/1.4 var(--pix); color: var(--gold); }
+body.lab-wood .importance-heading .small { color: var(--parch-2); }
+body.lab-wood .importance-heading button, body.lab-wood .importance-btn {
+  border-radius: 0; border: 2px solid var(--wood-0); background: var(--parch-2); color: var(--ink);
+  font: 700 0.74rem var(--font); box-shadow: 0 2px 0 #000;
+}
+body.lab-wood .importance-btn { opacity: 0.6; }
+body.lab-wood .importance-btn[aria-pressed="true"], body.lab-wood .importance-heading button[aria-pressed="true"] { opacity: 1; background: var(--gold); color: var(--ink); border-color: var(--wood-0); }
+body.lab-wood .importance-btn:hover, body.lab-wood .importance-heading button:hover { border-color: var(--parch); opacity: 1; }
+body.lab-wood .importance-number { border-radius: 0; background: var(--wood-1); color: var(--gold); font: 0.45rem/1 var(--pix); }
+body.lab-wood .importance-count { color: var(--ink-2); }
+
+body.lab-wood .map-wrap {
+  grid-column: 1; grid-row: 2; margin: 0 !important; min-height: 420px;
+  background:
+    radial-gradient(1px 1px at 12% 22%, rgba(255, 240, 200, 0.7), transparent 2px),
+    radial-gradient(1px 1px at 68% 14%, rgba(255, 240, 200, 0.5), transparent 2px),
+    radial-gradient(1px 1px at 84% 62%, rgba(255, 240, 200, 0.6), transparent 2px),
+    radial-gradient(1px 1px at 32% 78%, rgba(255, 240, 200, 0.45), transparent 2px),
+    radial-gradient(ellipse at 50% 48%, rgba(255, 180, 90, 0.12), transparent 60%),
+    radial-gradient(ellipse at 50% 120%, rgba(60, 100, 50, 0.35), transparent 55%),
+    linear-gradient(#0d1424, #0a0d14 60%, #0b0a08);
+  background-size: 220px 220px, 260px 260px, 300px 300px, 180px 180px, auto, auto, auto;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.7);
+}
+body.lab-wood .map-hint { font: 0.42rem/1.6 var(--pix); color: var(--parch-2); text-shadow: 0 1px 0 #000; opacity: 0.75; }
+
+/* Legende, Details, Hinweise: Pergamentzettel auf der Karte */
+body.lab-wood .map-legend, body.lab-wood .map-detail, body.lab-wood .map-toast {
+  background: var(--parch); color: var(--ink); border: 3px solid var(--wood-1); border-radius: 0;
+  box-shadow: inset 0 0 0 2px var(--parch-2), 0 4px 0 #000; backdrop-filter: none;
+}
+body.lab-wood .legend-item { color: var(--ink); }
+body.lab-wood .lg-shape { box-shadow: 0 0 0 1px rgba(42, 26, 8, 0.45); }
+body.lab-wood .lg-ring { border-color: var(--ink-2); }
+body.lab-wood .lg-st-passed { border-color: #3f7a2c; }
+body.lab-wood .lg-st-open { border-color: #b0442a; }
+body.lab-wood .lg-badge { color: var(--ink); border: 1px solid var(--ink); }
+body.lab-wood .map-detail h3 { font: 0.62rem/1.6 var(--pix); color: var(--ink); }
+body.lab-wood .map-detail h4, body.lab-wood .detail-kicker, body.lab-wood .map-detail .muted { color: var(--ink-2); }
+body.lab-wood .map-detail .close { color: var(--ink-2); }
+body.lab-wood .map-detail .close:hover { color: var(--rose); }
+body.lab-wood .detail-result { border-left: 3px solid var(--leaf); }
+body.lab-wood .rel-list li { border-top: 1px dashed var(--parch-3); }
+body.lab-wood .map-detail .link { color: var(--ink); }
+body.lab-wood .map-detail .link:hover { color: #9b3d12; }
+body.lab-wood .map-detail .btn { margin-top: 6px; }
+body.lab-wood .map-toast { font: 600 0.82rem var(--font); }
+
+/* Wachstum: Schriftrolle oben auf der Karte */
+body.lab-wood .map-growth-caption { border-radius: 0; border: 3px solid var(--wood-1); background: var(--parch); box-shadow: inset 0 0 0 2px var(--parch-2), 0 5px 0 #000; backdrop-filter: none; }
+body.lab-wood .growth-caption-count { color: var(--ink-2); font: 0.45rem/1.4 var(--pix); }
+body.lab-wood .growth-caption-layer strong { color: var(--ink); text-shadow: none; }
+body.lab-wood .growth-caption-layer small { color: var(--ink-2); }
+
+/* Liste: Einträge wie in einem Verzeichnisbuch */
+body.lab-wood .map-node-list { background: linear-gradient(#f6e6c0, #ecd7a8); color: var(--ink); }
+body.lab-wood .node-list-row { color: var(--ink); border-bottom: 1px dashed var(--parch-3); }
+body.lab-wood .node-list-row:hover, body.lab-wood .node-list-row:focus-visible, body.lab-wood .node-list-row[aria-pressed="true"] { color: var(--ink); background: rgba(255, 209, 102, 0.45); }
+body.lab-wood .node-list-type, body.lab-wood .node-list-status, body.lab-wood .node-list-empty { color: var(--ink-2); }
+body.lab-wood .node-list-level { border-radius: 0; border: 2px solid var(--wood-1); color: var(--gold); background: var(--wood-1); font: 0.45rem/1 var(--pix); }
+
+/* ---------- Live-Log: Spalte rechts neben der Karte (Holzregal) ---------- */
+body.lab-wood .livelog { position: static; grid-column: 2; grid-row: 2; display: flex; pointer-events: auto; top: auto; }
+body.lab-wood .livelog-toggle {
+  margin: 12px 0 0; border-radius: 0; border: 3px solid var(--wood-0); border-right: 0;
+  background: linear-gradient(90deg, var(--wood-3), var(--wood-2)); box-shadow: 0 3px 0 #000;
+  font: 0.45rem/1.4 var(--pix); color: var(--gold); text-shadow: 0 1px 0 #000;
+}
+body.lab-wood .livelog-body { background: #160e07; border-left: 3px solid var(--wood-0); backdrop-filter: none; }
+body.lab-wood .livelog.open .livelog-body { width: clamp(260px, 22vw, 420px); }
+body.lab-wood .livelog-head { border-bottom: 2px solid var(--wood-1); }
+body.lab-wood .livelog-head strong { font: 0.5rem/1.4 var(--pix); color: var(--gold); }
+body.lab-wood .log-item { border-bottom: 1px solid rgba(255, 220, 160, 0.06); }
+body.lab-wood .log-item .log-icon { text-shadow: none; }
+body.lab-wood .log-text a:hover { color: var(--gold); }
+@keyframes log-in { from { opacity: 0; transform: translateX(14px); background: rgba(255, 209, 102, 0.2); } }
+
+/* ---------- Vollansicht ---------- */
+body.lab-wood .map-card.is-full { position: fixed; inset: 0; z-index: 50; border-width: 0; min-height: 0; box-shadow: none; }
+
+@media (max-width: 900px) {
+  body.lab-wood .lab { padding: 10px; }
+  body.lab-wood .lab-head h1 { font-size: 0.85rem; }
+  body.lab-wood .map-card { min-height: 640px; }
+  body.lab-wood .livelog.open .livelog-body { width: min(70vw, 300px); }
+  body.lab-wood .map-tools input[type="search"] { width: 100%; }
+}

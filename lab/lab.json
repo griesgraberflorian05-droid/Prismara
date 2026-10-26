@@ -1,135 +1,375 @@
 {
-  "project": "Prismara",
-  "updated": "2026-10-25 21:30",
-  "current": {
-    "step": 5,
-    "phase": "Schritt 5 · Strahlteiler, Portale, lebendiges Live-Log, Karte > 200",
-    "status": "in_progress",
-    "workingOn": "Neue Lichtelemente und Level, Live-Log-Bus mit Farben, Gehirnkarte mit allen Projektinhalten.",
-    "question": "Tragen Teilen und Versetzen von Licht neue Rätselideen – und macht das Lab die Arbeit in Echtzeit sichtbar?",
-    "next": "Finale-Level, Level-Auswahl, Tests, live spielen, SYSTEM.md, Sicherung."
-  },
-  "steps": [
-    {
-      "id": 1,
-      "title": "Projektgrundlage und Prismara Lab",
-      "status": "passed",
-      "goal": "Ein startbares Projekt mit Doku, Sicherungen, Umgebungskennzeichnung und einer lebendigen Lab-Ansicht samt Gehirnkarte.",
-      "quality": {
-        "problem": "Ohne Grundlage kann weder gespielt noch die Entwicklung verfolgt werden.",
-        "fit": "Das Lab ist ausdrücklich Teil des Erlebnisses und muss von Anfang an sichtbar sein.",
-        "success": "Ein Befehl startet die App; Lab zeigt Status, Schritte und Karte; Karte lädt neue Knoten ohne Neuladen; Env-Badge zeigt 'Development'.",
-        "check": "Server starten, Lab im sichtbaren Browser öffnen, Knoten anklicken; tools/check.py ausführen."
-      },
-      "tried": [
-        "Werkzeuge geprüft: Python 3.12 vorhanden; Node.js, npm und Git fehlen.",
-        "Server gestartet, /env.js und gesperrten Pfad /backups/ abgefragt.",
-        "Lab im Browserfenster geöffnet und Knoten per Maus ausgewählt.",
-        "Zwei Knoten in brain.json ergänzt, während das Lab offen war."
-      ],
-      "observed": [
-        "/env.js liefert env=development aus .env; /backups/ antwortet 404.",
-        "tools/check.py bestanden.",
-        "Erster Klick verfehlte den Knoten: Layout driftete nach dem Einpassen weiter (behoben, erneut geprüft: Auswahl und Detailpanel funktionieren).",
-        "Neue Knoten erschienen ohne Neuladen mit Hinweis '2 neue Knoten …'."
-      ],
-      "decision": "Stack ohne Abhängigkeiten (ES-Module + Python-Server), Sicherungen als nummerierte ZIPs. Qualitätsziel erfüllt → Schritt bestanden.",
-      "open": ["Leistung der Karte bei >150 Knoten noch ungeprüft."],
-      "next": "Spielprototyp mit Lichtpfad-Hypothese.",
-      "backup": "step-01-grundlage-lab.zip"
-    },
-    {
-      "id": 2,
-      "title": "Spielbarer Prototyp: Lichtpfade",
-      "status": "passed",
-      "backup": "step-02-prototyp-lichtlaeufer.zip",
-      "tried": [
-        "Engine mit Strahlen, Spiegeln, additiver Mischung; Setz-Modus mit 5 Leveln.",
-        "Zufallsspieler-Messung: Setzen vs. nur Drehen.",
-        "Nach Nutzerwunsch: Modus Lichtläufer (Block steuern, Spiegel schieben/drehen, Schatten) mit 5 Leveln.",
-        "Live gespielt im sichtbaren Browser: Setz-Level 1, Lichtläufer 1–3."
-      ],
-      "observed": [
-        "Tests 22/22 bestanden; alle Level lösbar, Zugziele = Mindestzüge laut Löser.",
-        "Nur Drehen: 87–100 % Zufallslösungen in ≤20 Klicks; Setzen: 1 %.",
-        "Lichtläufer 1–3 mit Mindestzügen gelöst (3/6/12, je ★★★); Schatten, Drehen, Kreuzen funktionieren.",
-        "Gehirnkarte: Zoom auf Knoten, 'Alle Knoten' (91/174), Formationen sichtbar umgeschaltet."
-      ],
-      "decision": "Lichtläufer wird Kernmodus; Setz-Modus wird entfernt. Qualitätsziel erfüllt → bestanden.",
-      "next": "Lichtläufer ausbauen: neue Elemente und Varianten, mehr Level.",
-      "goal": "Kleinster vollständiger Spielablauf mit einer Kernmechanik, deren Tragfähigkeit geprüft wird.",
-      "quality": {
-        "problem": "Es gibt noch nichts zu spielen; die Kernidee ist unbewiesen.",
-        "fit": "Farbige Lichtpfade passen zu Name und Stil (Prisma, Licht, Farbe).",
-        "success": "Mehrere Level lassen sich mit Maus und Tastatur vollständig lösen; Sieg wird korrekt erkannt; Ziele sind auch ohne Farbwahrnehmung (Symbole) unterscheidbar; ein Zufallsspieler löst die Level deutlich seltener als bei reinem Drehen.",
-        "check": "Browser-Tests der Engine (tests/), Zufallsspieler-Messung, Live-Spiel im sichtbaren Browser."
-      }
-    },
-    {
-      "id": 3,
-      "title": "Lichtläufer ausbauen: neue Elemente und Level",
-      "status": "passed",
-      "backup": "step-03-lichtlaeufer-ausbau.zip",
-      "tried": [
-        "Setz-Modus mit Leveln, Löser und Tests entfernt (in step-02 gesichert).",
-        "Prismablock, Farbfilter und Eisfelder in Engine/Schiebelogik eingebaut, je ein Einführungslevel plus Finale 'Regenbogen'.",
-        "Alle 9 Level live im sichtbaren Browser gespielt, inkl. Fehlzug und Neustart."
-      ],
-      "observed": [
-        "Tests 22/22; Löser bestätigt alle Level (Mindestzüge 3–19).",
-        "Erster Regenbogen-Entwurf nach 400 000 Zuständen ungelöst → neu entworfen (19 Züge).",
-        "Live: alle 9 Level mit Mindestzügen gelöst (★★★); Prisma-Zerlegung, Filter (≠ → ✓), Rutschen und Neustart sichtbar korrekt."
-      ],
-      "decision": "Qualitätsziel erfüllt → bestanden. Nächster Nutzerwunsch: helleres Neon-Design, Siegesanimation über den ganzen Bildschirm, größere Spielfelder.",
-      "next": "Schritt 4: Neon-Design, Siegesfeuerwerk, größere Level.",
-      "goal": "Setz-Modus entfernen; Lichtläufer mit neuen Elementen (Prisma, Farbfilter, Eis) und mehr Leveln mit klarem Schwierigkeitsanstieg ausbauen.",
-      "quality": {
-        "problem": "Fünf Level mit nur Spiegeln werden schnell eintönig; der Nutzer wünscht Varianten.",
-        "fit": "Prisma und Farbfilter passen direkt zum Licht- und Farbthema; Eis verändert die Bewegung, nicht das Licht.",
-        "success": "Jedes neue Element wird in einem eigenen Einführungslevel erklärt; alle Level lösbar mit steigenden Mindestzügen; Tests grün; mehrere neue Level live gespielt.",
-        "check": "Engine-Tests für Prisma/Filter/Eis, Löser für jedes Level, Live-Spieltest im sichtbaren Browser."
-      }
-    },
-    {
-      "id": 4,
-      "title": "Neon-Design, Siegesfeuerwerk, größere Level",
-      "status": "in_progress",
-      "goal": "Freundlicher, heller, mehr Neon und Bewegung; beim Lösen eine bildschirmfüllende Feier; größere Spielfelder.",
-      "quality": {
-        "problem": "Rückmeldung: Design wirkt zu dunkel und ruhig, der Sieg zu klein, Felder zu eng (7 Spalten).",
-        "fit": "Neon und Licht sind der Kern des Themas; Feier muss nach dem Lösen kommen und darf nichts verdecken, während man spielt.",
-        "success": "Hellere Farbwelt mit sichtbarem Neon-Glühen und Hintergrundbewegung; Sieg löst Partikel/Lichtwellen über den ganzen Bildschirm aus; neue Level mit mindestens 13 Spalten; reduzierte Bewegung schaltet Effekte ab; Lesbarkeit der Symbole bleibt.",
-        "check": "Live-Spieltest im sichtbaren Browser inkl. Sieg; Löser für die neuen großen Level; Tests grün."
-      }
-    },
-    {
-      "id": 5,
-      "title": "Strahlteiler, Portale, lebendiges Live-Log, Karte > 200",
-      "status": "in_progress",
-      "goal": "Zwei neue Lichtelemente mit eigenen Einführungsleveln und großen Kombi-Leveln; Level-Auswahl; Live-Log, das jede Aktion farbig und fließend zeigt; Gehirnkarte mit über 200 echten, verbundenen Knoten; Systembeschreibung.",
-      "quality": {
-        "problem": "Nach 10 Leveln fehlen neue Ideen; das Live-Log war zu ruhig; die Karte bildete nur einen Teil des Projekts ab.",
-        "fit": "Teilen und Versetzen von Licht passt zum Prisma-Thema; das Lab soll die Entwicklung in Echtzeit erlebbar machen.",
-        "success": "Neue Elemente je mit Einführungslevel; alle Level per Löser lösbar und Zugziel = Minimum; Tests grün; Live-Log zeigt Spielzüge, Löser und Tests live auf 8420; 'Alle Knoten' > 200; docs/SYSTEM.md vorhanden.",
-        "check": "Löser + Tests im Browser, live spielen, Lab-Vollansicht auf localhost:8420 beobachten, Knotenzahl ablesen."
-      },
-      "tried": [
-        "Strahlteiler und Portale in engine.js/push.js/render.js eingebaut.",
-        "Leveldesign mit Löser im Browser: w11, w12, w13 (2 Entwürfe), w14.",
-        "Live-Log-Bus (POST /api/log), Nachlesen von live.log, Farbcodierung, Systempuls.",
-        "Generator für 'Alle Knoten' stark erweitert."
-      ],
-      "observed": [
-        "w11 7 · w12 9 · w13 17 (erster Entwurf ungelöst) · w14 27 Züge.",
-        "Port 8420 war von altem Server belegt → neu gestartet.",
-        "Karte kurz leer während des Umbaus, danach 153 Knoten / 485 Verbindungen."
-      ]
-    },
-    {
-      "id": 6,
-      "title": "Animation, visueller Stil und Sound",
-      "status": "planned",
-      "goal": "Licht, Übergänge und synthetisierter Klang geben Energie, ohne Lesbarkeit zu stören."
-    }
-  ]
+    "project":  "Prismara",
+    "updated":  "2026-10-26 18:05",
+    "current":  {
+                    "step":  19,
+                    "phase":  "Schritt 19 - Lab im Spielstil, Nebelmoor, GitHub",
+                    "status":  "in_progress",
+                    "workingOn":  "Hochladen auf GitHub",
+                    "question":  "Läuft die öffentliche Seite mit dem ganzen neuen Spiel?",
+                    "next":  "Danach Schritte 15-18 (Reaktionen, Bogen, Bomben, Fußspuren)."
+                },
+    "steps":  [
+                  {
+                      "id":  1,
+                      "title":  "Projektgrundlage und Prismara Lab",
+                      "status":  "passed",
+                      "goal":  "Ein startbares Projekt mit Doku, Sicherungen, Umgebungskennzeichnung und einer lebendigen Lab-Ansicht samt Gehirnkarte.",
+                      "quality":  {
+                                      "problem":  "Ohne Grundlage kann weder gespielt noch die Entwicklung verfolgt werden.",
+                                      "fit":  "Das Lab ist ausdrücklich Teil des Erlebnisses und muss von Anfang an sichtbar sein.",
+                                      "success":  "Ein Befehl startet die App; Lab zeigt Status, Schritte und Karte; Karte lädt neue Knoten ohne Neuladen; Env-Badge zeigt \u0027Development\u0027.",
+                                      "check":  "Server starten, Lab im sichtbaren Browser öffnen, Knoten anklicken; tools/check.py ausführen."
+                                  },
+                      "tried":  [
+                                    "Werkzeuge geprüft: Python 3.12 vorhanden; Node.js, npm und Git fehlen.",
+                                    "Server gestartet, /env.js und gesperrten Pfad /backups/ abgefragt.",
+                                    "Lab im Browserfenster geöffnet und Knoten per Maus ausgewählt.",
+                                    "Zwei Knoten in brain.json ergänzt, während das Lab offen war."
+                                ],
+                      "observed":  [
+                                       "/env.js liefert env=development aus .env; /backups/ antwortet 404.",
+                                       "tools/check.py bestanden.",
+                                       "Erster Klick verfehlte den Knoten: Layout driftete nach dem Einpassen weiter (behoben, erneut geprüft: Auswahl und Detailpanel funktionieren).",
+                                       "Neue Knoten erschienen ohne Neuladen mit Hinweis \u00272 neue Knoten …\u0027."
+                                   ],
+                      "decision":  "Stack ohne Abhängigkeiten (ES-Module + Python-Server), Sicherungen als nummerierte ZIPs. Qualitätsziel erfüllt → Schritt bestanden.",
+                      "open":  [
+                                   "Leistung der Karte bei \u003e150 Knoten noch ungeprüft."
+                               ],
+                      "next":  "Spielprototyp mit Lichtpfad-Hypothese.",
+                      "backup":  "step-01-grundlage-lab.zip"
+                  },
+                  {
+                      "id":  2,
+                      "title":  "Spielbarer Prototyp: Lichtpfade",
+                      "status":  "passed",
+                      "backup":  "step-02-prototyp-lichtlaeufer.zip",
+                      "tried":  [
+                                    "Engine mit Strahlen, Spiegeln, additiver Mischung; Setz-Modus mit 5 Leveln.",
+                                    "Zufallsspieler-Messung: Setzen vs. nur Drehen.",
+                                    "Nach Nutzerwunsch: Modus Lichtläufer (Block steuern, Spiegel schieben/drehen, Schatten) mit 5 Leveln.",
+                                    "Live gespielt im sichtbaren Browser: Setz-Level 1, Lichtläufer 1–3."
+                                ],
+                      "observed":  [
+                                       "Tests 22/22 bestanden; alle Level lösbar, Zugziele = Mindestzüge laut Löser.",
+                                       "Nur Drehen: 87–100 % Zufallslösungen in ≤20 Klicks; Setzen: 1 %.",
+                                       "Lichtläufer 1–3 mit Mindestzügen gelöst (3/6/12, je ★★★); Schatten, Drehen, Kreuzen funktionieren.",
+                                       "Gehirnkarte: Zoom auf Knoten, \u0027Alle Knoten\u0027 (91/174), Formationen sichtbar umgeschaltet."
+                                   ],
+                      "decision":  "Lichtläufer wird Kernmodus; Setz-Modus wird entfernt. Qualitätsziel erfüllt → bestanden.",
+                      "next":  "Lichtläufer ausbauen: neue Elemente und Varianten, mehr Level.",
+                      "goal":  "Kleinster vollständiger Spielablauf mit einer Kernmechanik, deren Tragfähigkeit geprüft wird.",
+                      "quality":  {
+                                      "problem":  "Es gibt noch nichts zu spielen; die Kernidee ist unbewiesen.",
+                                      "fit":  "Farbige Lichtpfade passen zu Name und Stil (Prisma, Licht, Farbe).",
+                                      "success":  "Mehrere Level lassen sich mit Maus und Tastatur vollständig lösen; Sieg wird korrekt erkannt; Ziele sind auch ohne Farbwahrnehmung (Symbole) unterscheidbar; ein Zufallsspieler löst die Level deutlich seltener als bei reinem Drehen.",
+                                      "check":  "Browser-Tests der Engine (tests/), Zufallsspieler-Messung, Live-Spiel im sichtbaren Browser."
+                                  }
+                  },
+                  {
+                      "id":  3,
+                      "title":  "Lichtläufer ausbauen: neue Elemente und Level",
+                      "status":  "passed",
+                      "backup":  "step-03-lichtlaeufer-ausbau.zip",
+                      "tried":  [
+                                    "Setz-Modus mit Leveln, Löser und Tests entfernt (in step-02 gesichert).",
+                                    "Prismablock, Farbfilter und Eisfelder in Engine/Schiebelogik eingebaut, je ein Einführungslevel plus Finale \u0027Regenbogen\u0027.",
+                                    "Alle 9 Level live im sichtbaren Browser gespielt, inkl. Fehlzug und Neustart."
+                                ],
+                      "observed":  [
+                                       "Tests 22/22; Löser bestätigt alle Level (Mindestzüge 3–19).",
+                                       "Erster Regenbogen-Entwurf nach 400 000 Zuständen ungelöst → neu entworfen (19 Züge).",
+                                       "Live: alle 9 Level mit Mindestzügen gelöst (★★★); Prisma-Zerlegung, Filter (≠ → ✓), Rutschen und Neustart sichtbar korrekt."
+                                   ],
+                      "decision":  "Qualitätsziel erfüllt → bestanden. Nächster Nutzerwunsch: helleres Neon-Design, Siegesanimation über den ganzen Bildschirm, größere Spielfelder.",
+                      "next":  "Schritt 4: Neon-Design, Siegesfeuerwerk, größere Level.",
+                      "goal":  "Setz-Modus entfernen; Lichtläufer mit neuen Elementen (Prisma, Farbfilter, Eis) und mehr Leveln mit klarem Schwierigkeitsanstieg ausbauen.",
+                      "quality":  {
+                                      "problem":  "Fünf Level mit nur Spiegeln werden schnell eintönig; der Nutzer wünscht Varianten.",
+                                      "fit":  "Prisma und Farbfilter passen direkt zum Licht- und Farbthema; Eis verändert die Bewegung, nicht das Licht.",
+                                      "success":  "Jedes neue Element wird in einem eigenen Einführungslevel erklärt; alle Level lösbar mit steigenden Mindestzügen; Tests grün; mehrere neue Level live gespielt.",
+                                      "check":  "Engine-Tests für Prisma/Filter/Eis, Löser für jedes Level, Live-Spieltest im sichtbaren Browser."
+                                  }
+                  },
+                  {
+                      "id":  4,
+                      "title":  "Neon-Design, Siegesfeuerwerk, größere Level",
+                      "status":  "passed",
+                      "goal":  "Freundlicher, heller, mehr Neon und Bewegung; beim Lösen eine bildschirmfüllende Feier; größere Spielfelder.",
+                      "quality":  {
+                                      "problem":  "Rückmeldung: Design wirkt zu dunkel und ruhig, der Sieg zu klein, Felder zu eng (7 Spalten).",
+                                      "fit":  "Neon und Licht sind der Kern des Themas; Feier muss nach dem Lösen kommen und darf nichts verdecken, während man spielt.",
+                                      "success":  "Hellere Farbwelt mit sichtbarem Neon-Glühen und Hintergrundbewegung; Sieg löst Partikel/Lichtwellen über den ganzen Bildschirm aus; neue Level mit mindestens 13 Spalten; reduzierte Bewegung schaltet Effekte ab; Lesbarkeit der Symbole bleibt.",
+                                      "check":  "Live-Spieltest im sichtbaren Browser inkl. Sieg; Löser für die neuen großen Level; Tests grün."
+                                  },
+                      "backup":  "step-04-neon-teiler-portale-schloesser.zip"
+                  },
+                  {
+                      "id":  5,
+                      "title":  "Strahlteiler, Portale, lebendiges Live-Log, Karte \u003e 200",
+                      "status":  "passed",
+                      "decision":  "Neue Elemente, 5 Level, Level-Auswahl, Live-Log-Bus und Karte (213 Knoten) umgesetzt; Tests 31/31. Offen nach Schritt 6 verschoben: docs/SYSTEM.md, Sicherung.",
+                      "goal":  "Zwei neue Lichtelemente mit eigenen Einführungsleveln und großen Kombi-Leveln; Level-Auswahl; Live-Log, das jede Aktion farbig und fließend zeigt; Gehirnkarte mit über 200 echten, verbundenen Knoten; Systembeschreibung.",
+                      "quality":  {
+                                      "problem":  "Nach 10 Leveln fehlen neue Ideen; das Live-Log war zu ruhig; die Karte bildete nur einen Teil des Projekts ab.",
+                                      "fit":  "Teilen und Versetzen von Licht passt zum Prisma-Thema; das Lab soll die Entwicklung in Echtzeit erlebbar machen.",
+                                      "success":  "Neue Elemente je mit Einführungslevel; alle Level per Löser lösbar und Zugziel = Minimum; Tests grün; Live-Log zeigt Spielzüge, Löser und Tests live auf 8420; \u0027Alle Knoten\u0027 \u003e 200; docs/SYSTEM.md vorhanden.",
+                                      "check":  "Löser + Tests im Browser, live spielen, Lab-Vollansicht auf localhost:8420 beobachten, Knotenzahl ablesen."
+                                  },
+                      "tried":  [
+                                    "Strahlteiler und Portale in engine.js/push.js/render.js eingebaut.",
+                                    "Leveldesign mit Löser im Browser: w11, w12, w13 (2 Entwürfe), w14.",
+                                    "Live-Log-Bus (POST /api/log), Nachlesen von live.log, Farbcodierung, Systempuls.",
+                                    "Generator für \u0027Alle Knoten\u0027 stark erweitert."
+                                ],
+                      "observed":  [
+                                       "w11 7 · w12 9 · w13 17 (erster Entwurf ungelöst) · w14 27 Züge.",
+                                       "Port 8420 war von altem Server belegt → neu gestartet.",
+                                       "Karte kurz leer während des Umbaus, danach 153 Knoten / 485 Verbindungen."
+                                   ],
+                      "backup":  "step-04-neon-teiler-portale-schloesser.zip"
+                  },
+                  {
+                      "id":  6,
+                      "title":  "Lichtschlösser und GitHub-Updates",
+                      "status":  "passed",
+                      "decision":  "Lichtschlösser mit 4 Leveln fertig, Tests 36/36, Schattenschloss live ★★★, SYSTEM.md + Sicherung. Offen: GitHub-Upload – Git-Installation braucht Admin-Freigabe am PC.",
+                      "open":  [
+                                   "GitHub-Upload (Arbeitskopie bereit)"
+                               ],
+                      "goal":  "Neues Element Lichtschloss (Sensor + Tor) mit eigenen Leveln; Spiel und Gehirnkarte etwa alle 5 Minuten auf GitHub aktualisieren, ohne das dortige Design zu verändern.",
+                      "quality":  {
+                                      "problem":  "Licht hat bisher nur Ziele verändert, nie die Wege. Die öffentliche Seite soll mit dem Spiel mitwachsen.",
+                                      "fit":  "Licht als Schlüssel passt zum Kern; Schatten des Spielers wird zur Spannung.",
+                                      "success":  "Einführungslevel + Kettenlevel lösbar mit Zugziel = Minimum; Tests grün; Update auf GitHub sichtbar und lauffähig im GitHub-Design.",
+                                      "check":  "Löser + Tests, live spielen, GitHub-Seite nach dem Hochladen öffnen."
+                                  },
+                      "tried":  [
+                                    "Sensor/Tor in engine.js, push.js, render.js; Fixpunkt-Verfolgung für Kettenreaktionen.",
+                                    "GitHub-Stand geladen und per Hash verglichen."
+                                ],
+                      "observed":  [
+                                       "w16 Schattenschloss 18 Züge (4 844 Zustände) · w17 Kettenschloss 15 (6 598).",
+                                       "Claude in Chrome zunächst nicht verbunden."
+                                   ],
+                      "backup":  "step-04-neon-teiler-portale-schloesser.zip"
+                  },
+                  {
+                      "id":  7,
+                      "title":  "Wanderlampen",
+                      "status":  "passed",
+                      "decision":  "Qualitätsziel erfüllt: 3 Level, Tests 40/40, Weißer Dreiklang live ★★★ (16 Züge).",
+                      "goal":  "Bewegliche Lichtquellen: schieben und drehen; Einführungs-, Kombi- und Mischlevel.",
+                      "quality":  {
+                                      "problem":  "Alle Quellen waren fest; Rätsel drehten sich nur um Umlenken.",
+                                      "fit":  "Den eigenen Lichtblock gibt es schon – jetzt trägt man auch Lampen.",
+                                      "success":  "Drei Level lösbar mit Zugziel = Minimum, Tests grün, eines live gespielt.",
+                                      "check":  "Löser, Tests, Live-Spiel."
+                                  },
+                      "tried":  [
+                                    "Lampe als Block-Art \u0027lamp\u0027 (Richtung im Zustand), rotateFront dreht sie.",
+                                    "Fünf Entwürfe mit dem Löser geprüft, drei behalten."
+                                ],
+                      "observed":  [
+                                       "Wanderlampe 5 · Lampenschlüssel 7 · Weißer Dreiklang 16 (1,3 Mio. Zustände)."
+                                   ],
+                      "backup":  "step-05-wanderlampen.zip"
+                  },
+                  {
+                      "id":  8,
+                      "title":  "Schaltwerk, Kapitel, Arcade-Menü",
+                      "status":  "passed",
+                      "decision":  "Qualitätsziel erfüllt: 25 Level, Tests 44/44, Menü/Karussell/Kit im Browser geprüft, Trittschalter live ★★★.",
+                      "goal":  "Druckplatten mit Kippspiegeln (3 Level), Kapitel-System, neues Arcade-Menü mit Kapitel-Karussell und Lichtblock-Kit.",
+                      "quality":  {
+                                      "problem":  "Lange Levelliste ohne Struktur; Menü wirkte wie eine Webseite statt wie ein Spiel.",
+                                      "fit":  "Arcade-Spiele wie Geometry Dash zeigen: großer Play-Knopf, Welten zum Durchblättern, Icons zum Freischalten motivieren.",
+                                      "success":  "Neue Level lösbar mit Zugziel = Minimum; Menü per Maus, Tastatur und Wischen bedienbar; Kit speichert und färbt den Spieler; Tests grün.",
+                                      "check":  "Löser + Tests, Menü und Level live im Browser, Screenshots an den Nutzer."
+                                  },
+                      "tried":  [
+                                    "Druckplatten in pushTrace (gedrückt = belegt).",
+                                    "Kippwerk neu entworfen (erster Entwurf unlösbar).",
+                                    "Menü komplett neu geschrieben, skins.js neu."
+                                ],
+                      "observed":  [
+                                       "Trittschalter 9 · Kippwerk 15 · Schaltzentrale 15.",
+                                       "Menü, Karussell, Kapitelseite, Kit im Browser geprüft; Trittschalter live ★★★."
+                                   ],
+                      "backup":  "step-06-schaltwerk-menue-sound.zip"
+                  },
+                  {
+                      "id":  9,
+                      "title":  "Sound",
+                      "status":  "passed",
+                      "decision":  "Synthetisierte Klänge für alle Spielereignisse und das Menü, Ton an/aus. Technisch geprüft; Hörprüfung durch den Nutzer steht aus.",
+                      "observed":  [
+                                       "15 Klänge fehlerfrei ausgelöst, Level mit Ton gelöst, keine Konsolenfehler."
+                                   ],
+                      "goal":  "Licht, Übergänge und synthetisierter Klang geben Energie, ohne Lesbarkeit zu stören.",
+                      "backup":  "step-06-schaltwerk-menue-sound.zip"
+                  },
+                  {
+                      "id":  10,
+                      "title":  "Farbwandler, 7 Welten, Meisterprüfungen",
+                      "status":  "passed",
+                      "goal":  "Neues Element Farbwandler; jede Welt ein eigener Ort mit Texturen und Teilchen; Schwierigkeit steigt von Welt zu Welt.",
+                      "quality":  {
+                                      "problem":  "Alle Level sahen gleich aus; späte Welten waren leichter als frühe.",
+                                      "fit":  "Orte machen die Reise sichtbar; Meisterprüfungen geben jeder Welt einen Höhepunkt.",
+                                      "success":  "7 Welten sichtbar unterschiedlich; Abschluss jeder Welt schwerer als der vorige; alle Level lösbar mit Zugziel = Minimum; Tests grün.",
+                                      "check":  "Screenshots jeder Welt, Löser + Tests, Konsolenfehler prüfen."
+                                  },
+                      "tried":  [
+                                    "Farbwandler + 3 Level.",
+                                    "worlds.js mit 7 prozeduralen Welten.",
+                                    "Levelschmiede (Zufall + Bergsteigen) für 4 Meisterprüfungen.",
+                                    "Weltreihenfolge nach Abschluss-Schwierigkeit."
+                                ],
+                      "observed":  [
+                                       "Abschlüsse 14 · 19 · 25 · 26 · 27 · 29 · 34.",
+                                       "Tests 52/52; 32 Level.",
+                                       "Mehrere Schmiede-Grundrisse unlösbar – angepasst."
+                                   ],
+                      "decision":  "Qualitätsziel erfüllt.",
+                      "backup":  "step-07-welten-meister.zip"
+                  },
+                  {
+                      "id":  11,
+                      "title":  "Strömungen, Korallenriff, Nachschub, Tagesrätsel",
+                      "status":  "passed",
+                      "goal":  "Neues Bewegungs-Element (Einbahnfelder) mit Welt 8; mehr Level für die ersten Welten; eigene Idee: tägliches Rätsel aus der Levelschmiede.",
+                      "quality":  {
+                                      "problem":  "Frühe Welten hatten nur 4–5 Level; nach dem letzten Level gab es nichts Neues mehr.",
+                                      "fit":  "Die Schmiede existiert schon – sie kann jeden Tag ein frisches, garantiert lösbares Rätsel liefern.",
+                                      "success":  "Strömungen getestet; Welt 8 endet schwerer als Welt 7; 6 neue Level unter den Welt-Abschlüssen; Tagesrätsel für mehrere Tage lösbar, gleich je Datum; Tests grün.",
+                                      "check":  "Löser + Tests, Strömung live, Tagesrätsel für 10 Tage erzeugen."
+                                  },
+                      "tried":  [
+                                    "Strömungen in push.js/render.js, Welt reef.",
+                                    "forge.js als Modul; 9 Level geschmiedet.",
+                                    "daily.js + Web Worker + Menü-Knopf."
+                                ],
+                      "observed":  [
+                                       "Riffstrudel 44; Nachschub 10/13/12/16/15/24.",
+                                       "Tagesrätsel 10 Tage: alle lösbar, 13–24 Züge."
+                                   ],
+                      "decision":  "Qualitätsziel erfüllt: 41 Level, Tests 63/63, Strömung live ★★★, Tagesrätsel per Worker.",
+                      "backup":  "step-08-riff-tagesraetsel.zip"
+                  },
+                  {
+                      "id":  12,
+                      "title":  "Gegner, Andocken, moderne Optik",
+                      "status":  "passed",
+                      "goal":  "Schattenläufer als Gegner (rundenbasiert, Licht löst sie auf), Welt Schattenreich, Andock- und Schub-Animation, modernisierte Optik.",
+                      "quality":  {
+                                      "problem":  "Keine Gefahr im Spiel; Bewegungen wirkten steif.",
+                                      "fit":  "Licht als Waffe gegen Schatten passt zum Kern.",
+                                      "success":  "Gegner im Löser berücksichtigt; 3 Level lösbar mit Zugziel = Minimum; Erwischt-Bildschirm; Andocken sichtbar; Tests grün.",
+                                      "check":  "Löser + Tests, live spielen inkl. absichtlich erwischt werden."
+                                  },
+                      "tried":  [
+                                    "stepEnemies in push.js, Schlüssel inkl. Gegner, Löser überspringt erwischte Zustände.",
+                                    "Gegner/Auflösen/Andocken/Spur/Stauchen in render.js.",
+                                    "Welt shadow, Levelschmiede für 3 Level."
+                                ],
+                      "observed":  [
+                                       "Schattenläufer 8 · Schattenpfad 18 · Mondfinsternis 32.",
+                                       "Feuerwerk lief nach Neustart weiter → behoben.",
+                                       "Tests 67/67."
+                                   ],
+                      "decision":  "Qualitätsziel erfüllt.",
+                      "backup":  "step-09-schatten-gegner.zip"
+                  },
+                  {
+                      "id":  13,
+                      "title":  "Pixel-Escape-Room-Abenteuer",
+                      "status":  "passed",
+                      "goal":  "Alle 44 Level als Escape-Räume in Pixel-Art (Schrägsicht), Rasterbewegung mit Kisten, Licht wie Minecraft-Shader, animierter Held mit Kraftleiste, Ausgangstür und Fragmente.",
+                      "quality":  {
+                                      "problem":  "Nutzer wünscht ein Abenteuer-Gefühl statt abstrakter Rätselfelder.",
+                                      "fit":  "Licht-Rätsel bleiben der Kern; Räume, Tür und Fragmente geben den Escape-Room-Rahmen.",
+                                      "success":  "Raum lösbar wie zuvor, Tür öffnet bei Lösung, Durchgang führt weiter, Sterne fair, Held animiert, Licht mit Schatten.",
+                                      "check":  "Live: Raum 1 bis zum Ausgang spielen, Texturbogen ansehen."
+                                  },
+                      "tried":  [
+                                    "Freie Physik (verworfen).",
+                                    "pixelRender.js + adventure.js + textureSheet.js.",
+                                    "Licht 0-15 mit Ausbreitung, Multiply, Bloom, Reflexionen."
+                                ],
+                      "observed":  [
+                                       "Raum 1: 3 Züge, 3 Sterne, Tür, ENTKOMMEN.",
+                                       "Weg zur Tür zählte zunächst mit -\u003e behoben."
+                                   ],
+                      "decision":  "Qualitätsziel erfüllt; weitere Spielereien als Schritte 14-18.",
+                      "open":  [
+                                   "Gegner-Räume und alle Welten im Abenteuer live spielen."
+                               ],
+                      "backup":  "step-10-pixel-abenteuer.zip"
+                  },
+                  {
+                      "id":  14,
+                      "title":  "Ingame-HUD wie Shell Shockers",
+                      "status":  "passed",
+                      "goal":  "Vollbild-Spiel ohne Webseiten-Leiste; alle Anzeigen (Raum, Fragmente, Licht, Kraft, Züge) und ein Pausenmenü direkt im Spiel eingeblendet.",
+                      "observed":  [
+                                       "HUD im Vollbild, Pausenmenü funktioniert.",
+                                       "Feuerwerk/Laser durch Ranken, Blumentöpfe, Laterne und Blütenmeer ersetzt (Nutzerwunsch).",
+                                       "Raum 2 live gelöst und entkommen."
+                                   ],
+                      "decision":  "Qualitätsziel erfüllt.",
+                      "backup":  "step-11-ranken-hud.zip"
+                  },
+                  {
+                      "id":  15,
+                      "title":  "Reaktionen für jedes Element",
+                      "status":  "planned",
+                      "goal":  "Jeder Block und jede Funktion bekommt eigene Animationen und Klänge: Spiegel-Funken, Ziel-Edelstein-Explosion, Tore fahren hoch, Platten klicken, Gegner bemerken dich, Eis-Rutschpose, Strömung reißt mit, Leerlauf: hinsetzen, einschlafen.",
+                      "observed":  [
+                                       "Räume eingerichtet: Rückwand, Möbel, Teppiche, Außenwelt, Teilchen (Nutzer: „sieht so leer aus“).",
+                                       "Tutorial-Lehrzimmer mit Eule gebaut und live durchgespielt."
+                                   ]
+                  },
+                  {
+                      "id":  16,
+                      "title":  "Bogen und Wurfgegenstände",
+                      "status":  "planned",
+                      "goal":  "Pfeile/Steine aufheben, in Blickrichtung zielen und schießen: getroffener Block wird ein Feld weitergestoßen. Löser rechnet Schüsse mit."
+                  },
+                  {
+                      "id":  17,
+                      "title":  "Bomben und zerstörbare Kisten",
+                      "status":  "planned",
+                      "goal":  "Bomben legen/werfen, Holzkisten zerbersten mit Explosions-Animation (Splitter, Rauch, Bildschirmwackeln). Neue Rätsel mit Löser."
+                  },
+                  {
+                      "id":  18,
+                      "title":  "Dreck, Schlamm und Fußspuren",
+                      "status":  "planned",
+                      "goal":  "Schlammfelder hinterlassen Fußspuren; Kisten ziehen Schleifspuren; Staub auf Sand, Spritzer im Wasser."
+                  },
+                  {
+                      "id":  19,
+                      "title":  "Lab im Spielstil, schnelle Karte, Nebelmoor, GitHub",
+                      "status":  "in_progress",
+                      "goal":  "Lab und Startseite im Holz-/Pergament-Stil mit allen Funktionen; Gehirnkarte flüssig bei 400+ Knoten; neue Welt Nebelmoor; ganzes Projekt auf GitHub.",
+                      "quality":  {
+                                      "problem":  "Lab sah anders aus als das Spiel und ruckelte bei 467 Knoten; GitHub zeigte noch den alten Stand.",
+                                      "fit":  "Ein Stil für alles; die Karte ist das Fenster in die Entwicklung.",
+                                      "success":  "Alle Lab-Knöpfe funktionieren, Zeichenzeit deutlich kleiner, Moor-Räume lösbar und durchgespielt, Repo aktuell.",
+                                      "check":  "Klicktest aller Knöpfe, Zeitmessung alt/neu, Durchspieltest, Testreihe, GitHub-Seite öffnen."
+                                  },
+                      "tried":  [
+                                    "Lab-Fassungen lokal + GitHub zusammengeführt, lab.css neu.",
+                                    "Vorgerenderte Knoten, gebündelte Verbindungen, Raumgitter (verworfen).",
+                                    "Levelschmiede auf Moor-Grundrissen.",
+                                    "Portables Git/gh, GitHub-Anmeldung per Gerätecode."
+                                ],
+                      "observed":  [
+                                       "Zeichnen 4,3 ms statt 10,6 ms (467 Knoten).",
+                                       "Moor-Räume 10/12/13/21/26, alle durchgespielt; Nebelbank-Tür korrigiert."
+                                   ]
+                  }
+              ]
 }

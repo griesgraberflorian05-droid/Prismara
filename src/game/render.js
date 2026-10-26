@@ -1,6 +1,7 @@
 // Darstellung des Spielfelds auf Canvas. Farben werden zusätzlich über Formen kodiert:
 // Rot ▲, Grün ●, Blau ■ – damit nichts allein von der Farbwahrnehmung abhängt.
 import { COLOR_INFO, COMPONENTS, DIRS } from './engine.js';
+import { drawPlayerBlock } from './skins.js';
 
 const COMP_HEX = { 1: '#ff4d6d', 2: '#3ddc97', 4: '#4da3ff' };
 
@@ -72,12 +73,13 @@ export class BoardRenderer {
       const ang = ph * Math.PI * 2;
       const cx = bx + bw / 2, cy = by + bh / 2, R = Math.max(bw, bh);
       const g = ctx.createLinearGradient(cx + Math.cos(ang) * R, cy + Math.sin(ang) * R, cx - Math.cos(ang) * R, cy - Math.sin(ang) * R);
-      g.addColorStop(0, '#ff4fd8'); g.addColorStop(0.18, '#ff4d6d'); g.addColorStop(0.38, '#ffd166'); g.addColorStop(0.56, '#3ddc97'); g.addColorStop(0.76, '#4ff0ff'); g.addColorStop(1, '#9b72ff');
+      const fc = opts.world?.frame || ['#ff4fd8', '#a07bff', '#4ff0ff'];
+      g.addColorStop(0, fc[0]); g.addColorStop(0.5, fc[1]); g.addColorStop(1, fc[2]);
       ctx.save();
-      ctx.fillStyle = 'rgba(8,10,24,0.86)';
+      ctx.fillStyle = opts.world?.board || 'rgba(20,12,60,0.55)';
       ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, s * 0.25); ctx.fill();
-      ctx.shadowColor = `hsl(${(ph * 360 + 205) % 360},100%,65%)`; ctx.shadowBlur = 24;
-      ctx.strokeStyle = g; ctx.lineWidth = 3.5;
+      ctx.shadowColor = fc[1]; ctx.shadowBlur = 24;
+      ctx.strokeStyle = g; ctx.lineWidth = 3;
       ctx.stroke();
       ctx.restore();
     }
@@ -87,12 +89,20 @@ export class BoardRenderer {
       for (let x = 0; x < level.w; x++) {
         const c = state.cells[y * level.w + x];
         const px = this.ox + x * s, py = this.oy + y * s;
+        // Welt-Texturen (Strand, Dschungel, …) ersetzen Standardwand und -boden
+        if (opts.world) {
+          if (c.type === 'wall') { opts.world.wall(ctx, px, py, s, x, y, opts.reduced ? 0 : t); continue; }
+          opts.world.floor(ctx, px, py, s, x, y, opts.reduced ? 0 : t);
+          if (c.ice) this._drawIce(px, py, s);
+          if (c.flow != null) this._drawFlow(px, py, s, c.flow, t, opts.reduced);
+          continue;
+        }
         if (c.type === 'wall') {
           const g = ctx.createLinearGradient(px, py, px, py + s);
-          g.addColorStop(0, '#30244e'); g.addColorStop(1, '#111323');
+          g.addColorStop(0, '#5a43cf'); g.addColorStop(1, '#33248f');
           ctx.fillStyle = g;
           ctx.beginPath(); ctx.roundRect(px + 1, py + 1, s - 2, s - 2, s * 0.14); ctx.fill();
-          ctx.strokeStyle = 'rgba(168,140,255,0.52)'; ctx.lineWidth = 1.2;
+          ctx.strokeStyle = 'rgba(255,140,240,0.35)'; ctx.lineWidth = 1;
           ctx.stroke();
           ctx.fillStyle = 'rgba(255,255,255,0.16)';
           ctx.fillRect(px + s * 0.14, py + 3, s * 0.72, 2);
@@ -100,23 +110,16 @@ export class BoardRenderer {
         }
         const buildable = c.type === 'empty' && c.build;
         const noBuild = c.type === 'empty' && c.build === false;
-        ctx.fillStyle = noBuild ? '#080a16' : '#101426';
+        ctx.fillStyle = noBuild ? '#1f1850' : '#2b2170';
         ctx.beginPath(); ctx.roundRect(px + 2, py + 2, s - 4, s - 4, s * 0.12); ctx.fill();
-        ctx.strokeStyle = 'rgba(108,145,255,0.18)'; ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(160,140,255,0.16)'; ctx.lineWidth = 1;
         ctx.stroke();
-        if (c.ice) {
-          // Eis: hellblau mit Glanzstreifen
-          const g = ctx.createLinearGradient(px, py, px + s, py + s);
-          g.addColorStop(0, 'rgba(151,246,255,0.36)'); g.addColorStop(1, 'rgba(88,132,255,0.12)');
-          ctx.fillStyle = g;
-          ctx.beginPath(); ctx.roundRect(px + 2, py + 2, s - 4, s - 4, s * 0.12); ctx.fill();
-          ctx.strokeStyle = 'rgba(163,248,255,0.75)'; ctx.lineWidth = 1.5;
-          ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * .12;
-          ctx.beginPath(); ctx.moveTo(px + s * 0.2, py + s * 0.45); ctx.lineTo(px + s * 0.45, py + s * 0.2);
-          ctx.moveTo(px + s * 0.35, py + s * 0.75); ctx.lineTo(px + s * 0.75, py + s * 0.35); ctx.stroke();
+        if (c.flow != null) {
+          this._drawFlow(px, py, s, c.flow, t, opts.reduced);
+        } else if (c.ice) {
+          this._drawIce(px, py, s);
         } else if (buildable) {
-          ctx.fillStyle = 'rgba(79,240,255,0.26)';
-          ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * .14;
+          ctx.fillStyle = 'rgba(160,170,230,0.25)';
           ctx.beginPath(); ctx.arc(px + s / 2, py + s / 2, Math.max(1.5, s * 0.03), 0, Math.PI * 2); ctx.fill();
         } else if (noBuild) {
           // nicht bebaubar: feine Schraffur
@@ -129,38 +132,65 @@ export class BoardRenderer {
       }
     }
 
+    // Druckplatten liegen im Boden – unter Blöcken, Spieler und Strahlen
+    state.cells.forEach((c, i) => {
+      if (!c.plate || c.type !== 'empty') return;
+      const { x: cx, y: cy } = this.cellCenter(i % level.w, Math.floor(i / level.w));
+      this._drawPlate(c, opts.tr.pressed?.has(c.plate), cx, cy, s);
+    });
+
     // Schiebe-Modus: Blocksockel unter den Strahlen
-    for (const b of opts.blocks || []) this._drawBlockBase(b, s);
+    for (const b of opts.blocks || []) this._squashed(b, () => this._drawBlockBase(b, s));
 
     // Strahlen
     this._drawBeams(opts.tr.beams, t, opts);
 
-    for (const b of opts.blocks || []) {
+    for (const b of opts.blocks || []) this._squashed(b, () => {
       const c = this.cellCenter(b.x, b.y);
       if (b.kind === 'mirror') this._drawMirror({ orient: b.orient }, c.x, c.y, s, 1, true);
       if (b.kind === 'splitter') this._drawSplitter(b.orient, c.x, c.y, s);
+      if (b.kind === 'shifter') this._drawShifter(c.x, c.y, s, t, opts);
+      if (b.kind === 'lamp') this._drawEmitter({ dir: b.dir, color: b.color }, c.x, c.y, s * 0.92);
       if (b.kind === 'prism') this._drawPrism(c.x, c.y, s);
       if (b.kind === 'filter') this._drawFilter(b.pass, c.x, c.y, s);
-    }
+    });
 
     // Objekte
     const targetInfo = new Map(opts.tr.targets.map((tg) => [tg.y * level.w + tg.x, tg]));
+    const sensorInfo = new Map((opts.tr.sensors || []).map((sn) => [sn.y * level.w + sn.x, sn]));
     state.cells.forEach((c, i) => {
       const x = i % level.w, y = Math.floor(i / level.w);
       const { x: cx, y: cy } = this.cellCenter(x, y);
       if (c.type === 'emitter') this._drawEmitter(c, cx, cy, s);
       if (c.type === 'portal') this._drawPortal(c, cx, cy, s, t, opts);
+      if (c.type === 'sensor') this._drawSensor(c, sensorInfo.get(i), cx, cy, s, t, opts);
+      if (c.type === 'door') this._drawDoor(c, opts.tr.open?.has(i), cx, cy, s);
+      if (c.type === 'flip') this._drawFlip(c, opts.tr.pressed?.has(c.plate), cx, cy, s);
       if (c.type === 'mirror') this._drawMirror(c, cx, cy, s, 1);
       if (c.type === 'target') this._drawTarget(c, targetInfo.get(i), cx, cy, s, t, opts);
     });
 
+    // Leuchtspur hinter dem Lichtblock
+    if (opts.trail?.length && !opts.reduced) this._drawTrail(opts.trail, s, t);
+    // Andock-Klammern am Block vor dem Spieler
+    if (opts.dock) this._drawDock(opts.dock, s, t, opts);
+    // Schattenläufer und sich auflösende Gegner
+    for (const e of opts.enemies || []) if (e.alive) this._drawEnemy(e, s, t, opts);
+    for (const d of opts.dissolving || []) this._drawDissolve(d, s, t);
+
     if (opts.player) this._drawPlayer(opts.player, s, t, opts);
+
+    // Welt-Teilchen (Blütenblätter, Glühwürmchen, Glut, Schnee …) über allem, außer bei reduzierter Bewegung
+    if (opts.world?.fx && !opts.reduced) {
+      ctx.save();
+      opts.world.fx(ctx, this.w, this.h, t);
+      ctx.restore();
+    }
 
     // Tastatur-Cursor
     if (opts.showCursor && opts.cursor) {
       const px = this.ox + opts.cursor.x * s, py = this.oy + opts.cursor.y * s;
-      ctx.strokeStyle = '#4ff0ff';
-      ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = 14;
+      ctx.strokeStyle = '#ffd166';
       ctx.lineWidth = 2.5;
       ctx.setLineDash([6, 4]);
       ctx.lineDashOffset = opts.reduced ? 0 : -t / 60;
@@ -239,18 +269,25 @@ export class BoardRenderer {
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = s * 0.15; ctx.shadowOffsetY = s * 0.05;
     const g = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
-    if (b.kind === 'stone') { g.addColorStop(0, '#47405c'); g.addColorStop(1, '#181622'); }
-    else { g.addColorStop(0, '#4eeeff'); g.addColorStop(.48, '#835aff'); g.addColorStop(1, '#ed4eff'); }
+    if (b.kind === 'stone') { g.addColorStop(0, '#5a6078'); g.addColorStop(1, '#262a3a'); }
+    else { g.addColorStop(0, '#4a52a8'); g.addColorStop(0.55, '#2c3270'); g.addColorStop(1, '#1b1f4a'); }
     ctx.fillStyle = g;
-    ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, s * 0.12); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, s * 0.14); ctx.fill();
     ctx.shadowColor = 'transparent';
-    ctx.strokeStyle = b.kind !== 'stone' ? 'rgba(210,250,255,0.82)' : 'rgba(185,164,255,0.34)';
-    if (b.kind !== 'stone') { ctx.shadowColor = '#8c65ff'; ctx.shadowBlur = s * .28; }
+    // Glas-Look: Lichtkante oben, dunkle Innenkante unten
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, s * 0.14); ctx.clip();
+    const sheen = ctx.createLinearGradient(cx, cy - r, cx, cy);
+    sheen.addColorStop(0, 'rgba(255,255,255,0.28)'); sheen.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sheen; ctx.fillRect(cx - r, cy - r, r * 2, r);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.fillRect(cx - r, cy + r * 0.78, r * 2, r * 0.22);
+    ctx.restore();
+    ctx.strokeStyle = b.kind !== 'stone' ? 'rgba(180,170,255,0.55)' : 'rgba(255,255,255,0.18)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
     if (b.kind !== 'stone') {
       // Ecknieten: erkennbar als schiebbarer Spiegelblock
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.fillStyle = 'rgba(200,190,255,0.6)';
       for (const [ox, oy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
         ctx.beginPath(); ctx.arc(cx + ox * r * 0.72, cy + oy * r * 0.72, s * 0.025, 0, Math.PI * 2); ctx.fill();
       }
@@ -267,12 +304,12 @@ export class BoardRenderer {
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(cx, cy - r); ctx.lineTo(cx + r * 1.05, cy + r * 0.8); ctx.lineTo(cx - r * 1.05, cy + r * 0.8); ctx.closePath();
-    ctx.fillStyle = 'rgba(162,236,255,0.22)';
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
     ctx.fill();
     const g = ctx.createLinearGradient(cx - r, cy, cx + r, cy);
     g.addColorStop(0, '#ff4d6d'); g.addColorStop(0.5, '#3ddc97'); g.addColorStop(1, '#4da3ff');
     ctx.strokeStyle = g; ctx.lineWidth = s * 0.05; ctx.lineJoin = 'round';
-    ctx.shadowColor = '#b874ff'; ctx.shadowBlur = s * 0.24;
+    ctx.shadowColor = '#ffffff'; ctx.shadowBlur = s * 0.12;
     ctx.stroke();
     ctx.restore();
   }
@@ -284,11 +321,10 @@ export class BoardRenderer {
     const [x0, y0, x1, y1] = orient === '/' ? [cx - d, cy + d, cx + d, cy - d] : [cx - d, cy - d, cx + d, cy + d];
     ctx.save();
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(79,240,255,0.22)'; ctx.lineWidth = s * 0.14;
-    ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * .24;
+    ctx.strokeStyle = 'rgba(140,240,255,0.35)'; ctx.lineWidth = s * 0.14;
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-    ctx.shadowColor = '#a88cff'; ctx.shadowBlur = s * 0.22;
-    ctx.strokeStyle = '#c9faff'; ctx.lineWidth = s * 0.06;
+    ctx.shadowColor = '#7ff6ff'; ctx.shadowBlur = s * 0.15;
+    ctx.strokeStyle = '#d9fbff'; ctx.lineWidth = s * 0.06;
     ctx.setLineDash([s * 0.09, s * 0.07]);
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
     ctx.restore();
@@ -297,12 +333,12 @@ export class BoardRenderer {
   // Portal: wirbelnder Ring; Paare teilen Farbe und Buchstaben (ohne Farbsinn erkennbar).
   _drawPortal(c, cx, cy, s, t, opts) {
     const { ctx } = this;
-    const hue = { A: '#4ff0ff', B: '#ff4fd8', C: '#ffe14f' }[c.pair] || '#a88cff';
+    const hue = { A: '#ff7af0', B: '#7affc8', C: '#ffb86b' }[c.pair] || '#c9a7ff';
     const r = s * 0.36;
     const spin = opts.reduced ? 0 : t / 600;
     ctx.save();
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, '#090a18'); g.addColorStop(0.56, 'rgba(24,19,48,0.92)'); g.addColorStop(1, hue);
+    g.addColorStop(0, '#0b0620'); g.addColorStop(0.65, 'rgba(40,10,80,0.9)'); g.addColorStop(1, hue);
     ctx.fillStyle = g;
     ctx.shadowColor = hue; ctx.shadowBlur = s * 0.35;
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
@@ -316,6 +352,290 @@ export class BoardRenderer {
     ctx.font = `800 ${Math.round(s * 0.26)}px system-ui, sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(c.pair, cx, cy + 1);
+    ctx.restore();
+  }
+
+  // Lichtschloss-Sensor: Raute in der benötigten Farbe mit Schlüsselloch und Torbuchstabe.
+  _drawSensor(c, info, cx, cy, s, t, opts) {
+    const { ctx } = this;
+    const hex = COLOR_INFO[c.need]?.hex || '#fff';
+    const r = s * 0.36;
+    const lit = info?.ok;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r); ctx.lineTo(cx + r, cy); ctx.lineTo(cx, cy + r); ctx.lineTo(cx - r, cy); ctx.closePath();
+    if (lit) {
+      const pulse = opts.reduced ? 1 : 1 + Math.sin(t / 180) * 0.1;
+      ctx.shadowColor = hex; ctx.shadowBlur = s * 0.45 * pulse;
+      ctx.fillStyle = hex; ctx.fill();
+      ctx.shadowBlur = 0;
+    } else {
+      ctx.fillStyle = '#12162e'; ctx.fill();
+    }
+    ctx.strokeStyle = info && info.got && !info.ok ? '#ff5f6d' : hex; ctx.lineWidth = 2.5;
+    ctx.stroke();
+    // Schlüsselloch
+    ctx.fillStyle = lit ? '#0a0c16' : hex;
+    ctx.beginPath(); ctx.arc(cx, cy - s * 0.05, s * 0.06, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(cx - s * 0.025, cy - s * 0.02, s * 0.05, s * 0.12);
+    // Torbuchstabe + Farbsymbol (ohne Farbsinn erkennbar)
+    ctx.font = `800 ${Math.round(s * 0.17)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(c.door, cx + r * 0.95, cy - r * 0.8);
+    glyphRow(ctx, c.need, cx - r * 0.95, cy - r * 0.8, s * 0.06, { fill: true });
+    ctx.restore();
+  }
+
+  // Eis: hellblau mit Glanzstreifen (auch auf Welt-Böden)
+  _drawIce(px, py, s) {
+    const { ctx } = this;
+    const g = ctx.createLinearGradient(px, py, px + s, py + s);
+    g.addColorStop(0, 'rgba(170,225,255,0.5)'); g.addColorStop(1, 'rgba(100,160,235,0.35)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.roundRect(px + 2, py + 2, s - 4, s - 4, s * 0.12); ctx.fill();
+    ctx.strokeStyle = 'rgba(235,250,255,0.6)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px + s * 0.2, py + s * 0.45); ctx.lineTo(px + s * 0.45, py + s * 0.2);
+    ctx.moveTo(px + s * 0.35, py + s * 0.75); ctx.lineTo(px + s * 0.75, py + s * 0.35); ctx.stroke();
+  }
+
+  // Stauchen: Block wird in Schubrichtung kurz flach gedrückt und quer breiter (Federeffekt).
+  _squashed(b, draw) {
+    if (!b.squash) { draw(); return; }
+    const { ctx } = this;
+    const { x: cx, y: cy } = this.cellCenter(b.x, b.y);
+    const along = 1 - b.squash, across = 1 + b.squash * 0.6;
+    const horiz = b.squashDir === 1 || b.squashDir === 3;
+    ctx.save();
+    ctx.translate(cx, cy); ctx.scale(horiz ? along : across, horiz ? across : along); ctx.translate(-cx, -cy);
+    draw();
+    ctx.restore();
+  }
+
+  // Schattenläufer: dunkle Geistgestalt mit wabernder Unterkante und glühenden Augen in Laufrichtung.
+  _drawEnemy(e, s, t, opts) {
+    const { ctx } = this;
+    const { x: cx, y: cy } = this.cellCenter(e.x, e.y);
+    const bob = opts.reduced ? 0 : Math.sin(t / 260 + e.x * 2 + e.y) * s * 0.03;
+    const r = s * 0.34;
+    ctx.save();
+    // Schattenaura
+    const aura = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 1.6);
+    aura.addColorStop(0, 'rgba(120,0,160,0.45)'); aura.addColorStop(1, 'rgba(60,0,90,0)');
+    ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(cx, cy, r * 1.6, 0, Math.PI * 2); ctx.fill();
+    // Körper
+    const g = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
+    g.addColorStop(0, '#3a1458'); g.addColorStop(1, '#0d0418');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(cx - r, cy + r * 0.7 + bob);
+    ctx.lineTo(cx - r, cy - r * 0.1 + bob);
+    ctx.arc(cx, cy - r * 0.1 + bob, r, Math.PI, 0);
+    ctx.lineTo(cx + r, cy + r * 0.7 + bob);
+    const waves = 4, ph = opts.reduced ? 0 : t / 180;
+    for (let k = waves; k >= 0; k--) {
+      const wx = cx - r + (2 * r * k) / waves;
+      ctx.lineTo(wx, cy + r * 0.7 + bob + Math.sin(ph + k * 1.7) * s * 0.06 + (k % 2 ? s * 0.06 : 0));
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(200,90,255,0.65)'; ctx.lineWidth = 1.5; ctx.stroke();
+    // Augen schauen in Laufrichtung
+    const [dx, dy] = DIRS[e.dir];
+    const blink = !opts.reduced && Math.sin(t / 900 + e.x * 3) > 0.97 ? 0.15 : 1;
+    ctx.shadowColor = '#ff3df2'; ctx.shadowBlur = s * 0.2;
+    ctx.fillStyle = '#ff5cf0';
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(cx + side * r * 0.38 + dx * r * 0.22, cy - r * 0.15 + bob + dy * r * 0.18, s * 0.06, s * 0.08 * blink, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Auflösen im Licht: Funkenring und verblassende Schattenfetzen (600 ms)
+  _drawDissolve(d, s, t) {
+    const { ctx } = this;
+    const k = Math.min(1, (t - d.t0) / 600);
+    if (k >= 1) return;
+    const { x: cx, y: cy } = this.cellCenter(d.x, d.y);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 1 - k;
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3 * (1 - k) + 1;
+    ctx.beginPath(); ctx.arc(cx, cy, s * (0.2 + k * 0.6), 0, Math.PI * 2); ctx.stroke();
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 + d.x;
+      const rr = s * (0.15 + k * 0.55);
+      ctx.fillStyle = i % 2 ? '#ff9cf6' : '#ffffff';
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr - k * s * 0.2, s * 0.04 * (1 - k) + 1, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Leuchtspur: verblassende Lichtpunkte der letzten Positionen des Spielers
+  _drawTrail(trail, s, t) {
+    const { ctx } = this;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    trail.forEach((p, i) => {
+      const age = (t - p.t) / 500;
+      if (age >= 1) return;
+      const { x: cx, y: cy } = this.cellCenter(p.x, p.y);
+      ctx.globalAlpha = (1 - age) * 0.35;
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, s * 0.4);
+      g.addColorStop(0, p.color || '#ffe9a8'); g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, s * 0.4 * (1 - age * 0.5), 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  // Andocken: zwei leuchtende Klammern schnappen von der Spielerseite an den Block, dazu ein Puls.
+  _drawDock(dock, s, t, opts) {
+    const { ctx } = this;
+    const k = opts.reduced ? 1 : Math.min(1, (t - dock.t0) / 220);
+    const ease = 1 - Math.pow(1 - k, 3);
+    const { x: cx, y: cy } = this.cellCenter(dock.x, dock.y);
+    const [dx, dy] = DIRS[dock.dir]; // Blickrichtung des Spielers → Klammern auf der zugewandten Seite
+    const side = s * 0.46;
+    const ex = cx - dx * side, ey = cy - dy * side;
+    const px = -dy, py = dx; // quer zur Blickrichtung
+    const spread = s * (0.42 - 0.12 * ease);
+    const pulse = opts.reduced ? 0 : (Math.sin(t / 160) + 1) / 2;
+    ctx.save();
+    ctx.strokeStyle = `rgba(127,246,255,${0.55 + 0.4 * pulse})`;
+    ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * 0.2;
+    ctx.lineWidth = s * 0.05; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const sgn of [-1, 1]) {
+      const bx = ex + px * spread * sgn - dx * s * 0.1 * (1 - ease), by = ey + py * spread * sgn - dy * s * 0.1 * (1 - ease);
+      ctx.beginPath();
+      ctx.moveTo(bx + dx * s * 0.14, by + dy * s * 0.14);
+      ctx.lineTo(bx, by);
+      ctx.lineTo(bx - px * sgn * s * 0.12, by - py * sgn * s * 0.12);
+      ctx.stroke();
+    }
+    // Andock-Welle beim Einrasten
+    if (k < 1) {
+      ctx.globalAlpha = 1 - k;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(ex, ey, s * (0.1 + 0.4 * k), 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Strömung: türkise Fläche mit drei Chevrons, die in Fließrichtung wandern.
+  _drawFlow(px, py, s, dir, t, reduced) {
+    const { ctx } = this;
+    const cx = px + s / 2, cy = py + s / 2;
+    ctx.save();
+    ctx.fillStyle = 'rgba(40,200,220,0.22)';
+    ctx.beginPath(); ctx.roundRect(px + 3, py + 3, s - 6, s - 6, s * 0.12); ctx.fill();
+    ctx.beginPath(); ctx.rect(px + 3, py + 3, s - 6, s - 6); ctx.clip();
+    ctx.translate(cx, cy); ctx.rotate((dir * Math.PI) / 2); // Grundform zeigt nach Norden
+    const phase = reduced ? 0 : ((t / 900) % 1) * (s * 0.34);
+    ctx.strokeStyle = '#7ff6ff'; ctx.lineWidth = s * 0.06; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * 0.12;
+    for (let k = -1; k <= 1; k++) {
+      const y = k * s * 0.34 - phase + s * 0.17;
+      ctx.globalAlpha = 0.85 - Math.abs(y) / s;
+      ctx.beginPath(); ctx.moveTo(-s * 0.16, y + s * 0.08); ctx.lineTo(0, y - s * 0.06); ctx.lineTo(s * 0.16, y + s * 0.08); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Farbwandler: Glaskreis mit drei Pfeilen ▲→●→■→▲ (Rot→Grün→Blau→Rot), dreht sich langsam.
+  _drawShifter(cx, cy, s, t, opts) {
+    const { ctx } = this;
+    const r = s * 0.27;
+    const spin = opts.reduced ? 0 : t / 1800;
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.arc(cx, cy, r * 1.15, 0, Math.PI * 2); ctx.fill();
+    const comps = [1, 2, 4];
+    comps.forEach((comp, i) => {
+      const a0 = spin + (i * Math.PI * 2) / 3, a1 = a0 + (Math.PI * 2) / 3 - 0.35;
+      ctx.strokeStyle = COMP_HEX[comps[(i + 1) % 3]]; ctx.lineWidth = s * 0.05; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(cx, cy, r, a0 + 0.25, a1); ctx.stroke();
+      // Pfeilspitze am Ende des Bogens
+      const ex = cx + Math.cos(a1) * r, ey = cy + Math.sin(a1) * r, ta = a1 + Math.PI / 2;
+      ctx.fillStyle = COMP_HEX[comps[(i + 1) % 3]];
+      ctx.beginPath();
+      ctx.moveTo(ex + Math.cos(ta) * s * 0.07, ey + Math.sin(ta) * s * 0.07);
+      ctx.lineTo(ex + Math.cos(ta + 2.4) * s * 0.06, ey + Math.sin(ta + 2.4) * s * 0.06);
+      ctx.lineTo(ex + Math.cos(ta - 2.4) * s * 0.06, ey + Math.sin(ta - 2.4) * s * 0.06);
+      ctx.closePath(); ctx.fill();
+      drawGlyph(ctx, comp, cx + Math.cos(a0) * r, cy + Math.sin(a0) * r, s * 0.06);
+    });
+    ctx.restore();
+  }
+
+  // Druckplatte: runder Knopf im Boden; gedrückt leuchtet sie türkis.
+  _drawPlate(c, pressed, cx, cy, s) {
+    const { ctx } = this;
+    const r = s * 0.3;
+    ctx.save();
+    ctx.fillStyle = pressed ? 'rgba(79,240,255,0.35)' : 'rgba(10,8,30,0.55)';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    if (pressed) { ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * 0.35; }
+    ctx.strokeStyle = pressed ? '#4ff0ff' : 'rgba(79,240,255,0.55)'; ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(79,240,255,0.35)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = pressed ? '#ffffff' : 'rgba(79,240,255,0.8)';
+    ctx.font = `800 ${Math.round(s * 0.2)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(c.plate, cx, cy + 1);
+    ctx.restore();
+  }
+
+  // Kippspiegel: fest verankert (Sockel mit Schrauben), Buchstabe zeigt die zugehörige Platte.
+  _drawFlip(c, pressed, cx, cy, s) {
+    const { ctx } = this;
+    const orient = pressed ? (c.orient === '/' ? '\\' : '/') : c.orient;
+    const r = s * 0.42;
+    ctx.save();
+    ctx.fillStyle = 'rgba(20,40,60,0.75)';
+    ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, s * 0.1); ctx.fill();
+    ctx.strokeStyle = pressed ? '#4ff0ff' : 'rgba(79,240,255,0.45)'; ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(200,240,255,0.5)';
+    for (const [ox, oy] of [[-1, 1], [1, -1], [-1, -1], [1, 1]]) {
+      ctx.beginPath(); ctx.arc(cx + ox * r * 0.75, cy + oy * r * 0.75, s * 0.022, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+    this._drawMirror({ orient }, cx, cy, s, 1, true);
+    ctx.save();
+    ctx.fillStyle = '#4ff0ff';
+    ctx.font = `800 ${Math.round(s * 0.16)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(c.plate, cx + r * 0.62, cy + r * 0.62);
+    ctx.restore();
+  }
+
+  // Lichttor: geschlossen = leuchtende Gitterstäbe, offen = gestrichelter Rahmen.
+  _drawDoor(c, open, cx, cy, s) {
+    const { ctx } = this;
+    const r = s * 0.42;
+    ctx.save();
+    if (open) {
+      ctx.strokeStyle = 'rgba(255,209,102,0.55)'; ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, s * 0.1); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      ctx.fillStyle = 'rgba(40,20,70,0.85)';
+      ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, s * 0.1); ctx.fill();
+      ctx.shadowColor = '#ffd166'; ctx.shadowBlur = s * 0.15;
+      ctx.strokeStyle = '#ffd166'; ctx.lineWidth = s * 0.05;
+      for (const k of [-0.5, 0, 0.5]) {
+        ctx.beginPath(); ctx.moveTo(cx + k * r, cy - r * 0.85); ctx.lineTo(cx + k * r, cy + r * 0.85); ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+    }
+    ctx.fillStyle = open ? 'rgba(255,209,102,0.8)' : '#ffffff';
+    ctx.font = `800 ${Math.round(s * 0.22)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(c.door, cx, cy + 1);
     ctx.restore();
   }
 
@@ -334,31 +654,10 @@ export class BoardRenderer {
     ctx.restore();
   }
 
+  // Spielerblock in Farbe und Symbol aus dem Lichtblock-Kit (skins.js)
   _drawPlayer(p, s, t, opts) {
-    const { ctx } = this;
     const { x: cx, y: cy } = this.cellCenter(p.x, p.y);
-    const bob = opts.reduced ? 0 : Math.sin(t / 380) * s * 0.015;
-    const r = s * 0.36;
-    ctx.save();
-    ctx.shadowColor = '#ff4fd8'; ctx.shadowBlur = s * 0.72;
-    const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-    g.addColorStop(0, '#fff8ff'); g.addColorStop(0.17, '#ff4fd8'); g.addColorStop(0.38, '#9b72ff'); g.addColorStop(0.58, '#4ff0ff'); g.addColorStop(0.78, '#3ddc97'); g.addColorStop(1, '#ffe14f');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.roundRect(cx - r, cy - r + bob, r * 2, r * 2, s * 0.14); ctx.fill();
-    ctx.shadowBlur = 0;
-    // Prisma-Symbol
-    ctx.strokeStyle = 'rgba(8,12,35,0.9)'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - r * 0.45 + bob); ctx.lineTo(cx + r * 0.45, cy + r * 0.35 + bob); ctx.lineTo(cx - r * 0.45, cy + r * 0.35 + bob); ctx.closePath();
-    ctx.stroke();
-    // Blickrichtung: leuchtende Kerbe auf der Seite, in die der Block schaut
-    const [dx, dy] = DIRS[p.dir];
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.arc(cx + dx * r * 0.8, cy + dy * r * 0.8 + bob, s * 0.055, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    drawPlayerBlock(this.ctx, cx, cy, s, { dir: p.dir, t, reduced: opts.reduced });
   }
 
   _drawEmitter(c, cx, cy, s) {
@@ -391,28 +690,27 @@ export class BoardRenderer {
     if (!ghost) {
       if (c.rotatable) {
         // runder Sockel mit Drehpfeilen = drehbar
-        ctx.strokeStyle = 'rgba(79,240,255,0.85)'; ctx.lineWidth = 2;
-        ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = s * .18;
+        ctx.strokeStyle = 'rgba(255,209,102,0.55)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.36, 0.3, 1.3); ctx.stroke();
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.36, Math.PI + 0.3, Math.PI + 1.3); ctx.stroke();
-        ctx.fillStyle = 'rgba(79,240,255,0.12)';
+        ctx.fillStyle = 'rgba(255,209,102,0.12)';
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.33, 0, Math.PI * 2); ctx.fill();
       } else if (c.placed) {
         // gesetzter Spiegel: violette Ecken
-        ctx.fillStyle = 'rgba(168,140,255,0.2)';
+        ctx.fillStyle = 'rgba(139,123,255,0.18)';
         ctx.beginPath(); ctx.roundRect(cx - s * 0.4, cy - s * 0.4, s * 0.8, s * 0.8, s * 0.1); ctx.fill();
       } else {
-        ctx.fillStyle = 'rgba(100,132,255,0.14)';
+        ctx.fillStyle = 'rgba(150,160,200,0.12)';
         ctx.beginPath(); ctx.roundRect(cx - s * 0.4, cy - s * 0.4, s * 0.8, s * 0.8, 2); ctx.fill();
       }
     }
     const d = s * 0.32;
     const [x0, y0, x1, y1] = c.orient === '/' ? [cx - d, cy + d, cx + d, cy - d] : [cx - d, cy - d, cx + d, cy + d];
     const g = ctx.createLinearGradient(x0, y0, x1, y1);
-    g.addColorStop(0, '#ff4fd8'); g.addColorStop(0.42, '#fff'); g.addColorStop(0.72, '#4ff0ff'); g.addColorStop(1, '#a88cff');
+    g.addColorStop(0, '#c9d2ff'); g.addColorStop(0.5, '#ffffff'); g.addColorStop(1, '#a9b4ee');
     ctx.globalAlpha *= alpha;
     ctx.lineCap = 'round';
-    ctx.shadowColor = '#4ff0ff'; ctx.shadowBlur = ghost ? 0 : s * 0.26;
+    ctx.shadowColor = '#b8c2ff'; ctx.shadowBlur = ghost ? 0 : s * 0.12;
     ctx.strokeStyle = g; ctx.lineWidth = s * 0.085;
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
     ctx.restore();
@@ -433,7 +731,7 @@ export class BoardRenderer {
       ctx.beginPath(); ctx.arc(cx, cy, r * pulse, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
     } else {
-      ctx.fillStyle = '#111';
+      ctx.fillStyle = '#12162e';
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
     }
     ctx.lineWidth = 3;
@@ -441,9 +739,12 @@ export class BoardRenderer {
     if (wrong) ctx.setLineDash([5, 4]);
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
     ctx.setLineDash([]);
-    // äußerer Ring = Zielmarkierung
-    ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5;
+    // äußerer Ring = Zielmarkierung, dreht sich langsam (modernes „Zielerfassungs“-Muster)
+    ctx.globalAlpha = okNow ? 0.85 : 0.55; ctx.lineWidth = 1.8;
+    ctx.setLineDash([s * 0.09, s * 0.06]);
+    ctx.lineDashOffset = opts.reduced ? 0 : -t / (okNow ? 25 : 60);
     ctx.beginPath(); ctx.arc(cx, cy, r + s * 0.08, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
     ctx.globalAlpha = 1;
 
     // benötigte Farbbestandteile: gefüllt, wenn sie ankommen, sonst nur Umriss
@@ -456,7 +757,7 @@ export class BoardRenderer {
       ctx.moveTo(cx - s * 0.08, cy + s * 0.12); ctx.lineTo(cx - s * 0.02, cy + s * 0.18); ctx.lineTo(cx + s * 0.1, cy + s * 0.06);
       ctx.stroke();
     } else if (wrong) {
-      ctx.fillStyle = '#ddd';
+      ctx.fillStyle = '#ff8a98';
       ctx.font = `700 ${Math.round(s * 0.16)}px system-ui, sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('≠', cx, cy + s * 0.14);
@@ -464,4 +765,3 @@ export class BoardRenderer {
     ctx.restore();
   }
 }
-

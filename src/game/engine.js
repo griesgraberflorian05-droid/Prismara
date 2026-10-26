@@ -25,6 +25,9 @@ export function parseColor(str) {
   return mask;
 }
 
+/** Rot→Grün, Grün→Blau, Blau→Rot (Bitmaske um eins rotieren). Weiß bleibt Weiß. */
+export const shiftColor = (c) => ((c << 1) | (c >> 2)) & 7;
+
 // Spiegel: neue Richtung je einfallender Richtung.
 const REFLECT = { '/': [1, 0, 3, 2], '\\': [3, 2, 1, 0] };
 
@@ -64,6 +67,8 @@ function parseCell(ch, legend, id) {
   if (entry.type === 'prism') return { type: 'prism' };
   if (entry.type === 'filter') return { type: 'filter', pass: parseColor(entry.color) };
   if (entry.type === 'portal') return { type: 'portal', pair: entry.pair };
+  if (entry.type === 'sensor') return { type: 'sensor', need: parseColor(entry.color), door: entry.door };
+  if (entry.type === 'door') return { type: 'door', door: entry.door };
   throw new Error(`Level ${id}: unbekannter Typ ${entry.type}`);
 }
 
@@ -116,7 +121,8 @@ export function trace(state) {
       if (c.type === 'wall') { points.push([x + 0.5 - dx * 0.5, y + 0.5 - dy * 0.5]); break; }
       if (c.type === 'emitter') { points.push([x + 0.5 - dx * 0.32, y + 0.5 - dy * 0.32]); break; }
       visited.add(ny * w + nx);
-      if (c.type === 'target') {
+      // Ziele und Sensoren (Lichtschloss) sammeln Licht und stoppen den Strahl.
+      if (c.type === 'target' || c.type === 'sensor') {
         got.set(ny * w + nx, (got.get(ny * w + nx) || 0) | color);
         points.push([x + 0.5 - dx * 0.18, y + 0.5 - dy * 0.18]);
         break;
@@ -140,6 +146,12 @@ export function trace(state) {
         }
         break;
       }
+      // Farbwandler: verschiebt jede Farbkomponente um eins (Rot→Grün→Blau→Rot), Licht läuft weiter.
+      if (c.type === 'shifter') {
+        points.push([x + 0.5, y + 0.5]);
+        stack.push({ x, y, dir, color: shiftColor(color) });
+        break;
+      }
       // Prisma: zerlegt Licht – Rot knickt nach links, Grün geradeaus, Blau nach rechts ab.
       if (c.type === 'prism') {
         points.push([x + 0.5, y + 0.5]);
@@ -160,11 +172,15 @@ export function trace(state) {
   }
 
   const targets = [];
+  const sensors = [];
   cells.forEach((c, i) => {
-    if (c.type !== 'target') return;
+    if (c.type !== 'target' && c.type !== 'sensor') return;
     const g = got.get(i) || 0;
-    targets.push({ x: i % w, y: Math.floor(i / w), need: c.need, got: g, ok: g === c.need });
+    const info = { x: i % w, y: Math.floor(i / w), need: c.need, got: g, ok: g === c.need };
+    if (c.type === 'target') targets.push(info);
+    else sensors.push({ ...info, door: c.door });
   });
+  // Sensoren zählen nicht als Ziele: gelöst ist das Level erst, wenn alle Ziele stimmen.
   const solved = targets.length > 0 && targets.every((t) => t.ok);
-  return { beams, targets, visited, solved };
+  return { beams, targets, sensors, visited, solved };
 }
