@@ -1039,10 +1039,12 @@ export class BrainMap {
     // Beschriftungen zuletzt; überlappende werden weggelassen (Wichtiges und Vorderes zuerst).
     labels.sort((a, b) => (b.important - a.important) || (a.z - b.z));
     const placed = [];
+    // Übersicht ruhig halten: wenige Schilder, beim Hineinzoomen mehr
+    const maxLabels = this.cam.k > 1.6 ? MAX_LABELS : 12;
     for (const l of labels) {
-      if (placed.length >= MAX_LABELS && !l.strong) break;
+      if (placed.length >= maxLabels && !l.strong) break;
       const w = this._textWidth(l.text, l.strong) + 12;
-      const box = { x0: l.x - w / 2, x1: l.x + w / 2, y0: l.y - 9, y1: l.y + 9 };
+      const box = { x0: l.x - w / 2 - 10, x1: l.x + w / 2 + 10, y0: l.y - 15, y1: l.y + 15 }; // mit Luft: Schilder dürfen sich nicht drängeln
       if (box.x1 < 0 || box.x0 > W || box.y1 < 0 || box.y0 > H) continue;
       const hit = placed.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0);
       if (hit && !l.strong) continue;

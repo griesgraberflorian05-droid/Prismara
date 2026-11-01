@@ -9,6 +9,10 @@ export const SKIN_COLORS = [
   { id: 'pink', name: 'Kirschrosa', stops: ['#ffe6f0', '#d0708f', '#8a3a5a'], glow: '#ff9ce9', stars: 12 },
   { id: 'lime', name: 'Moosgrün', stops: ['#e8f4d8', '#5a9a44', '#2f5e2a'], glow: '#c4ff9f', stars: 20 },
   { id: 'ruby', name: 'Rubinrot', stops: ['#fff0f2', '#ff4d6d', '#c2185b'], glow: '#ff9fb0', stars: 30 },
+  { id: 'linen', name: 'Leinen', stops: ['#fff8e8', '#d8c8a8', '#a8926e'], glow: '#fff2d0', stars: 0 },
+  { id: 'oak', name: 'Eiche', stops: ['#e8c89a', '#8a5a32', '#5a3a1e'], glow: '#e8c89a', stars: 0 },
+  { id: 'midnight', name: 'Mitternacht', stops: ['#c8d4f0', '#2e3f6e', '#1a2444'], glow: '#c8d4f0', stars: 3 },
+  { id: 'plum', name: 'Pflaume', stops: ['#f0d8f0', '#7a3f7a', '#4a2448'], glow: '#f0d8f0', stars: 9 },
   { id: 'prism', name: 'Regenbogen', stops: ['#ff4d6d', '#ffd166', '#3ddc97', '#4da3ff', '#b18cff'], glow: '#ffffff', stars: 45 },
 ];
 
@@ -20,6 +24,22 @@ export const SKIN_SYMBOLS = [
   { id: 'eye', name: 'Auge', stars: 25 },
   { id: 'bolt', name: 'Blitz', stars: 38 },
 ];
+
+// Weitere Anpassung des Pixel-Helden: Hautton und Laternenlicht (color = Glas, glow = Lichtschein im Raum)
+export const SKIN_TONES = [
+  { id: 'light', name: 'Hell', color: '#ffe0bd' }, { id: 'warm', name: 'Warm', color: '#eab98a' },
+  { id: 'tan', name: 'Gebräunt', color: '#c98f5e' }, { id: 'deep', name: 'Dunkel', color: '#8a5a38' },
+];
+export const LANTERNS = [
+  { id: 'warm', name: 'Warm', color: '#ffe9a8', glow: '#ffcf8a' }, { id: 'ember', name: 'Glut', color: '#ffb36b', glow: '#ff9a55' },
+  { id: 'moon', name: 'Mond', color: '#cfe6ff', glow: '#a8d0ff' }, { id: 'moss', name: 'Moos', color: '#c4ffb0', glow: '#9fe88a' },
+  { id: 'rose', name: 'Rose', color: '#ffc4dc', glow: '#ff9fc4' },
+];
+export function getLook() {
+  const l = getSettings().look || {};
+  return { tone: SKIN_TONES.find((t) => t.id === l.tone) || SKIN_TONES[0], lantern: LANTERNS.find((t) => t.id === l.lantern) || LANTERNS[0] };
+}
+export function setLook(patch) { updateSettings({ look: { ...(getSettings().look || {}), ...patch } }); }
 
 export function getSkin() {
   const s = getSettings().skin || {};

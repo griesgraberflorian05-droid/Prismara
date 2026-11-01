@@ -3,11 +3,11 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, getSkin, setSkin } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook } from '../game/skins.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
 import { setMusic, musicOn, toggleMusic } from '../game/music.js';
-import { worldForChapter, CHAPTER_WORLD } from '../game/worlds.js';
+import { WORLDS, worldForChapter, CHAPTER_WORLD } from '../game/worlds.js';
 import { todayKey } from '../game/daily.js';
 import { tutorialSeen, fragmentCount } from '../adventure/adventure.js';
 import { ITEMS, HATS, getInv, buy, buyHat, wearHat, hat, ownsHat, crystalsSpent } from '../game/inventory.js';
@@ -22,7 +22,7 @@ function drawHatPreview(canvas, id) {
   pr.player({ x: 0, y: 0, dir: 2, walk: null, stamina: 1, hat: id }, 0);
   pr.ctx.restore();
 }
-import { mountScene, roomThumb } from './menuScene.js';
+import { roomThumb } from './menuScene.js';
 import { mountTitleArt } from './titleArt.js';
 import { logoCanvas } from './logo.js';
 import { isAdmin, setAdmin, redeem } from '../game/admin.js';
@@ -59,6 +59,9 @@ function chapterInfo(ci) {
 }
 const currentChapter = () => { const t = totals(); return t.firstOpen < 0 ? 0 : Math.max(0, CHAPTERS.findIndex((c) => c.levels.includes(PUSH_LEVELS[t.firstOpen].id))); };
 
+/** Menü-Hintergrund: selbst gewählte Welt oder (auto) die aktuelle. */
+const menuBackground = () => { const b = getSettings().menuBg; return b && WORLDS[b] ? b : themeOf(currentChapter()); };
+
 export function mountMenu(root, params = []) {
   const page = params[0] || 'main';
   root.innerHTML = `<section class="tm${page === 'main' ? '' : ' sub'}"><canvas class="tm-scene" aria-hidden="true"></canvas><div class="tm-shade"></div><div class="tm-ui"></div></section>`;
@@ -68,7 +71,8 @@ export function mountMenu(root, params = []) {
   const worldPage = page === 'chapter' || page === 'chapters';
   document.body.dataset.world = themeOf(worldPage ? startCh : currentChapter()); // Oberflächenfarben der Welt
   setMusic(worldPage ? themeOf(startCh) : 'menu');
-  const scene = worldPage ? mountScene(root.querySelector('.tm-scene'), themeOf(startCh)) : mountTitleArt(root.querySelector('.tm-scene'), themeOf(currentChapter())); // Titelbild im Stil der aktuellen Welt
+  // Panorama der Welt: auf Welten-Seiten die gezeigte, sonst die aktuelle – oder das selbst gewählte
+  const scene = mountTitleArt(root.querySelector('.tm-scene'), worldPage ? themeOf(startCh) : menuBackground());
   let cleanup = () => {};
 
   // Gesperrte Modi: Hinweis statt Inhalt (Welten-Seiten zählen als Modus „worlds“)
@@ -76,7 +80,7 @@ export function mountMenu(root, params = []) {
   if (lockId && !isUnlocked(lockId)) ui.innerHTML = lockedHtml(lockId);
   else if (page === 'chapters') cleanup = chaptersPage(ui, parseInt(params[1] ?? '-1', 10), scene);
   else if (page === 'chapter') chapterPage(ui, parseInt(params[1] || '0', 10));
-  else if (page === 'kit') cleanup = kitPage(ui);
+  else if (page === 'kit') cleanup = kitPage(ui, scene);
   else if (page === 'shop') shopPage(ui);
   else if (page === 'settings') settingsPage(ui);
   else if (page === 'code') codePage(ui);
@@ -212,7 +216,7 @@ function chaptersPage(el, start, scene) {
     const info = chapterInfo(cur);
     const w = worldForChapter(info.ch.id);
     const pct = Math.round((info.solved / info.idx.length) * 100);
-    scene.setTheme(themeOf(cur));
+    scene.setWorld(themeOf(cur));
     document.body.dataset.world = themeOf(cur);
     setMusic(themeOf(cur));
     stage.innerHTML = `
@@ -311,10 +315,11 @@ function shopPage(el) {
 }
 
 // ---------- Held: Umhangfarbe und Hut – Vorschau ist der echte Pixel-Held aus dem Spiel ----------
-function kitPage(el) {
+function kitPage(el, scene) {
   const { stars } = totals();
   const render = () => {
-    const skin = getSkin(), worn = hat();
+    const skin = getSkin(), worn = hat(), look = getLook(), bg = getSettings().menuBg || '';
+    const bgWorlds = CHAPTERS.map((c) => CHAPTER_WORLD[c.id]).filter((id) => WORLDS[id]);
     const owned = Object.entries(HATS).filter(([id]) => ownsHat(id));
     el.innerHTML = `
       ${head('#/menu', '🎨 Held', `★ ${stars}`)}
@@ -332,6 +337,15 @@ function kitPage(el) {
             <button class="kit-swatch${worn ? '' : ' active'}" data-hat="" aria-pressed="${!worn}"><canvas class="ks-hat" data-hat="" width="24" height="28"></canvas><small>Ohne</small></button>
             ${owned.map(([id, h]) => `<button class="kit-swatch${worn === id ? ' active' : ''}" data-hat="${id}" aria-pressed="${worn === id}"><canvas class="ks-hat" data-hat="${id}" width="24" height="28"></canvas><small>${esc(h.name)}</small></button>`).join('')}
           </div>
+          <h3>Hautton</h3>
+          <div class="kit-row">${SKIN_TONES.map((t) => `<button class="kit-swatch${look.tone.id === t.id ? ' active' : ''}" data-tone="${t.id}" aria-pressed="${look.tone.id === t.id}"><span class="ks-dot" style="background:${t.color}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
+          <h3>Laterne</h3>
+          <div class="kit-row">${LANTERNS.map((t) => `<button class="kit-swatch${look.lantern.id === t.id ? ' active' : ''}" data-lantern="${t.id}" aria-pressed="${look.lantern.id === t.id}"><span class="ks-dot" style="background:${t.color};box-shadow:0 0 0 3px ${t.glow}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
+          <h3>Menü-Hintergrund</h3>
+          <div class="kit-row">
+            <button class="kit-swatch${bg ? '' : ' active'}" data-bg="" aria-pressed="${!bg}"><small>Aktuelle Welt</small></button>
+            ${bgWorlds.map((id) => `<button class="kit-swatch${bg === id ? ' active' : ''}" data-bg="${id}" aria-pressed="${bg === id}"><small>${WORLDS[id].icon} ${esc(WORLDS[id].name)}</small></button>`).join('')}
+          </div>
           <p class="small">Neue Umhänge schaltest du mit Sternen frei, Hüte gibt es im Shop gegen Kristalle 💎.</p>
         </div>
       </div>`;
@@ -341,6 +355,13 @@ function kitPage(el) {
       setSkin({ color: b.dataset.id }); play('ui'); render();
       el.querySelector(`[data-id="${b.dataset.id}"]`)?.focus();
     }));
+    const pick = (attr, fn) => el.querySelectorAll(`[data-${attr}]`).forEach((b) => b.addEventListener('click', () => {
+      fn(b.dataset[attr]); play('ui'); render();
+      el.querySelector(`[data-${attr}="${b.dataset[attr]}"]`)?.focus();
+    }));
+    pick('tone', (id) => setLook({ tone: id }));
+    pick('lantern', (id) => setLook({ lantern: id }));
+    pick('bg', (id) => { updateSettings({ menuBg: id || null }); scene.setWorld(id || themeOf(currentChapter())); document.body.dataset.world = id || themeOf(currentChapter()); });
     el.querySelectorAll('button[data-hat]').forEach((b) => b.addEventListener('click', () => {
       wearHat(b.dataset.hat || null); play('ui'); render();
       el.querySelector(`button[data-hat="${b.dataset.hat}"]`)?.focus();

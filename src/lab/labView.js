@@ -74,6 +74,9 @@ export function mountLab(root, params = []) {
                 <button class="seg-btn" type="button" data-view="brain" aria-pressed="true">Gehirn</button>
                 <button class="seg-btn" type="button" data-view="list" aria-pressed="false">Liste</button>
               </div>
+              <button class="btn btn-sm full-only" type="button" id="map-tools-btn" aria-expanded="false">⚙ Werkzeuge</button>
+              <button class="btn btn-sm full-only" type="button" id="map-legend-btn" aria-expanded="false">Legende</button>
+              <button class="btn btn-sm full-only" type="button" id="map-exit">✕ Schließen</button>
             </div>
             <div class="map-tools">
               <section class="map-tool-section map-node-tools" aria-label="Knoten und Darstellung">
@@ -338,6 +341,11 @@ export function mountLab(root, params = []) {
     // Adresse merkt sich die Vollansicht (übersteht Neuladen, lässt sich verlinken)
     if (!standalone) history.replaceState(null, '', on ? '#/lab/full' : '#/lab');
   }
+  // Vollansicht: Werkzeuge und Legende klappen auf Wunsch über die Karte, sonst gehört ihr das ganze Fenster
+  const flip = (btn, cls) => $(btn).addEventListener('click', (e) => { const on = mapCard.classList.toggle(cls); e.currentTarget.setAttribute('aria-expanded', String(on)); });
+  flip('#map-tools-btn', 'tools-open'); flip('#map-legend-btn', 'legend-open');
+  $('#map-exit').addEventListener('click', () => setFull(false));
+  if (standalone) $('#map-exit').hidden = true;
   if (standalone) { fullBtn.hidden = true; root.querySelector('.lab-back').hidden = true; }
   if (params[0] === 'full' || standalone) setFull(true);
   const onKey = (e) => { if (e.key === 'Escape' && mapCard.classList.contains('is-full') && !map.selected && !standalone) setFull(false); };

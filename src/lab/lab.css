@@ -269,3 +269,21 @@ body.lab-wood .map-card.is-full { position: fixed; inset: 0; z-index: 50; border
   body.lab-wood .map-tools input[type="search"] { width: 100%; }
 }
 @media (max-height: 760px) { body.lab-wood .map-card.is-full .map-tool-heading, body.lab-wood .map-card.is-full .importance-controls { display: none; } body.lab-wood .map-card.is-full .map-toolbar { gap: 6px; padding: 8px 10px; } }
+
+/* Vollansicht: Karte über das ganze Fenster, Leiste schwebt oben, Werkzeuge und Legende klappen auf */
+.full-only { display: none; }
+body.lab-wood .map-card.is-full .full-only { display: inline-flex; }
+body.lab-wood .map-card.is-full { display: block; animation: none; opacity: 1; }
+body.lab-wood .map-card.is-full .map-wrap { position: absolute; inset: 0; margin: 0; border: 0; }
+body.lab-wood .map-card.is-full .map-toolbar { position: absolute; left: 10px; top: 10px; z-index: 6; display: grid; gap: 8px; width: min(420px, calc(100vw - 80px)); padding: 0; background: none; border: 0; box-shadow: none; pointer-events: none; }
+body.lab-wood .map-card.is-full .map-title { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px; width: 100%; padding: 8px 10px; background: rgba(35, 21, 11, 0.9); border: 3px solid var(--wood-0); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5); pointer-events: auto; }
+body.lab-wood .map-card.is-full .map-title h2 { flex-basis: 100%; }
+body.lab-wood .map-card.is-full .map-tools, body.lab-wood .map-card.is-full .importance-controls { display: none; }
+body.lab-wood .map-card.is-full.tools-open .map-tools { display: grid; grid-template-columns: minmax(0, 1fr); pointer-events: auto; }
+body.lab-wood .map-card.is-full.tools-open .importance-controls { display: block; padding: 10px; background: rgba(35, 21, 11, 0.92); border: 3px solid var(--wood-0); pointer-events: auto; }
+body.lab-wood .map-card.is-full.tools-open .map-tool-section { background: rgba(35, 21, 11, 0.92); }
+body.lab-wood .map-card.is-full.tools-open .map-tool-heading { display: block; }
+body.lab-wood .map-card.is-full.tools-open .map-toolbar { max-height: calc(100dvh - 20px); overflow: hidden auto; }
+body.lab-wood .map-card.is-full [data-act="full"] { display: none; }
+body.lab-wood .map-card.is-full .map-legend { display: none; }
+body.lab-wood .map-card.is-full.legend-open .map-legend { display: flex; }

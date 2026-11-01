@@ -4,7 +4,7 @@
 // erfüllte Ziele werfen farbiges, weiches Licht – in groben Blöcken (Lichtkarte in 1/4 Auflösung).
 // Gezeichnet wird in einen kleinen Puffer, der ohne Glättung hochskaliert wird.
 import { COLOR_INFO, DIRS } from './engine.js';
-import { getSkin } from './skins.js';
+import { getSkin, getLook } from './skins.js';
 import { hat as currentHat } from './inventory.js';
 import { MARGIN, makeDecor, DecorSteps, drawFlames, drawGlows, drawShafts, drawMotes, shadeMargin } from './roomDecor.js';
 
@@ -353,7 +353,7 @@ export class PixelRenderer {
     if (!back) {
       // Gesicht: blinzeln, erschrocken, angestrengt, erschöpft
       const fx = hx + (side ? (dx > 0 ? 3 : 1) : 2), fy = hy + 2;
-      this.r(fx, fy, side ? 4 : 4, 4, '#ffe0bd');
+      this.r(fx, fy, side ? 4 : 4, 4, getLook().tone.color);
       const blink = Math.floor(t / 90) % 40 === 0;
       const eye = '#1a1022';
       if (p.caught) { this.r(fx, fy, 2, 2, '#ffffff'); this.r(fx + (side ? 2 : 2), fy, 2, 2, '#ffffff'); this.r(fx + 1, fy + 3, 2, 1, eye); }
@@ -365,7 +365,7 @@ export class PixelRenderer {
     this.hat(p.hat ?? currentHat(), hx, hy, t);
     // Laterne (Lichtquelle der Figur) – auf der Seite der Blickrichtung
     const lanX = px + (side ? (dx > 0 ? 13 : 1) : 12) + (strain && side ? dx * 2 : 0), lanY = by + 2;
-    this.part(lanX, lanY, 2, 3, '#ffe9a8'); this.r(lanX, lanY + 1, 1, 1, '#ffffff');
+    this.part(lanX, lanY, 2, 3, getLook().lantern.color); this.r(lanX, lanY + 1, 1, 1, '#ffffff');
     // Schweiß: Tropfen spritzen beim Schieben und bei Erschöpfung
     if (strain || p.exhausted) {
       for (let k = 0; k < 3; k++) {
@@ -825,7 +825,7 @@ export class PixelRenderer {
         for (let k = 0; k <= n; k++) lights.push({ x: x0 + ((x1 - x0) * k) / n, y: y0 + ((y1 - y0) * k) / n, level: 8, falloff: 4, color: hex, i: 0.4 });
       }
     }
-    if (opts.player) lights.push({ x: opts.player.x + 0.5, y: opts.player.y + 0.5, level: opts.bigLantern ? 12 : 9, color: '#ffcf8a', reflect: 0.5 });
+    if (opts.player) lights.push({ x: opts.player.x + 0.5, y: opts.player.y + 0.5, level: opts.bigLantern ? 12 : 9, color: getLook().lantern.glow, reflect: 0.5 });
     if (opts.exit && opts.exitOpen) lights.push({ x: opts.exit.x + 0.5, y: opts.exit.y + 0.5, level: 13, color: '#9ff0e8', reflect: 1 });
     for (const f of opts.fragments || []) if (!f.got) lights.push({ x: f.x + 0.5, y: f.y + 0.5, level: 6, color: '#9ff6ff' });
     // Undurchsichtig: Wände und massive Kisten (Glas, Prisma, Filter, Teiler lassen Licht durch)

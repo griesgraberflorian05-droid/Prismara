@@ -1058,3 +1058,6 @@ body.wood .btn:has(.pxi) { flex-direction: row; }
 .upd-btns { display: flex; gap: 6px; flex: none; }
 @keyframes upd-in { from { transform: translate(-50%, -24px); opacity: 0; } }
 @media (max-width: 520px) { .upd-note { flex-direction: column; align-items: stretch; } .upd-btns > * { flex: 1; } }
+
+/* Held: Hautton, Laterne, Hintergrund */
+body.wood .ks-dot { display: block; width: 26px; height: 26px; border: 3px solid var(--wood-0); }

@@ -2220,6 +2220,33 @@
       "status": "passed",
       "summary": "tests/watchplay.js spielt Räume sichtbar mit Anzeige, inklusive Vorhängen.",
       "area": "tests/watchplay.js"
+    },
+    {
+      "id": "feat-worldbg",
+      "type": "improvement",
+      "label": "Menü-Hintergrund je Welt",
+      "step": 21,
+      "status": "built",
+      "summary": "Alle Menüseiten zeigen das Panorama ihrer Welt; im Held-Menü lässt sich der Hintergrund frei wählen.",
+      "area": "src/ui/menu.js"
+    },
+    {
+      "id": "feat-looks",
+      "type": "improvement",
+      "label": "Held anpassen",
+      "step": 21,
+      "status": "built",
+      "summary": "Vier neue Umhänge, vier Hauttöne, fünf Laternenfarben (färben auch das Licht im Raum), Hüte direkt wählbar.",
+      "area": "src/game/skins.js"
+    },
+    {
+      "id": "fix-brainlayout",
+      "type": "improvement",
+      "label": "Gehirnkarte aufgeräumt",
+      "step": 21,
+      "status": "built",
+      "summary": "Vollansicht füllt das Fenster, Werkzeuge und Legende klappen auf Wunsch auf, höchstens 12 Schilder in der Übersicht, mehr beim Zoomen.",
+      "area": "src/lab/lab.css"
     }
   ],
   "edges": [
@@ -4407,7 +4434,22 @@
       "from": "fix-eisspalt",
       "to": "feat-advrooms",
       "rel": "verbessert"
+    },
+    {
+      "from": "feat-worldbg",
+      "to": "feat-worldtitle",
+      "rel": "nutzt"
+    },
+    {
+      "from": "feat-looks",
+      "to": "feat-heromenu",
+      "rel": "erweitert"
+    },
+    {
+      "from": "fix-brainlayout",
+      "to": "feat-brain3d",
+      "rel": "verbessert"
     }
   ],
-  "updated": "2026-11-01 22:33"
+  "updated": "2026-11-01 22:36"
 }
