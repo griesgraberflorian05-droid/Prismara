@@ -13,7 +13,7 @@ const KEY = 'prismara.combat.v1';
 export const UPGRADES = {
   sword: { name: 'Klinge', info: 'Mehr Schaden je Treffer.', values: [1, 2, 3, 4, 6], costs: [120, 320, 800, 1800], unit: 'Schaden' },
   armor: { name: 'Rüstung', info: 'Mehr Herzen im Kampf.', values: [3, 4, 5, 6], costs: [200, 600, 1500], unit: 'Herzen' },
-  reach: { name: 'Reichweite', info: 'Trifft ein Feld weiter.', values: [1, 2], costs: [1000], unit: 'Felder' },
+  reach: { name: 'Reichweite', info: 'Der Rundumschlag reicht ein Feld weiter.', values: [1, 2], costs: [1000], unit: 'Felder' },
 };
 
 export const SWORD_SKINS = [
@@ -30,14 +30,14 @@ export const SWORD_SKINS = [
 export const FOES = {
   beach: { critter: 'Sandkrabbe', minion: 'crab', colors: ['#e0704a', '#8a3020'], boss: 'Zangor der Gezeitenkrebs', shape: 'crab', moves: ['cross', 'charge'] },
   cherry: { critter: 'Blütenling', minion: 'sprout', colors: ['#f0a0c0', '#a04870'], boss: 'Sakura, die Dornenhexe', shape: 'bloom', moves: ['ring', 'rain'] },
-  jungle: { critter: 'Rankenschleim', minion: 'slime', colors: ['#6cb455', '#2f5e2a'], boss: 'Mokar der Baumwächter', shape: 'tree', moves: ['lines', 'summon', 'cross'] },
+  jungle: { critter: 'Rankenschleim', minion: 'slime', colors: ['#6cb455', '#2f5e2a'], boss: 'Mokar der Baumwächter', shape: 'tree', moves: ['shots', 'summon', 'cross'] },
   castle: { critter: 'Kerkerratte', minion: 'rat', colors: ['#8a8794', '#45434e'], boss: 'Ritter Eisenriegel', shape: 'knight', moves: ['charge', 'sweep'] },
   moor: { critter: 'Moorlicht', minion: 'wisp', colors: ['#9fe8c8', '#3e6c5a'], boss: 'Die Nebelmutter', shape: 'hag', moves: ['rain', 'summon', 'ring'] },
   night: { critter: 'Nachtfalter', minion: 'bat', colors: ['#4f6ea0', '#1c2434'], boss: 'Fürst Mondschatten', shape: 'moth', moves: ['sweep', 'rain'] },
-  volcano: { critter: 'Glutling', minion: 'slime', colors: ['#ff7a3a', '#84281c'], boss: 'Ignor der Schmiedefürst', shape: 'golem', moves: ['lines', 'charge', 'cross'] },
+  volcano: { critter: 'Glutling', minion: 'slime', colors: ['#ff7a3a', '#84281c'], boss: 'Ignor der Schmiedefürst', shape: 'golem', moves: ['shots', 'charge', 'cross'] },
   temple: { critter: 'Skarabäus', minion: 'crab', colors: ['#d8aa60', '#6e4818'], boss: 'Pharao Sonnenschwur', shape: 'pharaoh', moves: ['ring', 'sweep', 'summon'] },
   shadow: { critter: 'Schattenrest', minion: 'wisp', colors: ['#7a5ab0', '#22163a'], boss: 'Der Lichtfresser', shape: 'shade', moves: ['cross', 'sweep', 'rain'] },
-  aurora: { critter: 'Frostling', minion: 'slime', colors: ['#a8d8f0', '#3a5670'], boss: 'Glazius der Eiskoloss', shape: 'golem', moves: ['lines', 'ring', 'charge'] },
+  aurora: { critter: 'Frostling', minion: 'slime', colors: ['#a8d8f0', '#3a5670'], boss: 'Glazius der Eiskoloss', shape: 'golem', moves: ['shots', 'ring', 'charge'] },
   reef: { critter: 'Riffquappe', minion: 'bat', colors: ['#ff8aa0', '#123a48'], boss: 'Krakia, Herrin der Tiefe', shape: 'kraken', moves: ['sweep', 'summon', 'rain', 'cross'] },
 };
 export const foeOf = (world) => FOES[world] || FOES.beach;

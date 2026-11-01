@@ -1254,3 +1254,5 @@ body.wood .ihud-door.open .pxi { color: #7dff6a; }
 .lv-trail li:nth-last-child(2)::after { display: none; }
 @media (max-width: 520px) { .ar-hearts { top: 58px; } .ar-boss { top: 100px; width: 86vw; } }
 .sword-skins { margin: 0; }
+
+.mm-tiles { grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }

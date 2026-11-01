@@ -28,6 +28,9 @@ const BEATS = {
 // Lieder: Tempo, Grundton (MIDI), Tonleiter, 4 Akkorde (Halbtöne + m/M), Beat, Keyboard-Muster, Bass-Muster,
 // Melodie-Instrument und der Hook: 4 Takte à 16 Schritte. 1–9 = Tonleiterstufe, a/b = höher, z/y = tiefer.
 export const SONGS = {
+  // Bosskampf: langsam, tief, Halbtonreibung über schwerem Puls
+  boss: { bpm: 72, root: 38, scale: 'harmonic', chords: ['0m', '1M', '0m', '6M'], beat: 'march', keys: 'pad', bassP: 'x..x..x...x..x..', lead: 'harpsi',
+    hook: ['1...2...1...z...', '1...2...5...4...', '1...2...1...z...', '5.4.2.1.z.......'] },
   menu: { bpm: 96, root: 57, scale: 'major', chords: ['0M', '7M', '9m', '5M'], beat: 'pop', keys: 'stab', bassP: 'x.....x.x.......', lead: 'bell',
     hook: ['5...3.5.6...5...', '2...z.2.3...2...', '3...1.3.6...5.3.', '4.4.3.2.1.......'] },
   default: { bpm: 90, root: 55, scale: 'major', chords: ['0M', '9m', '5M', '7M'], beat: 'lofi', keys: 'pump', bassP: 'x.......x.......', lead: 'bell',

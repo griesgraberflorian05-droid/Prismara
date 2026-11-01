@@ -15,6 +15,7 @@ import { setMusic } from '../game/music.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 import { foeOf, bossBeaten } from '../game/combat.js';
+import { getLook } from '../game/skins.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
 import { isAdmin } from '../game/admin.js';
 import { WORLDS } from '../game/worlds.js';
@@ -717,7 +718,8 @@ export function mountAdventure(root, params, opts = {}) {
   }
 
   // ---------- Zeichnen ----------
-  let running = true, shownStamina = '', view = null;
+  let running = true, shownStamina = '', view = null, trail = [], trailAt = { x: -1, y: -1 };
+  const trailColor = getLook().trail.color;
   const staminaEl = $('#stamina');
   const lerp = (a, b, k) => a + (b - a) * k;
   function frame(t) {
@@ -766,6 +768,7 @@ export function mountAdventure(root, params, opts = {}) {
 
     const marker = hintMark || (tutorial && !done ? TUT_STEPS[tutStep].mark() : null);
     const markers = t < lensUntil ? [...loot.filter((l) => !l.got), ...fragments.filter((f) => !f.got), ...level.cells.map((c, i) => (c.key && !state.got?.includes(i) ? { x: i % level.w, y: Math.floor(i / level.w) } : null)).filter(Boolean)] : [];
+    if (trailColor && (state.player.x !== trailAt.x || state.player.y !== trailAt.y)) { if (trailAt.x >= 0) trail.push({ ...trailAt, t0: t, side: trail.length % 2 }); trailAt = { x: state.player.x, y: state.player.y }; }
     const img = pix.draw(reduced ? 0 : t, { marker, markers, loot, chest, sign, got: state.got, fill: state.fill, broken: state.broken, sinking, bigLantern: owns('lantern'), tr, blocks, player, enemies, dissolving, dock, exit, exitOpen, fragments, theme, dust, bloom, grow: reduced ? Infinity : ((t - growStart) / 1000) * 16 });
     // Hochskalieren ohne Glättung → Pixel-Art
     const dpr = devicePixelRatio || 1;
@@ -778,6 +781,13 @@ export function mountAdventure(root, params, opts = {}) {
     const scale = Math.max(1, Math.floor(Math.min(cw / v.w, chh / v.h)));
     const dx = Math.floor((cw - v.w * scale) / 2) - v.x * scale, dy = Math.floor((chh - v.h * scale) / 2) - v.y * scale;
     view = { dx, dy, scale };
+    if (trail.length) { // Spur auf den Boden, verblasst in zwei Sekunden
+      const g = img.getContext('2d');
+      trail = trail.filter((p) => t - p.t0 < 2000);
+      g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy); g.fillStyle = trailColor;
+      for (const p of trail) { g.globalAlpha = 0.7 * (1 - (t - p.t0) / 2000); g.fillRect(p.x * T + (p.side ? 4 : 9), p.y * T + 11, 3, 3); }
+      g.restore();
+    }
     ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
     requestAnimationFrame(frame);
   }

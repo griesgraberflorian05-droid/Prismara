@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
@@ -89,6 +89,7 @@ export function mountMenu(root, params = []) {
   else if (page === 'chapter') chapterPage(ui, parseInt(params[1] || '0', 10));
   else if (page === 'kit') cleanup = kitPage(ui, scene);
   else if (page === 'shop') shopPage(ui);
+  else if (page === 'forge') forgePage(ui);
   else if (page === 'settings') settingsPage(ui);
   else if (page === 'code') codePage(ui);
   else if (page === 'codes') myCodesPage(ui);
@@ -140,7 +141,7 @@ function mainPage(el) {
         if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn mm-tile locked" aria-disabled="true" title="${esc(m.info)}">${icon('lock')}<span>${m.name}</span><small>ab ${m.need} Räumen</small></span>`;
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
         return `<a class="wbtn mm-tile${glow ? ' glow' : ''}" href="${href}">${icon(MODE_ICON[m.id])}<span>${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</span></a>`;
-      }).join('')}</nav>
+      }).join('')}<a class="wbtn mm-tile" href="#/menu/forge">${icon('sword')}<span>Schmiede</span></a></nav>
       <div class="mm-tools">
         <a class="wbtn sm" href="#/menu/code">${icon('key')}<span>Code</span></a>
         <a class="wbtn sm" href="#/menu/settings">${icon('gear')}<span>Optionen</span></a>
@@ -360,6 +361,28 @@ function chapterPage(el, ci) {
   (el.querySelector('.room.next') || el.querySelector('a.room'))?.focus();
 }
 
+// ---------- Schmiede: Schwert verbessern und Waffen-Skins ----------
+function forgePage(el) {
+  const render = (msg = '') => {
+    const inv = getInv();
+    el.innerHTML = `
+      ${head('#/menu', 'Schmiede', `${icon('coin')} ${inv.coins}`)}
+      <div class="shop">
+        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">⚒</span><p>Die Schmiede verbessert dein Redstone-Schwert. ${msg || 'Billig ist hier nichts, spar gut.'}</p></div>
+        <ul class="shop-list">${Object.entries(UPGRADES).map(([id, u]) => {
+          const cost = nextCost(id), lvl = getCombat()[id];
+          return `<li class="parch shop-item"><span class="si-icon">${icon(id === 'armor' ? 'heart' : 'sword')}</span>
+            <span class="si-text"><b>${esc(u.name)} ${lvl + 1}/${u.values.length}</b><small>${esc(u.info)}</small><em>${u.values[lvl]} ${u.unit}</em></span>
+            <button class="wbtn sm" data-up="${id}" ${cost == null || inv.coins < cost ? 'disabled' : ''}>${cost == null ? 'MAX' : cost ? `${icon('coin')} ${cost}` : 'GRATIS'}</button></li>`;
+        }).join('')}</ul>
+        <div class="kit-row sword-skins">${shownSkins().map((s) => `<button class="kit-swatch${swordSkin().id === s.id ? ' active' : ''}" data-sword="${s.id}" aria-pressed="${swordSkin().id === s.id}"><span class="ks-dot" style="background:${s.blade};box-shadow:0 0 0 3px ${s.edge}"></span><small>${esc(s.name)}${ownsSkin(s.id) ? '' : ` ${s.price}`}</small></button>`).join('')}</div>
+      </div>`;
+    el.querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { if (upgrade(b.dataset.up)) play('target', 7); render('Die Klinge glüht – Verbesserung geschafft!'); }));
+    el.querySelectorAll('[data-sword]').forEach((b) => b.addEventListener('click', () => { const ok = pickSkin(b.dataset.sword); play(ok ? 'ui' : 'bump'); render(ok ? 'Schöne Waffe!' : 'Dafür fehlen dir Münzen.'); }));
+  };
+  render();
+}
+
 // ---------- Shoppen ----------
 function shopPage(el) {
   const render = (msg = '') => {
@@ -376,22 +399,12 @@ function shopPage(el) {
             <button class="wbtn sm" data-buy="${id}" ${sold || (!isAdmin() && inv.coins < it.price) ? 'disabled' : ''}>${sold ? '✓ gekauft' : isAdmin() ? 'GRATIS' : `🪙 ${it.price}`}</button></li>`;
         }).join('')}</ul>
         <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">🎩</span><p>Der Hutmacher nimmt keine Münzen – nur Kristalle 💎 aus den Räumen. Du hast <b>${fragmentCount() - crystalsSpent()}</b> übrig.</p></div>
-        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">⚒</span><p>Die Schmiede verbessert dein Redstone-Schwert. Billig ist hier nichts, spar gut.</p></div>
-        <ul class="shop-list">${Object.entries(UPGRADES).map(([id, u]) => {
-          const cost = nextCost(id), lvl = getCombat()[id];
-          return `<li class="parch shop-item"><span class="si-icon">${icon(id === 'armor' ? 'heart' : 'sword')}</span>
-            <span class="si-text"><b>${esc(u.name)} ${lvl + 1}/${u.values.length}</b><small>${esc(u.info)}</small><em>${u.values[lvl]} ${u.unit}</em></span>
-            <button class="wbtn sm" data-up="${id}" ${cost == null || inv.coins < cost ? 'disabled' : ''}>${cost == null ? 'MAX' : cost ? `${icon('coin')} ${cost}` : 'GRATIS'}</button></li>`;
-        }).join('')}</ul>
-        <div class="kit-row sword-skins">${shownSkins().map((s) => `<button class="kit-swatch${swordSkin().id === s.id ? ' active' : ''}" data-sword="${s.id}" aria-pressed="${swordSkin().id === s.id}"><span class="ks-dot" style="background:${s.blade};box-shadow:0 0 0 3px ${s.edge}"></span><small>${esc(s.name)}${ownsSkin(s.id) ? '' : ` ${s.price}`}</small></button>`).join('')}</div>
         <ul class="hat-list">${Object.entries(HATS).map(([id, h]) => {
           const own = ownsHat(id), worn = hat() === id;
           return `<li class="parch hat-item${worn ? ' worn' : ''}"><canvas class="hat-prev" data-hat="${id}" width="24" height="28"></canvas><b>${esc(h.name)}</b>
             ${own ? `<button class="wbtn sm" data-wear="${worn ? '' : id}">${worn ? 'ABSETZEN' : 'AUFSETZEN'}</button>` : `<button class="wbtn sm" data-hat-buy="${id}" ${fragmentCount() - crystalsSpent() < h.price ? 'disabled' : ''}>💎 ${h.price}</button>`}</li>`;
         }).join('')}</ul>
       </div>`;
-    el.querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { if (upgrade(b.dataset.up)) play('target', 7); render('Die Klinge glüht – Verbesserung geschafft!'); }));
-    el.querySelectorAll('[data-sword]').forEach((b) => b.addEventListener('click', () => { const ok = pickSkin(b.dataset.sword); play(ok ? 'ui' : 'bump'); render(ok ? 'Schöne Waffe!' : 'Dafür fehlen dir Münzen.'); }));
     el.querySelectorAll('.hat-prev').forEach((c) => drawHatPreview(c, c.dataset.hat));
     el.querySelectorAll('[data-hat-buy]').forEach((b) => b.addEventListener('click', () => {
       const id = b.dataset.hatBuy;
@@ -434,6 +447,8 @@ function kitPage(el, scene) {
           </div>
           <h3>Hautton</h3>
           <div class="kit-row">${SKIN_TONES.map((t) => `<button class="kit-swatch${look.tone.id === t.id ? ' active' : ''}" data-tone="${t.id}" aria-pressed="${look.tone.id === t.id}"><span class="ks-dot" style="background:${t.color}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
+          <h3>Spur</h3>
+          <div class="kit-row">${TRAILS.map((t) => { const locked = !isAdmin() && stars < t.stars, on = look.trail.id === t.id; return `<button class="kit-swatch${on ? ' active' : ''}" ${locked ? 'disabled' : `data-trail="${t.id}"`} aria-pressed="${on}"><span class="ks-dot" style="background:${t.color || 'transparent'}"></span><small>${locked ? `★${t.stars}` : esc(t.name)}</small></button>`; }).join('')}</div>
           <h3>Laterne</h3>
           <div class="kit-row">${LANTERNS.map((t) => `<button class="kit-swatch${look.lantern.id === t.id ? ' active' : ''}" data-lantern="${t.id}" aria-pressed="${look.lantern.id === t.id}"><span class="ks-dot" style="background:${t.color};box-shadow:0 0 0 3px ${t.glow}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
           ${allOpen ? `<h3>Anpassung: Menü-Hintergrund</h3>
@@ -456,6 +471,7 @@ function kitPage(el, scene) {
     }));
     pick('tone', (id) => setLook({ tone: id }));
     pick('lantern', (id) => setLook({ lantern: id }));
+    pick('trail', (id) => setLook({ trail: id }));
     pick('bg', (id) => { updateSettings({ menuBg: id || null }); scene.setWorld(menuBackground()); document.body.dataset.world = menuBackground(); });
     el.querySelectorAll('button[data-hat]').forEach((b) => b.addEventListener('click', () => {
       wearHat(b.dataset.hat || null); play('ui'); render();

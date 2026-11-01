@@ -71,6 +71,21 @@ function noise({ dur = 0.15, vol = 0.15, freq = 800, q = 1, delay = 0 } = {}) {
 // Tonhöhe je Farbe (Rot tief, Grün Mitte, Blau hoch) – Mischfarben spielen einen Akkord.
 const COLOR_NOTES = { 1: 523.25, 2: 659.25, 4: 783.99 };
 
+/** Boss-Geräusche: charge = dunkles Aufladen, shot = Schuss, slam = Einschlag, roar = Brüllen. */
+export function bossSound(kind) {
+  if (silent()) return;
+  const c = audio();
+  if (!c) return;
+  const t = c.currentTime, S = { charge: [70, 160, 0.5, 'sawtooth', 0.22], shot: [520, 120, 0.2, 'square', 0.16], slam: [120, 32, 0.4, 'square', 0.38], roar: [190, 55, 0.9, 'sawtooth', 0.34] }[kind];
+  const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain();
+  o.type = o2.type = S[3];
+  o.frequency.setValueAtTime(S[0], t); o.frequency.exponentialRampToValueAtTime(S[1], t + S[2]);
+  o2.frequency.setValueAtTime(S[0] * 1.06, t); o2.frequency.exponentialRampToValueAtTime(S[1] * 1.06, t + S[2]);
+  g.gain.setValueAtTime(S[4], t); g.gain.exponentialRampToValueAtTime(0.0001, t + S[2]);
+  o.connect(g); o2.connect(g); g.connect(master);
+  o.start(t); o2.start(t); o.stop(t + S[2]); o2.stop(t + S[2]);
+}
+
 /** Schrei für den Jumpscare: verstimmte Sägezähne fallen ab, darüber Rauschen. */
 export function scream(sec = 1.3) {
   if (silent()) return;

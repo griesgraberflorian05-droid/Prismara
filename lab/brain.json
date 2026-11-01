@@ -2454,6 +2454,42 @@
       "status": "built",
       "summary": "21 neue, vom Löser bestätigte Räume aus den Grundrissen jeder Welt.",
       "area": "src/game/forgedLevels.js"
+    },
+    {
+      "id": "feat-spin",
+      "type": "improvement",
+      "label": "Rundumschlag",
+      "step": 21,
+      "status": "built",
+      "summary": "Das Schwert trifft alles im Kreis um den Helden.",
+      "area": "src/adventure/arena.js"
+    },
+    {
+      "id": "feat-bossmood",
+      "type": "improvement",
+      "label": "Düsterer Bosskampf",
+      "step": 21,
+      "status": "built",
+      "summary": "Eigene Musik, Boss-Geräusche, Geschosse statt Reihenmuster, blutroter Raum.",
+      "area": "src/adventure/arena.js"
+    },
+    {
+      "id": "feat-forgepage",
+      "type": "improvement",
+      "label": "Schmiede-Seite",
+      "step": 21,
+      "status": "built",
+      "summary": "Eigenes Menü für Schwert und Waffen-Skins.",
+      "area": "src/ui/menu.js"
+    },
+    {
+      "id": "feat-trails",
+      "type": "improvement",
+      "label": "Spuren",
+      "step": 21,
+      "status": "built",
+      "summary": "Fußspuren und weitere Spuren als Cosmetic, dazu neue Umhänge und Laternen.",
+      "area": "src/game/skins.js"
     }
   ],
   "edges": [
@@ -4786,7 +4822,27 @@
       "from": "feat-forged",
       "to": "feat-advrooms",
       "rel": "erweitert"
+    },
+    {
+      "from": "feat-spin",
+      "to": "feat-combat",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-bossmood",
+      "to": "feat-combat",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-forgepage",
+      "to": "feat-combat",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-trails",
+      "to": "feat-kit",
+      "rel": "erweitert"
     }
   ],
-  "updated": "2026-11-01 23:17"
+  "updated": "2026-11-01 23:21"
 }

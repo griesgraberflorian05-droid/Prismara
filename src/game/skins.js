@@ -13,6 +13,8 @@ export const SKIN_COLORS = [
   { id: 'oak', name: 'Eiche', stops: ['#e8c89a', '#8a5a32', '#5a3a1e'], glow: '#e8c89a', stars: 0 },
   { id: 'midnight', name: 'Mitternacht', stops: ['#c8d4f0', '#2e3f6e', '#1a2444'], glow: '#c8d4f0', stars: 3 },
   { id: 'plum', name: 'Pflaume', stops: ['#f0d8f0', '#7a3f7a', '#4a2448'], glow: '#f0d8f0', stars: 9 },
+  { id: 'coral', name: 'Koralle', stops: ['#ffe0d8', '#e8806a', '#a84a3a'], glow: '#ffc0b0', stars: 15 },
+  { id: 'ash', name: 'Asche', stops: ['#d8d8dc', '#5a5a64', '#2e2e36'], glow: '#d8d8dc', stars: 24 },
   { id: 'prism', name: 'Regenbogen', stops: ['#ff4d6d', '#ffd166', '#3ddc97', '#4da3ff', '#b18cff'], glow: '#ffffff', stars: 45 },
   // Nur über den Code „halloween“, bis dahin in der Auswahl unsichtbar
   { id: 'halloween', name: 'Halloween', stops: ['#2a1a30', '#e8701a', '#7a2f0a'], glow: '#ff8a2a', stars: 0, secret: true },
@@ -44,10 +46,16 @@ export const LANTERNS = [
   { id: 'warm', name: 'Warm', color: '#ffe9a8', glow: '#ffcf8a' }, { id: 'ember', name: 'Glut', color: '#ffb36b', glow: '#ff9a55' },
   { id: 'moon', name: 'Mond', color: '#cfe6ff', glow: '#a8d0ff' }, { id: 'moss', name: 'Moos', color: '#c4ffb0', glow: '#9fe88a' },
   { id: 'rose', name: 'Rose', color: '#ffc4dc', glow: '#ff9fc4' },
+  { id: 'violet', name: 'Violett', color: '#d8b8ff', glow: '#b48cff' }, { id: 'ice', name: 'Eis', color: '#d8fbff', glow: '#a0f0ff' },
+];
+// Spur hinter dem Helden, mit Sternen freigeschaltet
+export const TRAILS = [
+  { id: 'none', name: 'Keine', color: null, stars: 0 }, { id: 'steps', name: 'Fußspuren', color: '#4a3020', stars: 2 }, { id: 'petals', name: 'Blüten', color: '#f0a0c0', stars: 8 },
+  { id: 'sparks', name: 'Funken', color: '#ffd166', stars: 14 }, { id: 'frost', name: 'Frost', color: '#bfe8ff', stars: 22 }, { id: 'ember', name: 'Glut', color: '#ff7a3a', stars: 32 },
 ];
 export function getLook() {
   const l = getSettings().look || {};
-  return { tone: SKIN_TONES.find((t) => t.id === l.tone) || SKIN_TONES[0], lantern: LANTERNS.find((t) => t.id === l.lantern) || LANTERNS[0] };
+  return { tone: SKIN_TONES.find((t) => t.id === l.tone) || SKIN_TONES[0], lantern: LANTERNS.find((t) => t.id === l.lantern) || LANTERNS[0], trail: TRAILS.find((t) => t.id === l.trail) || TRAILS[0] };
 }
 export function setLook(patch) { updateSettings({ look: { ...(getSettings().look || {}), ...patch } }); }
 

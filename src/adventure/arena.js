@@ -8,7 +8,7 @@ import { WORLDS } from '../game/worlds.js';
 import { addCoins, hat } from '../game/inventory.js';
 import { foeOf, worldOf, stat, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
 import { drawMinion, drawBoss } from '../game/monsters.js';
-import { play } from '../game/sound.js';
+import { play, bossSound } from '../game/sound.js';
 import { setMusic } from '../game/music.js';
 import { prefersReducedMotion } from '../settings.js';
 import { transitionTo } from '../ui/transition.js';
@@ -50,7 +50,7 @@ export function mountArena(root, params) {
   const $ = (s) => root.querySelector(s);
   const canvas = $('#board'), ctx = canvas.getContext('2d');
 
-  let hero, mobs, boss, tele, phase, held, paused, running = true, shake = 0, view = null, sparks;
+  let shots = [], hero, mobs, boss, tele, phase, held, paused, running = true, shake = 0, view = null, sparks;
   const reduced = prefersReducedMotion();
 
   function spawnMobs(n) {
@@ -62,7 +62,8 @@ export function mountArena(root, params) {
   }
   function start() {
     hero = { x: 1, y: 4, dir: 1, hp: maxHp, safe: 0, next: 0, swing: 0, moved: 0 };
-    mobs = []; tele = []; sparks = []; boss = null; phase = 1; held = null; paused = false;
+    mobs = []; tele = []; shots = []; sparks = []; boss = null; phase = 1;
+    setMusic(world); held = null; paused = false;
     spawnMobs(3);
     $('#wave').textContent = 'WELLE 1/2'; $('#bossbar').hidden = true; $('#panel').hidden = true;
     showHearts();
@@ -93,11 +94,11 @@ export function mountArena(root, params) {
     const now = performance.now();
     if (paused || phase === 0 || now < hero.swing + SWING_MS) return;
     hero.swing = now; play('swipe');
-    const [dx, dy] = DIRS[hero.dir];
+    // Rundumschlag: trifft alles im Kreis um den Helden
     let hitBoss = false;
-    for (let k = 1; k <= reach; k++) {
-      const x = hero.x + dx * k, y = hero.y + dy * k;
-      if (wall(x, y)) break;
+    for (let y = hero.y - reach; y <= hero.y + reach; y++) for (let x = hero.x - reach; x <= hero.x + reach; x++) {
+      if (wall(x, y) || (x === hero.x && y === hero.y)) continue;
+      const dx = Math.sign(x - hero.x), dy = Math.sign(y - hero.y);
       for (const m of [...mobs]) if (m.x === x && m.y === y) {
         m.hp -= damage; m.hit = now; play('target', 3);
         if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x, y, t0: now }); } else if (!blocked(x + dx, y + dy)) { m.x += dx; m.y += dy; m.wind = 0; m.next = now + 500; }
@@ -116,10 +117,15 @@ export function mountArena(root, params) {
   function attack(now) {
     const angry = boss.hp <= bossHp / 2, wind = (angry ? 700 : 900) - ci * 12;
     const name = foe.moves[boss.turn++ % foe.moves.length];
+    if (name !== 'shots') bossSound(name === 'summon' ? 'roar' : 'charge');
     const cx = boss.x + 0.5, cy = boss.y + 0.5;
     if (name === 'cross') tele.push({ cells: inner((x, y) => x === hero.x || y === hero.y), at: now + wind });
     if (name === 'ring') tele.push({ cells: inner((x, y) => { const q = Math.max(Math.abs(x - cx), Math.abs(y - cy)); return q >= 1.5 && q < (angry ? 4.5 : 3.5); }), at: now + wind });
-    if (name === 'lines') { const k = boss.turn % 2; tele.push({ cells: inner((x, y) => y % 2 === k), at: now + wind }); tele.push({ cells: inner((x, y) => y % 2 !== k), at: now + wind + 750 }); }
+    if (name === 'shots') { // Geschosse fliegen sternförmig aus dem Boss, die Lücken dazwischen sind sicher
+      bossSound('charge');
+      const off = boss.turn % 2 ? 0 : Math.PI / 8, n = angry ? 12 : 8;
+      for (let k = 0; k < n; k++) { const a = off + (k * Math.PI * 2) / n; shots.push({ x: cx, y: cy, dx: Math.cos(a), dy: Math.sin(a), at: now + wind * 0.7 }); }
+    }
     if (name === 'rain') { const n = 10 + (angry ? 6 : 0) + ci; const free = inner(() => true).sort(() => Math.random() - 0.5).slice(0, n); tele.push({ cells: [...free, [hero.x, hero.y]], at: now + wind }); }
     if (name === 'sweep') {
       const gap = 1 + Math.floor(Math.random() * (H - 3)); // zwei freie Reihen zum Durchschlüpfen
@@ -153,7 +159,17 @@ export function mountArena(root, params) {
     for (let i = tele.length - 1; i >= 0; i--) if (now >= tele[i].at) {
       const z = tele.splice(i, 1)[0];
       z.then?.();
+      bossSound('slam'); shake = now + 160;
       if (z.cells.some(([x, y]) => x === hero.x && y === hero.y)) hurt(now);
+    }
+    for (let i = shots.length - 1; i >= 0; i--) {
+      const p = shots[i];
+      if (now < p.at) continue;
+      if (!p.fired) { p.fired = true; p.last = now; bossSound('shot'); }
+      const d = ((now - p.last) / 1000) * (5 + ci * 0.25); p.last = now;
+      p.x += p.dx * d; p.y += p.dy * d;
+      const x = Math.round(p.x), y = Math.round(p.y);
+      if (x === hero.x && y === hero.y) { hurt(now); shots.splice(i, 1); } else if (x < 0 || y < 0 || x >= W || y >= H || wall(x, y)) shots.splice(i, 1);
     }
     if (phase === 0) return;
     if (boss) {
@@ -168,20 +184,20 @@ export function mountArena(root, params) {
       if (phase === 2) { spawnMobs(5); $('#wave').textContent = 'WELLE 2/2'; } else {
         boss = { x: 9, y: 3, hp: bossHp, next: now + 1600, turn: 0, hit: 0 };
         $('#wave').textContent = 'BOSS'; $('#bossbar').hidden = false; $('#bosshp').style.width = '100%';
-        play('door');
+        setMusic('boss'); bossSound('roar'); shake = now + 500;
       }
     }
   }
 
   function panel(html) { $('#panel-card').innerHTML = html; $('#panel').hidden = false; }
   function lose() {
-    phase = 0; held = null; tele = [];
+    phase = 0; held = null; tele = []; shots = [];
     panel(`<h2 class="pixel">BESIEGT</h2><p class="pause-hint">${esc(foe.boss)} war stärker. Verbessere dein Schwert in der Schmiede oder versuche es noch einmal.</p>
       <button class="btn btn-primary" id="p-again">Nochmal</button><a class="btn" href="#/menu/shop">Zur Schmiede</a><a class="btn" href="#/menu/chapter/${ci}">Zur Welt</a>`);
     $('#p-again').addEventListener('click', start); $('#p-again').focus();
   }
   function win() {
-    phase = 0; held = null; tele = []; mobs = []; shake = performance.now() + 400;
+    phase = 0; held = null; tele = []; shots = []; mobs = []; setMusic(world); shake = performance.now() + 400;
     const first = !bossBeaten(ci), reward = first ? 60 + ci * 25 : 10;
     addCoins(reward); markBoss(ci); play('exitopen');
     const nextCh = CHAPTERS[ci + 1];
@@ -203,6 +219,7 @@ export function mountArena(root, params) {
       const d = performance.now() - pausedAt; // Zeitmarken verschieben, damit die Pause nichts auslöst
       for (const m of mobs) { m.next += d; if (m.wind) m.wind += d; }
       for (const z of tele) z.at += d;
+      for (const p of shots) { p.at += d; if (p.last) p.last += d; }
       if (boss) boss.next += d;
       hero.safe += d;
       $('#panel').hidden = true; canvas.focus();
@@ -241,17 +258,29 @@ export function mountArena(root, params) {
 
   // ---------- Zeichnen ----------
   function drawSword(g, now) {
-    const [dx, dy] = DIRS[hero.dir], k = (now - hero.swing) / 170;
-    const px = hero.x * T + 8, py = hero.y * T + 8;
+    const k = (now - hero.swing) / 240, px = hero.x * T + 8, py = hero.y * T + 8;
     const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
-    if (k < 1) { // Hieb: Klinge schnellt nach vorn, die Spur zeigt die getroffenen Felder
-      const len = 6 + T * reach, wide = dx !== 0;
-      R(px + (dx < 0 ? -len : dx ? 0 : -6), py + (dy < 0 ? -len : dy ? 0 : -6), wide ? len : 12, wide ? 12 : len, `${skin.edge}55`);
-      R(px + (dx < 0 ? -len : dx ? 0 : -2), py + (dy < 0 ? -len : dy ? 0 : -2), wide ? len : 4, wide ? 4 : len, skin.blade);
-      R(px + (dx < 0 ? -len : dx ? 0 : -1), py + (dy < 0 ? -len : dy ? 0 : -1), wide ? len : 1, wide ? 1 : len, skin.edge);
+    if (k < 1) { // Rundumschlag: die Klinge zieht einen vollen Kreis, die Spur bleibt kurz stehen
+      const len = 8 + T * reach;
+      for (let i = 0; i < 36; i++) {
+        const a = (i / 36) * Math.PI * 2 - Math.PI / 2;
+        if (i / 36 > k) break;
+        R(Math.round(px + Math.cos(a) * len) - 2, Math.round(py + Math.sin(a) * len) - 2, 4, 4, i / 36 > k - 0.25 ? skin.edge : `${skin.blade}66`);
+      }
+      const a = k * Math.PI * 2 - Math.PI / 2;
+      for (let d = 4; d < len; d += 2) R(Math.round(px + Math.cos(a) * d) - 1, Math.round(py + Math.sin(a) * d) - 1, 3, 3, d > len - 5 ? skin.edge : skin.blade);
     } else {
       R(px + 6, py - 8, 3, 11, skin.blade); R(px + 6, py - 8, 1, 11, skin.edge); R(px + 4, py + 3, 7, 2, skin.grip); R(px + 6, py + 5, 3, 3, skin.grip);
     }
+  }
+  // Figuren bleiben im dunklen Bosskampf hell: nach dem Abdunkeln noch einmal obenauf zeichnen
+  const mirror = (g) => (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x + pix.ox, y + pix.oy, w, h); };
+  function drawHero(g, now) {
+    const r = mirror(g), x = hero.x * T, y = hero.y * T;
+    g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy); pix.player({ x: hero.x, y: hero.y, dir: hero.dir, walk: null, stamina: 1, hat: hat() }, now); drawSword(g, now);
+    for (const q of tele) for (const [a, b] of q.cells) { r(a * T - pix.ox + 1, b * T - pix.oy + 1, T - 2, 1, '#ff3a2a'); }
+    for (const p of shots) if (now >= p.at) { const sx = Math.round(p.x * T) + 4, sy = Math.round(p.y * T) + 4; g.fillStyle = '#1a0208'; g.fillRect(sx, sy, 8, 8); g.fillStyle = '#ff3a2a'; g.fillRect(sx + 2, sy + 2, 4, 4); }
+    g.restore(); void x; void y;
   }
   function frame(now) {
     if (!running) return;
@@ -269,10 +298,19 @@ export function mountArena(root, params) {
     }
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, { flash: now - m.hit < 110, warn: !!m.wind });
     if (boss) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T, t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
+    for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
     if (!blink && phase !== 0) drawSword(g, now);
     sparks = sparks.filter((s) => now - s.t0 < 300);
     for (const s of sparks) { const k = (now - s.t0) / 300, a = Math.round(k * 9); for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) r(s.x * T + 7 + dx * a, s.y * T + 7 + dy * a, 3, 3, foe.colors[0]); }
     g.restore();
+    if (boss) { // Bosskampf: Raum wird düster, die Ränder pulsieren blutrot
+      const p = img.width, q = img.height, beat = reduced ? 0.5 : (Math.sin(now / 420) + 1) / 2;
+      g.fillStyle = 'rgba(6,0,10,0.45)'; g.fillRect(0, 0, p, q);
+      g.fillStyle = `rgba(120,0,10,${0.14 + beat * 0.14})`; g.fillRect(0, 0, p, q);
+      for (const m of mobs) drawMinion(mirror(g), foe.minion, foe.colors, m.x * T, m.y * T, t, { flash: now - m.hit < 110, warn: !!m.wind });
+      drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T, t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
+      if (!blink) pix.ctx && drawHero(g, now);
+    }
     const dpr = devicePixelRatio || 1, rect = canvas.getBoundingClientRect();
     const cw = Math.max(1, Math.round(rect.width * dpr)), ch = Math.max(1, Math.round(rect.height * dpr));
     if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
