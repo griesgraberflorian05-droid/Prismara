@@ -27,7 +27,7 @@ import { mountTitleArt } from './titleArt.js';
 import { logoCanvas } from './logo.js';
 import { isAdmin, setAdmin, redeem } from '../game/admin.js';
 import { checkUpdate, applyUpdate } from './updater.js';
-import { VERSION, BUILD } from '../version.js';
+import { VERSION, LABEL } from '../version.js';
 
 // Schwierigkeit einer Welt: 1–5 Punkte nach dem höchsten Zugziel (Meisterprüfung) der Welt.
 const difficulty = (ci) => {
@@ -138,7 +138,7 @@ function mainPage(el) {
       <span>🪙 <b>${getInv().coins}</b></span>
       <span>💎 <b>${fragmentCount()}</b></span>
     </footer>
-    <p class="tm-version">Version ${VERSION === 'dev' ? 'lokal' : `1.${BUILD}`}</p>`;
+    <p class="tm-version">Version ${VERSION === 'dev' ? 'lokal' : LABEL}</p>`;
   const logo = logoCanvas(); logo.className = 'logo'; logo.setAttribute('aria-hidden', 'true');
   el.querySelector('.logo-h1').prepend(logo);
   el.querySelector('#upd').addEventListener('click', async (e) => {

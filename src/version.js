@@ -1,2 +1,2 @@
-export const VERSION = '20261101223817';
-export const BUILD = 1;
+export const VERSION = '20261101224211';
+export const LABEL = '3.23.26';

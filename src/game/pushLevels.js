@@ -798,11 +798,11 @@ ALL_LEVELS.push(
     rows: ['#############', '#.a...#.....#', '#.@.ooA.....#', '#.....#.....#', '#.m..nA....2#', '#.....#.....#', '#############'],
   },
   {
-    // Nutzerwunsch „zu schwer“: unterer Spiegel steht schon richtig, Start in der Mitte (14 statt 24 Züge)
-    id: 'w41', name: 'Eisspalt', par: 14, exit: [0, 3],
-    hint: 'Der untere Spiegel steht schon richtig. Bring den rechten Spiegel hoch in die Ecke und dreh ihn – aufs Eis kommst du nur rutschend!',
+    // Nutzerwunsch „immer noch zu schwer“: rechter Spiegel steht schon in der Ecke, nur noch drehen (6 Züge)
+    id: 'w41', name: 'Eisspalt', par: 6, exit: [0, 3],
+    hint: 'Rutsch übers Eis nach oben und geh zum Spiegel in der Ecke. Dreh ihn, damit die Leitung nach unten läuft – dann geh ihr aus dem Weg.',
     legend: { a: R_E, 1: { type: 'target', color: 'R' } },
-    rows: ['###########', '#a..k.....#', '#.~~~~~~~.#', '#.~~~~~~~m#', '#.~~~~~~~.#', '#1..m@...1#', '###########'],
+    rows: ['###########', '#a..k....m#', '#.~~~~~~~.#', '#.~~~~~~~.#', '#.~~~~~~~.#', '#1..m@...1#', '###########'],
   },
 );
 
@@ -882,10 +882,10 @@ ALL_LEVELS.push(
     rows: ['##########', '#.......b#', '#.@%%%%..#', '#..%OO%o.#', '#.n%%%%..#', '#3.....o.#', '##########'],
   },
   {
-    id: 'w51', name: 'Nebelbank', par: 21, exit: [8, 4], // nach der Lösung ist der obere Steg eingebrochen
-    hint: 'Grünes Licht fällt ins Moor. Der Spiegel steht fast richtig – doch um ihn herum ist nur Sumpf und morsches Holz.',
+    id: 'w51', name: 'Nebelbank', par: 6, exit: [8, 4], // nach der Lösung ist der obere Steg eingebrochen
+    hint: 'Geh über das morsche Holz und schieb den Spiegel nach unten. Dann von rechts unter die Leitung – das Holz trägt dich nur einmal!',
     legend: { a: { type: 'emitter', dir: 'S', color: 'G' }, 2: { type: 'target', color: 'G' } },
-    rows: ['#########', '#...a...#', '#.o.....#', '#O%OOO%O#', '#...m@..#', '#2......#', '#########'],
+    rows: ['#########', '#...a...#', '#.o...@.#', '#O%OOO%O#', '#.....m.#', '#2......#', '#########'],
   },
   {
     id: 'w52', name: 'Irrlichtmoor', par: 26, master: true,

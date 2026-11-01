@@ -9,7 +9,7 @@ const EVERY_MS = 60 * 1000, SNOOZE_MS = 2 * 60 * 1000;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let snoozeUntil = 0;
 
-/** Liefert { version, build, note }, wenn online etwas Neueres liegt, sonst null. */
+/** Liefert { version, label, note }, wenn online etwas Neueres liegt, sonst null. */
 export async function checkUpdate() {
   if (VERSION === 'dev') return null;
   try {
@@ -29,7 +29,7 @@ export function showUpdate(info) {
   const el = document.createElement('div');
   el.className = 'upd-note';
   el.setAttribute('role', 'status');
-  el.innerHTML = `<div><b>✨ Update${info.build ? ` v1.${esc(info.build)}` : ''} ist da!</b>${info.note ? `<span>${esc(info.note)}</span>` : ''}</div>
+  el.innerHTML = `<div><b>✨ Update${info.label ? ` ${esc(info.label)}` : ''} ist da!</b>${info.note ? `<span>${esc(info.note)}</span>` : ''}</div>
     <div class="upd-btns"><button class="wbtn sm" data-a="now">Aktualisieren</button><button class="wbtn sm" data-a="later">Später</button></div>`;
   el.addEventListener('click', (e) => {
     const a = e.target.closest('button')?.dataset.a;
