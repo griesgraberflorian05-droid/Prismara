@@ -2,6 +2,7 @@
 // nach gelösten Räumen. Bereits gezeigte Freischaltungen werden gemerkt, damit das Menü neue feiern kann.
 import { PUSH_LEVELS } from './pushLevels.js';
 import { isSolved } from './progress.js';
+import { isAdmin } from './admin.js';
 
 export const MODES = [
   { id: 'worlds', name: 'Welten', icon: '🗺', need: 3, info: 'Jeden geschafften Raum erneut spielen, Welten durchblättern.' },
@@ -17,7 +18,7 @@ export const solvedCount = () => PUSH_LEVELS.filter((l) => isSolved(l.id)).lengt
 export const modeOf = (id) => MODES.find((m) => m.id === id) || null;
 export function isUnlocked(id, solved = solvedCount()) {
   const m = modeOf(id);
-  return !m || solved >= m.need;
+  return !m || isAdmin() || solved >= m.need;
 }
 
 function loadSeen() { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'); } catch { return []; } }

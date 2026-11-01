@@ -25,6 +25,7 @@ function drawHatPreview(canvas, id) {
 import { mountScene, roomThumb } from './menuScene.js';
 import { mountTitleArt } from './titleArt.js';
 import { logoCanvas } from './logo.js';
+import { isAdmin, setAdmin, redeem } from '../game/admin.js';
 
 // Schwierigkeit einer Welt: 1–5 Punkte nach dem höchsten Zugziel (Meisterprüfung) der Welt.
 const difficulty = (ci) => {
@@ -51,7 +52,7 @@ function chapterInfo(ci) {
   const solved = idx.filter((i) => isSolved(PUSH_LEVELS[i].id)).length;
   const stars = idx.reduce((n, i) => n + starsOf(PUSH_LEVELS[i]), 0);
   const { firstOpen } = totals();
-  const open = idx.some((i) => isSolved(PUSH_LEVELS[i].id) || i === firstOpen) || firstOpen < 0;
+  const open = isAdmin() || idx.some((i) => isSolved(PUSH_LEVELS[i].id) || i === firstOpen) || firstOpen < 0;
   return { ch, idx, solved, stars, open, done: solved === idx.length };
 }
 const currentChapter = () => { const t = totals(); return t.firstOpen < 0 ? 0 : Math.max(0, CHAPTERS.findIndex((c) => c.levels.includes(PUSH_LEVELS[t.firstOpen].id))); };
@@ -76,6 +77,7 @@ export function mountMenu(root, params = []) {
   else if (page === 'kit') cleanup = kitPage(ui);
   else if (page === 'shop') shopPage(ui);
   else if (page === 'settings') settingsPage(ui);
+  else if (page === 'code') codePage(ui);
   else { ui.classList.add('tm-main'); mainPage(ui); }
 
   const onKey = (e) => {
@@ -117,6 +119,7 @@ function mainPage(el) {
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
         return `<a class="wbtn${glow ? ' glow' : ''}" href="${href}">${m.icon} ${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</a>`;
       }).join('')}
+        <a class="wbtn" href="#/menu/code">🔑 Code</a>
         <a class="wbtn" href="#/menu/settings">⚙ Einstellungen</a>
         <a class="wbtn sm tm-lab" href="#/lab">🧠 Gehirn Lab</a>
       </div>
@@ -132,6 +135,30 @@ function mainPage(el) {
   el.querySelector('.logo-h1').prepend(logo);
   el.querySelector('#play').focus();
   el.querySelector('#play').addEventListener('click', () => play('play'));
+}
+
+// ---------- Code eingeben: „freeadmin“ schaltet alles frei ----------
+function codePage(el) {
+  const render = (msg = '') => {
+    const on = isAdmin();
+    el.innerHTML = `
+      ${head('#/menu', '🔑 Code')}
+      <form class="parch settings code-form">
+        ${on ? '<p class="code-msg">✓ Admin-Modus ist an: Alle Räume, Welten, Modi, Umhänge und Hüte sind frei, der Shop ist gratis.</p>' : `
+        <label for="code">Code eingeben</label>
+        <input id="code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="32">
+        <button class="wbtn big" type="submit">Einlösen</button>`}
+        ${msg ? `<p class="code-msg">${esc(msg)}</p>` : ''}
+        ${on ? '<a class="wbtn big" href="#/menu/chapters/0">🗺 Zu den Welten</a><button class="wbtn sm" type="button" id="adm-off">Admin-Modus ausschalten</button>' : ''}
+      </form>`;
+    el.querySelector('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (redeem(el.querySelector('#code').value)) { play('chapter'); render(); } else { play('bump'); render('Dieser Code stimmt nicht.'); }
+    });
+    el.querySelector('#adm-off')?.addEventListener('click', () => { setAdmin(false); play('ui'); render(); });
+    el.querySelector('#code')?.focus();
+  };
+  render();
 }
 
 // ---------- Einstellungen: Ton, Bewegung, Tutorial nochmal ----------
@@ -223,7 +250,7 @@ function chapterPage(el, ci) {
     <ol class="rooms">${info.idx.map((i, k) => {
       const l = PUSH_LEVELS[i];
       const solved = isSolved(l.id);
-      const open = solved || i === firstOpen;
+      const open = isAdmin() || solved || i === firstOpen;
       const inner = `<span class="rthumb"><canvas data-i="${i}"></canvas>${open ? '' : '<span class="wlock">🔒</span>'}${l.master ? '<span class="rcrown">👑</span>' : ''}</span>
         <span class="rinfo"><span class="rnum">RAUM ${k + 1}</span><span class="rname">${esc(l.name)}</span>
         <span class="rstars">${starRow(starsOf(l))}</span><span class="rmeta">Ziel ≤ ${l.par} Züge${solved ? ` · Best ${bestMoves(l.id)}` : ''}</span></span>`;
@@ -248,7 +275,7 @@ function shopPage(el) {
           const sold = it.permanent && have;
           return `<li class="parch shop-item${sold ? ' sold' : ''}"><span class="si-icon">${it.icon}</span>
             <span class="si-text"><b>${esc(it.name)}</b><small>${esc(it.info)}</small>${it.permanent ? '<em>dauerhaft</em>' : `<em>im Beutel: ${have}</em>`}</span>
-            <button class="wbtn sm" data-buy="${id}" ${sold || inv.coins < it.price ? 'disabled' : ''}>${sold ? '✓ gekauft' : `🪙 ${it.price}`}</button></li>`;
+            <button class="wbtn sm" data-buy="${id}" ${sold || (!isAdmin() && inv.coins < it.price) ? 'disabled' : ''}>${sold ? '✓ gekauft' : isAdmin() ? 'GRATIS' : `🪙 ${it.price}`}</button></li>`;
         }).join('')}</ul>
         <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">🎩</span><p>Der Hutmacher nimmt keine Münzen – nur Kristalle 💎 aus den Räumen. Du hast <b>${fragmentCount() - crystalsSpent()}</b> übrig.</p></div>
         <ul class="hat-list">${Object.entries(HATS).map(([id, h]) => {
@@ -286,7 +313,7 @@ function kitPage(el) {
         <div>
           <h3>Umhang</h3>
           <div class="kit-row">${SKIN_COLORS.map((c) => {
-            const locked = stars < c.stars, active = skin.color.id === c.id;
+            const locked = !isAdmin() && stars < c.stars, active = skin.color.id === c.id;
             return `<button class="kit-swatch${active ? ' active' : ''}" ${locked ? 'disabled' : `data-pick="color" data-id="${c.id}"`} aria-pressed="${active}" title="${esc(c.name)}${locked ? ` – ab ★ ${c.stars}` : ''}">
               <canvas class="ks-cloak" data-color="${c.id}" width="12" height="12"></canvas><small>${locked ? `🔒 ★${c.stars}` : esc(c.name)}</small></button>`;
           }).join('')}</div>

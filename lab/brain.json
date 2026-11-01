@@ -2166,6 +2166,15 @@
       "status": "passed",
       "summary": "Hohe Rückwand bekam nur flache Abdunkelung; jetzt echte Lichtkarte samt Leuchten, Außenwelt heller.",
       "area": "src/game/pixelRender.js"
+    },
+    {
+      "id": "feat-admincode",
+      "type": "improvement",
+      "label": "Code freeadmin",
+      "step": 21,
+      "status": "built",
+      "summary": "Menüknopf Code: freeadmin schaltet alle Räume, Welten, Modi, Umhänge und Hüte frei, Shop gratis; abschaltbar.",
+      "area": "src/game/admin.js"
     }
   ],
   "edges": [
@@ -4323,6 +4332,11 @@
       "from": "fix-darkbar",
       "to": "feat-backwall",
       "rel": "verbessert"
+    },
+    {
+      "from": "feat-admincode",
+      "to": "feat-titlemenu",
+      "rel": "erweitert"
     }
   ],
   "updated": "2026-11-01 22:20"

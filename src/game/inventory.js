@@ -1,6 +1,8 @@
 // Inventar und Münzen (Spielstand im Browser). Münzen findet man in Räumen und Truhen und
 // bekommt sie fürs Entkommen; ausgeben kann man sie im Shop. Gegenstände liegen in Räumen
 // oder werden gekauft und im Raum über die Inventarleiste (Tasten 1–4) benutzt.
+import { isAdmin } from './admin.js';
+
 const KEY = 'prismara.inventory.v1';
 
 /** Alle Gegenstände: Symbol (Pixel-Emoji im HUD), Name, Erklärung, Preis im Shop. */
@@ -63,8 +65,9 @@ export function useItem(id) {
 }
 export function buy(id) {
   const it = ITEMS[id], d = load();
-  if (!it || d.coins < it.price || (it.permanent && d.items[id])) return false;
-  d.coins -= it.price; d.items[id] = (d.items[id] || 0) + 1; save(d); return true;
+  const price = isAdmin() ? 0 : it?.price;
+  if (!it || d.coins < price || (it.permanent && d.items[id])) return false;
+  d.coins -= price; d.items[id] = (d.items[id] || 0) + 1; save(d); return true;
 }
 // ---------- Hüte: mit gesammelten Kristallen (💎) beim Hutmacher kaufen, einer ist aufgesetzt ----------
 export const HATS = {
@@ -77,14 +80,14 @@ export const HATS = {
   crown: { icon: '👑', name: 'Krone', price: 10 },
 };
 export const hat = () => (cache || load()) && cache.hat || null;
-export const ownsHat = (id) => (load().hats || []).includes(id);
+export const ownsHat = (id) => isAdmin() || (load().hats || []).includes(id);
 export const crystalsSpent = () => load().crystalsSpent || 0;
 export function buyHat(id, crystalsHave) {
   const d = load(), it = HATS[id];
   if (!it || (d.hats || []).includes(id) || crystalsHave - (d.crystalsSpent || 0) < it.price) return false;
   d.crystalsSpent = (d.crystalsSpent || 0) + it.price; d.hats = [...(d.hats || []), id]; d.hat = id; save(d); return true;
 }
-export function wearHat(id) { const d = load(); d.hat = id && (d.hats || []).includes(id) ? id : null; save(d); }
+export function wearHat(id) { const d = load(); d.hat = id && ownsHat(id) ? id : null; save(d); }
 
 /** Merkt, welche Fundstücke eines Raums schon eingesammelt sind (z. B. 'coin2', 'chest'). */
 export function isFound(room, what) { return (load().found[room] || []).includes(what); }
