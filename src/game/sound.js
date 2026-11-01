@@ -19,6 +19,9 @@ function audio() {
   return ctx;
 }
 
+/** Gemeinsamer Audio-Kontext (auch für die Musik). */
+export const audioContext = () => audio();
+
 export const isMuted = () => (getSettings().sfxVolume ?? 0.7) <= 0;
 export function toggleMute() {
   const v = getSettings().sfxVolume ?? 0.7;
@@ -80,6 +83,13 @@ export function play(name, arg) {
       break;
     }
     case 'door': tone(220, { type: 'sawtooth', dur: 0.35, vol: 0.06, to: 660 }); noise({ dur: 0.3, vol: 0.06, freq: 1200 }); break;
+    // Ausgangstür öffnet sich: Riegel klackt, Holz knarrt in Schüben, warmer Akkord
+    case 'exitopen':
+      noise({ dur: 0.05, vol: 0.2, freq: 1800, q: 3 }); tone(160, { type: 'square', dur: 0.05, vol: 0.09, to: 90 });
+      [0.1, 0.2, 0.31, 0.45].forEach((d, i) => { tone(150 + i * 28, { type: 'sawtooth', dur: 0.1, vol: 0.035, to: 230 + i * 34, delay: d }); noise({ dur: 0.09, vol: 0.05, freq: 900 + i * 250, q: 5, delay: d }); });
+      noise({ dur: 0.1, vol: 0.12, freq: 240, q: 1.5, delay: 0.62 });
+      [392, 493.88, 587.33].forEach((f, i) => tone(f, { type: 'sine', dur: 0.9, vol: 0.09, delay: 0.42 + i * 0.07 }));
+      break;
     case 'doorclose': tone(500, { type: 'sawtooth', dur: 0.25, vol: 0.05, to: 160 }); break;
     case 'plate': tone(330, { type: 'triangle', dur: 0.12, vol: 0.12 }); tone(495, { type: 'triangle', dur: 0.12, vol: 0.1, delay: 0.06 }); break;
     case 'win':

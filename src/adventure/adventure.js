@@ -11,6 +11,10 @@ import { CHAPTER_WORLD } from '../game/worlds.js';
 import { PixelRenderer, PIXEL_THEMES, T } from '../game/pixelRender.js';
 import { recordSolve, starsFor, bestMoves } from '../game/progress.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
+import { setMusic } from '../game/music.js';
+import { transitionTo } from '../ui/transition.js';
+import { icon } from '../ui/icons.js';
+import { WORLDS } from '../game/worlds.js';
 import { prefersReducedMotion } from '../settings.js';
 import { stopCelebration } from '../ui/celebrate.js';
 import { devlog } from '../devlog.js';
@@ -207,6 +211,7 @@ export function mountAdventure(root, params, opts = {}) {
   // liegen als Pixel-Panels direkt über dem Spielbild; Esc/⏸ öffnet das Pausenmenü.
   document.body.classList.add('ingame');
   document.body.dataset.world = themeId; // Oberflächenfarben der Welt
+  setMusic(themeId);
   const worldName = tutorial ? '📖 Tutorial' : { beach: '🏖️ Sommerstrand', cherry: '🌸 Kirschblüte', jungle: '🌴 Dschungel', night: '🌙 Nachtwald', volcano: '🌋 Vulkanschmiede', temple: '🏜️ Wüstentempel', shadow: '🌑 Schattenreich', aurora: '❄️ Polarlicht', reef: '🐠 Korallenriff', castle: '🏰 Burgverlies', moor: '🌫️ Nebelmoor' }[themeId] || '';
   root.innerHTML = `
     <section class="adv-full pixel-ui${touch ? ' touch' : ''}${tutorial ? ' has-coach' : ''}" style="--w1:${theme.ambient};--w2:${theme.dark};--w3:${theme.face}">
@@ -225,8 +230,8 @@ export function mountAdventure(root, params, opts = {}) {
         ${hasKeys ? '<span class="ihud-chip" title="Schlüssel in der Tasche">🗝<b id="keys">0</b></span>' : ''}
       </div>
       <div class="ihud ihud-tr">
-        <button class="ibtn" id="snd" title="Ton an/aus">🔊</button>
-        <button class="ibtn" id="pause" title="Pause (Esc)">⏸</button>
+        <button class="ibtn" id="snd" title="Ton an/aus" aria-label="Ton an oder aus">${icon(isMuted() ? 'mute' : 'sound')}</button>
+        <button class="ibtn" id="pause" title="Pause (Esc)" aria-label="Pause">${icon('pause')}</button>
       </div>
       <div class="ihud ihud-bl pixel">
         <div class="ihud-label">KRAFT</div>
@@ -242,9 +247,9 @@ export function mountAdventure(root, params, opts = {}) {
         <button class="btn btn-primary" id="sign-close">Verstanden</button>
       </div></div>
       <div class="ihud ihud-br">
-        <button class="ibtn" id="rotate" title="Drehen (Leertaste)">⟳</button>
-        <button class="ibtn" id="undo" title="Zug zurück (Z)">↶</button>
-        <button class="ibtn" id="reset" title="Raum neu (R)">⟲</button>
+        <button class="ibtn" id="rotate" title="Drehen (Leertaste)" aria-label="Drehen">${icon('turn')}</button>
+        <button class="ibtn" id="undo" title="Zug zurück (Z)" aria-label="Zug zurück">${icon('undo')}</button>
+        <button class="ibtn" id="reset" title="Raum neu (R)" aria-label="Raum neu">${icon('reset')}</button>
       </div>
       ${tutorial ? `<div class="coach pixel" id="coach" aria-live="polite"><div class="coach-owl" aria-hidden="true"><i></i></div><div class="coach-body"><div class="coach-step" id="coach-step"></div><p id="coach-text"></p><div class="coach-dots" id="coach-dots"></div></div></div>` : `<div class="ihud-note pixel" id="note"><span>📜</span> ${esc(def.hint)}</div>`}
 
@@ -254,9 +259,9 @@ export function mountAdventure(root, params, opts = {}) {
         <div class="pause-card pixel-card">
           <h2 class="pixel">PAUSE</h2>
           <p class="pause-hint">📜 ${esc(def.hint)}</p>
-          <button class="btn btn-primary" id="p-resume">▶ Weiter</button>
-          <button class="btn" id="p-undo">↶ Zug zurück</button>
-          <button class="btn" id="p-reset">⟲ Raum neu</button>
+          <button class="btn btn-primary" id="p-resume">${icon('play')} Weiter</button>
+          <button class="btn" id="p-undo">${icon('undo')} Zug zurück</button>
+          <button class="btn" id="p-reset">${icon('reset')} Raum neu</button>
           ${isUnlocked('worlds') ? `<a class="btn" href="#/menu/chapter/${Math.max(0, chIndex)}">🗺 Weltkarte</a>` : ''}
           ${opts.back ? `<a class="btn" href="${esc(opts.back)}">${esc(opts.backLabel || 'Zurück')}</a>` : ''}
           <a class="btn" href="#/menu">⌂ Hauptmenü</a>
@@ -264,7 +269,7 @@ export function mountAdventure(root, params, opts = {}) {
         </div>
       </div>
       ${touch ? `<div class="dpad" aria-hidden="true"><button data-d="0">▲</button><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button><i class="dpad-hub"></i></div>
-      <button class="tpad-rot" id="tpad-rot" aria-label="Drehen">⟳<small>DREHEN</small></button>` : ''}
+      <button class="tpad-rot" id="tpad-rot" aria-label="Drehen">${icon('turn')}<small>DREHEN</small></button>` : ''}
     </section>`;
 
   const $ = (s) => root.querySelector(s);
@@ -479,7 +484,7 @@ export function mountAdventure(root, params, opts = {}) {
       devlog('SPIEL', `${def.id}: Fragment ${f.i + 1} gefunden`);
     }
     // Tür
-    if (tr.solved && !exitOpen) { exitOpen = true; if (solveMoves == null || state.moves < solveMoves) solveMoves = state.moves; later(() => play('door'), 260); devlog('SPIEL', `${def.id}: Ausgang offen nach ${state.moves} Zügen`); }
+    if (tr.solved && !exitOpen) { exitOpen = true; if (solveMoves == null || state.moves < solveMoves) solveMoves = state.moves; later(() => play('exitopen'), 260); devlog('SPIEL', `${def.id}: Ausgang offen nach ${state.moves} Zügen`); }
     // Einmal aufgeblüht bleibt die Tür offen – sonst schlösse sie sich, wenn der Weg hinaus die Ranke kreuzt
     // (im Live-Test: w36, w37, w5). Nur Zurück/Neu schließen sie wieder.
     relocateDoor();
@@ -572,6 +577,14 @@ export function mountAdventure(root, params, opts = {}) {
       </div>`;
     later(() => { win.hidden = false; $('#win-next')?.focus(); }, 1500); // erst die Blüte genießen
     $('#win-retry').addEventListener('click', () => { reset(); canvas.focus(); });
+    // Weiter mit Vorhang: im Raum der Vorhang der nächsten Welt, beim Weltwechsel erst ihr Panorama
+    const nextDef = tutorial ? PUSH_LEVELS[0] : nextIndex != null ? PUSH_LEVELS[nextIndex] : null;
+    if (nextDef) $('#win-next').addEventListener('click', (e) => {
+      e.preventDefault();
+      const nci = CHAPTERS.findIndex((c) => c.levels.includes(nextDef.id)), nch = CHAPTERS[nci];
+      const to = CHAPTER_WORLD[nch.id] || 'default';
+      transitionTo(`#/adv/${tutorial ? 0 : nextIndex}`, { from: themeId, to, worldChange: to !== themeId, label: `RAUM ${nch.levels.indexOf(nextDef.id) + 1} · ${nextDef.name}`, kicker: `WELT ${nci + 1}`, title: WORLDS[to]?.name || nch.name });
+    });
   }
 
   function onCaught() {
@@ -582,7 +595,7 @@ export function mountAdventure(root, params, opts = {}) {
       <div class="win-card caught-card pixel-card">
         <h2 id="win-title" class="pixel">ERWISCHT!</h2>
         <p>Ein Schattenläufer hat dich berührt. Locke ihn in einen Lichtstrahl!</p>
-        <div class="win-actions"><button class="btn btn-primary" id="c-undo">↶ Zug zurück (Z)</button><button class="btn" id="c-reset">⟲ Raum neu (R)</button></div>
+        <div class="win-actions"><button class="btn btn-primary" id="c-undo">${icon('undo')} Zug zurück (Z)</button><button class="btn" id="c-reset">${icon('reset')} Raum neu (R)</button></div>
       </div>`;
     win.hidden = false;
     $('#c-undo').addEventListener('click', () => { undo(); canvas.focus(); });
@@ -602,7 +615,7 @@ export function mountAdventure(root, params, opts = {}) {
   $('#p-undo').addEventListener('click', () => { setPaused(false); undo(); });
   $('#p-reset').addEventListener('click', () => { setPaused(false); reset(); });
   const sndBtn = $('#snd');
-  const showSnd = () => { sndBtn.textContent = isMuted() ? '🔇' : '🔊'; };
+  const showSnd = () => { sndBtn.innerHTML = icon(isMuted() ? 'mute' : 'sound'); };
   showSnd();
   sndBtn.addEventListener('click', () => { toggleMute(); showSnd(); canvas.focus(); });
   // Hinweiszettel blendet sich nach ein paar Sekunden aus, Antippen zeigt ihn wieder

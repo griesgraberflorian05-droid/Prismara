@@ -2104,6 +2104,68 @@
       "status": "passed",
       "summary": "w25: Tür zog hin und her, sobald der Spieler ein Lichttor kurz schloss. Licht-/Gittertore zählen jetzt als passierbar.",
       "area": "src/adventure/adventure.js"
+    },
+    {
+      "id": "req-transitions",
+      "type": "idea",
+      "label": "Wunsch: Themen-Übergänge",
+      "step": 21,
+      "status": "passed",
+      "summary": "Rückmeldung: elegante Vorhang-Animation aus dem Level selbst beim Weiterklicken, smoother Weltenübergang, nicht übertrieben; Knöpfe nicht emojihaft; passende Musik; Tür-öffnen-Sound."
+    },
+    {
+      "id": "feat-curtains",
+      "type": "improvement",
+      "label": "Vorhänge je Welt",
+      "step": 21,
+      "status": "built",
+      "summary": "Pixel-Vorhang aus der Welt selbst: Meereswelle, Blütensturm, Lianen, Burggitter, Nebelbank, Tannen, Lava, Tempeltore, Frost, Blasen, Schatten-Tinte, Holztore. Der Raum wechselt unsichtbar dahinter.",
+      "area": "src/ui/transition.js"
+    },
+    {
+      "id": "feat-worldgate",
+      "type": "improvement",
+      "label": "Weltenübergang",
+      "step": 21,
+      "status": "built",
+      "summary": "Vorhang der alten Welt, dahinter Panorama der neuen Welt mit Namensschild, dann ihr Vorhang. Tippen überspringt das Panorama.",
+      "area": "src/ui/transition.js"
+    },
+    {
+      "id": "feat-music",
+      "type": "improvement",
+      "label": "Musik je Welt",
+      "step": 21,
+      "status": "built",
+      "summary": "13 live erzeugte Stücke (Web Audio) mit eigener Tonleiter, Akkordfolge, Instrument und Schlagwerk; Überblenden beim Weltwechsel, pausiert bei gesperrtem Handy, in den Einstellungen abschaltbar.",
+      "area": "src/game/music.js"
+    },
+    {
+      "id": "feat-pxicons",
+      "type": "improvement",
+      "label": "Pixel-Knöpfe",
+      "step": 21,
+      "status": "built",
+      "summary": "Ton, Pause, Drehen, Zurück und Neu als Pixel-Symbole statt Emojis, Farbe folgt dem Knopf.",
+      "area": "src/ui/icons.js"
+    },
+    {
+      "id": "feat-doorsound",
+      "type": "improvement",
+      "label": "Tür-öffnen-Sound",
+      "step": 21,
+      "status": "built",
+      "summary": "Riegel klackt, Holz knarrt, warmer Akkord, wenn die Ausgangstür aufgeht.",
+      "area": "src/game/sound.js"
+    },
+    {
+      "id": "fix-darkbar",
+      "type": "improvement",
+      "label": "Fix: dunkler Balken",
+      "step": 21,
+      "status": "passed",
+      "summary": "Hohe Rückwand bekam nur flache Abdunkelung; jetzt echte Lichtkarte samt Leuchten, Außenwelt heller.",
+      "area": "src/game/pixelRender.js"
     }
   ],
   "edges": [
@@ -4206,7 +4268,62 @@
       "from": "test-chaos",
       "to": "fix-doorflip",
       "rel": "führte zu"
+    },
+    {
+      "from": "req-transitions",
+      "to": "feat-curtains",
+      "rel": "führte zu"
+    },
+    {
+      "from": "req-transitions",
+      "to": "feat-worldgate",
+      "rel": "führte zu"
+    },
+    {
+      "from": "req-transitions",
+      "to": "feat-music",
+      "rel": "führte zu"
+    },
+    {
+      "from": "req-transitions",
+      "to": "feat-pxicons",
+      "rel": "führte zu"
+    },
+    {
+      "from": "req-transitions",
+      "to": "feat-doorsound",
+      "rel": "führte zu"
+    },
+    {
+      "from": "feat-worldgate",
+      "to": "feat-curtains",
+      "rel": "nutzt"
+    },
+    {
+      "from": "feat-worldgate",
+      "to": "feat-worldtitle",
+      "rel": "nutzt"
+    },
+    {
+      "from": "feat-curtains",
+      "to": "feat-advrooms",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-music",
+      "to": "feat-advrooms",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-pxicons",
+      "to": "feat-ingamehud",
+      "rel": "verbessert"
+    },
+    {
+      "from": "fix-darkbar",
+      "to": "feat-backwall",
+      "rel": "verbessert"
     }
   ],
-  "updated": "2026-10-27 00:36"
+  "updated": "2026-11-01 22:20"
 }

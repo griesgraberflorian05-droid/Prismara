@@ -6,6 +6,7 @@ import { mountDaily } from './ui/dailyView.js';
 import { mountAdventure } from './adventure/adventure.js';
 import { mountTextures } from './adventure/textureSheet.js';
 import { setFavicon } from './ui/logo.js';
+import { stopMusic } from './game/music.js';
 
 setFavicon();
 
@@ -39,6 +40,7 @@ function render() {
   document.body.classList.toggle('standalone', name === 'brain');
   // Spielseiten im einheitlichen Holz-/Pergament-Pixel-Stil (das Lab setzt seinen eigenen)
   document.body.classList.toggle('wood', route.tab === 'game');
+  if (route.tab !== 'game') stopMusic();
   unmount = route.mount(view, params) || null;
   document.querySelectorAll('.tabs a').forEach((a) => {
     a.toggleAttribute('aria-current', a.dataset.tab === route.tab);

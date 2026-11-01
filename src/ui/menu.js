@@ -6,6 +6,7 @@ import { isSolved, bestMoves, starsFor } from '../game/progress.js';
 import { SKIN_COLORS, getSkin, setSkin } from '../game/skins.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
+import { setMusic, musicOn, toggleMusic } from '../game/music.js';
 import { worldForChapter, CHAPTER_WORLD } from '../game/worlds.js';
 import { todayKey } from '../game/daily.js';
 import { tutorialSeen, fragmentCount } from '../adventure/adventure.js';
@@ -63,6 +64,7 @@ export function mountMenu(root, params = []) {
   // Welt-Seiten zeigen einen lebendigen Raum der Welt, alle anderen das eigene Titelbild
   const worldPage = page === 'chapter' || page === 'chapters';
   document.body.dataset.world = themeOf(worldPage ? startCh : currentChapter()); // Oberflächenfarben der Welt
+  setMusic(worldPage ? themeOf(startCh) : 'menu');
   const scene = worldPage ? mountScene(root.querySelector('.tm-scene'), themeOf(startCh)) : mountTitleArt(root.querySelector('.tm-scene'), themeOf(currentChapter())); // Titelbild im Stil der aktuellen Welt
   let cleanup = () => {};
 
@@ -140,11 +142,13 @@ function settingsPage(el) {
       ${head('#/menu', '⚙ Einstellungen')}
       <div class="parch settings">
         <div class="set-row"><span>🔊 Ton</span><button class="wbtn sm" id="snd" aria-pressed="${!isMuted()}">${isMuted() ? 'AUS' : 'AN'}</button></div>
+        <div class="set-row"><span>🎵 Musik</span><button class="wbtn sm" id="mus" aria-pressed="${musicOn()}">${musicOn() ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>🌀 Bewegung reduzieren</span><button class="wbtn sm" id="motion" aria-pressed="${!!rm}">${rm === null ? 'SYSTEM' : rm ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📖 Tutorial (Lehrzimmer)</span><a class="wbtn sm" href="#/adv/tutorial">NOCHMAL SPIELEN</a></div>
         <div class="set-row"><span>◈ Prismara Lab</span><a class="wbtn sm" href="#/lab">ÖFFNEN</a></div>
       </div>`;
     el.querySelector('#snd').addEventListener('click', () => { toggleMute(); play('ui'); render(); el.querySelector('#snd').focus(); });
+    el.querySelector('#mus').addEventListener('click', () => { toggleMusic(); play('ui'); render(); el.querySelector('#mus').focus(); });
     el.querySelector('#motion').addEventListener('click', () => {
       updateSettings({ reducedMotion: rm === null ? true : rm ? false : null }); play('ui'); render(); el.querySelector('#motion').focus();
     });
@@ -173,6 +177,7 @@ function chaptersPage(el, start, scene) {
     const pct = Math.round((info.solved / info.idx.length) * 100);
     scene.setTheme(themeOf(cur));
     document.body.dataset.world = themeOf(cur);
+    setMusic(themeOf(cur));
     stage.innerHTML = `
       <a class="wcard ${dirClass}${info.open ? '' : ' locked'}${info.done ? ' done' : ''}" ${info.open ? `href="#/menu/chapter/${cur}"` : 'aria-disabled="true"'}>
         <span class="wframe"><canvas class="wthumb"></canvas>${info.open ? '' : '<span class="wlock">🔒</span>'}</span>

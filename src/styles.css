@@ -1022,3 +1022,25 @@ body.wood .view-community { overflow-y: auto; }
   .adv-full.touch .tpad-rot { width: 80px; height: 80px; }
   .adv-full.touch .ihud-br { right: 96px; }
 }
+
+/* Pixel-Symbole auf Knöpfen */
+.pxi { width: 1.1em; height: 1.1em; display: inline-block; vertical-align: -0.15em; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.55)); }
+.ibtn { display: grid; place-items: center; padding: 0; }
+.ibtn .pxi { width: 26px; height: 26px; }
+body.wood .ibtn:hover, body.wood .ibtn:focus-visible { background: linear-gradient(var(--wood-4), var(--wood-3)); }
+.tpad-rot .pxi { width: 34px; height: 34px; }
+.adv-full.touch .ihud-br .ibtn .pxi { width: 22px; height: 22px; }
+body.wood .btn .pxi { width: 12px; height: 12px; }
+body.wood .btn:has(.pxi) { flex-direction: row; }
+
+/* Vorhang zwischen Räumen und Welten */
+.curtain { position: fixed; inset: 0; z-index: 200; touch-action: none; }
+.curtain-c, .curtain-world { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.curtain-title { position: absolute; left: 50%; top: 38%; z-index: 2; display: grid; gap: 12px; justify-items: center; width: max-content; max-width: 92vw; padding: 18px 26px; transform: translate(-50%, -50%); text-align: center; color: var(--parch); background: linear-gradient(var(--wood-3), var(--wood-2)); border: 4px solid var(--wood-0); box-shadow: inset 0 4px 0 rgba(255, 220, 160, 0.3), 0 8px 0 rgba(0, 0, 0, 0.6); font-family: 'Press Start 2P', monospace; text-shadow: 0 3px 0 var(--wood-0); animation: curtain-in 0.55s steps(7) both; }
+.curtain-title small { font-size: 0.6rem; color: var(--gold); }
+.curtain-title b { font-size: clamp(1rem, 5vw, 1.8rem); line-height: 1.4; font-weight: 400; }
+.curtain-title.out { animation: curtain-out 0.4s steps(5) both; }
+.curtain-label { position: absolute; left: 50%; top: 50%; z-index: 2; max-width: 92vw; padding: 10px 16px; transform: translate(-50%, -50%); color: #fff6d8; font: 0.65rem/1.6 'Press Start 2P', monospace; text-align: center; text-shadow: 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000; animation: curtain-in 0.2s steps(3) both; }
+.curtain-label.out { animation: curtain-out 0.25s steps(3) both; }
+@keyframes curtain-in { from { opacity: 0; transform: translate(-50%, -40%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes curtain-out { to { opacity: 0; transform: translate(-50%, -60%); } }
