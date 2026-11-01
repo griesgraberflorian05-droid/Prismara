@@ -60,7 +60,8 @@ function chapterInfo(ci) {
   const solved = idx.filter((i) => isSolved(PUSH_LEVELS[i].id)).length;
   const stars = idx.reduce((n, i) => n + starsOf(PUSH_LEVELS[i]), 0);
   const { firstOpen } = totals();
-  const open = isAdmin() || idx.some((i) => isSolved(PUSH_LEVELS[i].id) || (i === firstOpen && bossPending() < 0)) || firstOpen < 0 || (ci > 0 && bossBeaten(ci - 1));
+  const pending = bossPending();
+  const open = isAdmin() || ((pending < 0 || ci <= pending) && (idx.some((i) => isSolved(PUSH_LEVELS[i].id) || i === firstOpen) || firstOpen < 0 || (ci > 0 && bossBeaten(ci - 1))));
   return { ch, idx, solved, stars, open, done: solved === idx.length };
 }
 const currentChapter = () => { const t = totals(); return t.firstOpen < 0 ? 0 : Math.max(0, CHAPTERS.findIndex((c) => c.levels.includes(PUSH_LEVELS[t.firstOpen].id))); };
@@ -77,7 +78,7 @@ export function mountMenu(root, params = []) {
   const worldPage = page === 'chapter' || page === 'chapters';
   if (page === 'chapter') updateSettings({ lastWorld: themeOf(startCh) }); // Welt betreten: Hauptmenü zeigt sie ab sofort
   document.body.dataset.world = worldPage ? themeOf(startCh) : menuBackground(); // Oberflächenfarben der Welt
-  setMusic(worldPage ? themeOf(startCh) : 'menu');
+  setMusic(worldPage ? themeOf(startCh) : getSettings().radio || 'menu');
   // Panorama der Welt: auf Welten-Seiten die gezeigte, sonst die aktuelle – oder das selbst gewählte
   const scene = mountTitleArt(root.querySelector('.tm-scene'), worldPage ? themeOf(startCh) : menuBackground());
   let cleanup = () => {};
@@ -90,6 +91,7 @@ export function mountMenu(root, params = []) {
   else if (page === 'kit') cleanup = kitPage(ui, scene);
   else if (page === 'shop') shopPage(ui);
   else if (page === 'forge') forgePage(ui);
+  else if (page === 'radio') radioPage(ui);
   else if (page === 'settings') settingsPage(ui);
   else if (page === 'code') codePage(ui);
   else if (page === 'codes') myCodesPage(ui);
@@ -124,6 +126,7 @@ function mainPage(el) {
       <li title="Sterne">${icon('star')}<b>${t.stars}</b>/${t.maxStars}</li>
       <li title="Münzen">${icon('coin')}<b>${getInv().coins}</b></li>
       <li title="Kristalle">${icon('gem')}<b>${fragmentCount()}</b></li>
+      <li class="mm-radio"><a href="#/menu/radio" title="Radio" aria-label="Radio">${icon('note')}</a></li>
     </ul>
     <div class="mm-a">
       <header class="mm-logo" aria-label="Prismara"><h1 class="logo-h1"><span class="sr">PRISMARA</span></h1><p>${isAdmin() ? 'ADMIN-MODUS' : 'Ein Licht-Abenteuer'}</p></header>
@@ -343,7 +346,7 @@ function chapterPage(el, ci) {
       <ol class="rooms lv-trail">${info.idx.map((i, k) => {
         const l = PUSH_LEVELS[i];
         const solved = isSolved(l.id);
-        const open = isAdmin() || solved || (i === firstOpen && bossPending() < 0);
+        const open = isAdmin() || (info.open && (solved || (i === firstOpen && bossPending() < 0)));
         const inner = `<span class="rthumb"><canvas data-i="${i}"></canvas>
           <span class="rbadge">${k + 1}</span>
           ${solved ? `<span class="rstamp">${icon('check')}</span>` : ''}
@@ -379,6 +382,37 @@ function forgePage(el) {
       </div>`;
     el.querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { if (upgrade(b.dataset.up)) play('target', 7); render('Die Klinge glüht – Verbesserung geschafft!'); }));
     el.querySelectorAll('[data-sword]').forEach((b) => b.addEventListener('click', () => { const ok = pickSkin(b.dataset.sword); play(ok ? 'ui' : 'bump'); render(ok ? 'Schöne Waffe!' : 'Dafür fehlen dir Münzen.'); }));
+  };
+  render();
+}
+
+// ---------- Radio: je erreichter Welt ein Lied, das Gewählte läuft im Menü ----------
+const SONG_TITLES = {
+  menu: 'Lied vom Lagerfeuer', beach: 'Sonne auf der Haut', cherry: 'Wenn die Blüten fallen', jungle: 'Trommeln im Blätterdach', castle: 'Marsch der Kerkerwache',
+  moor: 'Stimmen im Nebel', night: 'Mondlicht-Walzer', volcano: 'Hammer und Glut', temple: 'Der Sand erinnert sich', shadow: 'Was im Dunkel wartet',
+  aurora: 'Tanz der Polarlichter', reef: 'Lied der Tiefe', boss: 'Der letzte Atemzug',
+};
+function radioPage(el) {
+  const tracks = [
+    { id: 'menu', world: 'Hauptmenü', open: true },
+    ...CHAPTERS.map((c, i) => ({ id: themeOf(i), world: WORLDS[themeOf(i)]?.name || c.name, open: chapterInfo(i).open })),
+    { id: 'boss', world: 'Bosskampf', open: isAdmin() || CHAPTERS.some((_, i) => bossBeaten(i)) },
+  ];
+  const render = () => {
+    const now = getSettings().radio || 'menu', cur = tracks.find((t) => t.id === now) || tracks[0];
+    el.innerHTML = `
+      ${head('#/menu', 'Radio', `${tracks.filter((t) => t.open).length}/${tracks.length}`)}
+      <div class="rd">
+        <div class="rd-now parch"><span class="rd-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="rd-info"><small>LÄUFT GERADE · ${esc(cur.world)}</small><b>${esc(SONG_TITLES[cur.id] || cur.world)}</b></span></div>
+        <ol class="rd-list">${tracks.map((t, i) => `<li><button class="rd-track${now === t.id ? ' on' : ''}" type="button" ${t.open ? `data-track="${t.id}"` : 'disabled'} aria-pressed="${now === t.id}">
+          <span class="rd-no">${t.open ? (now === t.id ? icon('note') : i + 1) : icon('lock')}</span>
+          <span class="rd-text"><b>${t.open ? esc(SONG_TITLES[t.id] || t.world) : '???'}</b><small>${t.open ? esc(t.world) : 'Noch nicht entdeckt'}</small></span></button></li>`).join('')}</ol>
+      </div>`;
+    el.querySelectorAll('[data-track]').forEach((b) => b.addEventListener('click', () => {
+      updateSettings({ radio: b.dataset.track }); setMusic(b.dataset.track); render();
+      el.querySelector(`[data-track="${b.dataset.track}"]`)?.focus();
+    }));
   };
   render();
 }

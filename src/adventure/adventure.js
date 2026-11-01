@@ -14,7 +14,7 @@ import { play, isMuted, toggleMute } from '../game/sound.js';
 import { setMusic } from '../game/music.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
-import { foeOf, bossBeaten } from '../game/combat.js';
+import { foeOf, bossBeaten, bossPending } from '../game/combat.js';
 import { getLook } from '../game/skins.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
 import { isAdmin } from '../game/admin.js';
@@ -193,6 +193,9 @@ export function mountAdventure(root, params, opts = {}) {
   const level = parsePushLevel(def);
   const chIndex = CHAPTERS.findIndex((c) => c.levels.includes(def.id));
   const chapter = CHAPTERS[chIndex];
+  // Boss nicht besiegt: Folgewelten bleiben zu, auch über direkte Links
+  const gate = custom || tutorial ? -1 : bossPending();
+  if (gate >= 0 && chIndex > gate) { location.replace(`#/arena/${gate}`); return () => {}; }
   const roomNo = chapter ? chapter.levels.indexOf(def.id) + 1 : 1;
   const themeId = opts.theme || (chapter ? CHAPTER_WORLD[chapter.id] : 'default');
   const theme = PIXEL_THEMES[themeId] || PIXEL_THEMES.default;

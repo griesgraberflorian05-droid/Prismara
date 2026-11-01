@@ -2490,6 +2490,15 @@
       "status": "built",
       "summary": "Fußspuren und weitere Spuren als Cosmetic, dazu neue Umhänge und Laternen.",
       "area": "src/game/skins.js"
+    },
+    {
+      "id": "feat-radio",
+      "type": "improvement",
+      "label": "Radio",
+      "step": 21,
+      "status": "built",
+      "summary": "Je erreichter Welt ein Lied, das gewählte läuft im Menü.",
+      "area": "src/ui/menu.js"
     }
   ],
   "edges": [
@@ -4842,7 +4851,12 @@
       "from": "feat-trails",
       "to": "feat-kit",
       "rel": "erweitert"
+    },
+    {
+      "from": "feat-radio",
+      "to": "feat-menu3",
+      "rel": "erweitert"
     }
   ],
-  "updated": "2026-11-01 23:21"
+  "updated": "2026-11-01 23:24"
 }

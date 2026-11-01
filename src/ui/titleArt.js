@@ -70,7 +70,7 @@ export const TITLE_STYLES = {
     sky: ['#1a0404', '#260606', '#340a08', '#440e0a', '#56140c', '#6c1a0e', '#842210', '#9c2c12', '#b83814', '#d44a18', '#e86a20'],
     light: 'none', stars: 0.2, clouds: ['#2a1a18', '#c84a2a', '#3a2420'], far: ['#2a1a1c', '#36221e', '#ff6a1a'], mid: '#1e1416',
     lake: ['#ffaa3a', '#ff7a1a', '#d44a10', '#8a2a08'], glint: ['#fff3b0', '#ffcf4a'], hill: '#140e10', tree: 'dead', trees: ['#0e0a0a', '#1a1212'],
-    stone: ['#4a3a3e', '#5e4a4e', '#2e2226'], ground: ['#2a1e1e', '#3a2a2a', '#4a3434'], flowers: ['#ff6a1a', '#ffcf4a', '#ff4d6d', '#ffb36b', '#fff3b0'], fx: 'embers', lavaGlow: true,
+    stone: ['#4a3a3e', '#5e4a4e', '#2e2226'], ground: ['#2a1e1e', '#3a2a2a', '#4a3434'], flowers: ['#ff6a1a', '#ffcf4a', '#ff4d6d', '#ffb36b', '#fff3b0'], fx: 'embers', lavaGlow: true, flora: 'ember',
   },
   temple: {
     sky: ['#2a1430', '#3a1a3a', '#4e2240', '#662c42', '#803842', '#9a4640', '#b4583c', '#cc6e3a', '#e08a3c', '#eca848', '#f4c45c'],
@@ -88,7 +88,7 @@ export const TITLE_STYLES = {
     sky: ['#021428', '#031c34', '#042440', '#052c4c', '#063458', '#073c64', '#08446e', '#0a4e78', '#0c5882', '#0e628c', '#106c96'],
     light: 'rays', stars: 0, clouds: null, far: ['#0a3a5a', '#0e4666', null], mid: '#082e4a',
     lake: ['#2a8aa0', '#1e7690', '#166280', '#0e4e6a'], glint: ['#bff8ff', '#ffffff'], hill: '#0a2a40', tree: 'coral', trees: ['#ff7a8f', '#ffa040'],
-    stone: ['#5a6d8a', '#7a8daa', '#3a4a66'], ground: ['#8a7a5a', '#c8b07a', '#e0cc94'], flowers: ['#ff7a8f', '#ffd166', '#4ff0ff', '#ffffff', '#ffa040'], fx: 'bubbles', noFire: true,
+    stone: ['#5a6d8a', '#7a8daa', '#3a4a66'], ground: ['#8a7a5a', '#c8b07a', '#e0cc94'], flowers: ['#ff7a8f', '#ffd166', '#4ff0ff', '#ffffff', '#ffa040'], fx: 'bubbles', noFire: true, flora: 'weed',
   },
   shadow: {
     sky: ['#06020c', '#0a0414', '#0e061c', '#140826', '#1a0a30', '#200c3a', '#280e44', '#30104e', '#3a1258', '#441462', '#4e166c'],
@@ -210,13 +210,13 @@ function drawFront(S) {
   R(g, tx - 3, tt + 30, 6, 8, '#2a1a10'); R(g, tx - 2, tt + 31, 4, 7, '#ffb050');
   R(g, tx - 4, tb - 18, 8, 18, '#2a1a10'); R(g, tx - 3, tb - 17, 6, 17, '#6b4426'); R(g, tx + 1, tb - 9, 1, 1, '#ffd166');
   // Ranken am Turm mit Blüten in den Farben der Welt
-  for (let v = 0; v < 3; v++) {
+  for (let v = 0; v < 3 && !S.flora; v++) { // nicht am Vulkan und unter Wasser
     const vx = tx - 9 + v * 8, len = 30 + v * 14;
     for (let s = 0; s < len; s++) {
       const y = tb - s, x = vx + Math.round(Math.sin(s / 5 + v) * 2);
       R(g, x, y, 1, 1, '#3f8a3a');
       if (s % 5 === 2) R(g, x + (s % 10 === 2 ? 1 : -2), y, 2, 1, '#5ab845');
-      if (s % 11 === 6) { const col = S.flowers[(s + v) % S.flowers.length]; R(g, x - 1, y, 3, 1, col); R(g, x, y - 1, 1, 3, col); R(g, x, y, 1, 1, '#ffd166'); }
+      if (s % 11 === 6 && !S.flora) { const col = S.flowers[(s + v) % S.flowers.length]; R(g, x - 1, y, 3, 1, col); R(g, x, y - 1, 1, 3, col); R(g, x, y, 1, 1, '#ffd166'); }
     }
   }
   // Vordergrund: Boden der Welt mit Klippenkante
@@ -441,6 +441,16 @@ export function mountTitleArt(canvas, worldId = 'default') {
       const base = groundY(x) + 3 + Math.floor(hash(i, 92) * 14);
       const sway = Math.round(Math.sin(t / 900 + i) * 1.2), h = 4 + Math.floor(hash(i, 93) * 4);
       const col = S.flowers[i % S.flowers.length];
+      if (S.flora === 'weed') { // Seegras wiegt in der Strömung, Korallen stehen still
+        if (i % 3 === 0) { R(g, x - 2, base - 3, 5, 3, col); R(g, x - 1, base - 5, 1, 2, col); R(g, x + 1, base - 6, 1, 3, col); continue; }
+        for (let k = 0; k < h + 4; k++) R(g, x + Math.round(Math.sin(t / 700 + i + k * 0.5) * (k / 4)), base - k, 2, 1, i % 2 ? '#2f8a6a' : '#1e6a5a');
+        continue;
+      }
+      if (S.flora === 'ember') { // Schlackebrocken mit glühender Spitze statt Blumen
+        R(g, x - 2, base - 3, 5, 3, '#1a1214'); R(g, x - 1, base - 5, 3, 2, '#2a1e1e');
+        R(g, x, base - 6, 1, 1 + (Math.floor(t / 400 + i) % 2), col);
+        continue;
+      }
       R(g, x, base - h, 1, h, '#3f8a3a'); R(g, x + sway - 1, base - h - 1, 3, 1, col); R(g, x + sway, base - h - 2, 1, 3, col); R(g, x + sway, base - h - 1, 1, 1, '#ffd166');
     }
     particles(g, S, t);

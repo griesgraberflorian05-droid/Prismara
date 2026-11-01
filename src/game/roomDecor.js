@@ -14,7 +14,7 @@ const hash = (x, y, k = 0) => {
 const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
 
 /** Rand um den Raum in Feldern (Außenwelt). Oben ist Platz für die hohe Rückwand. */
-export const MARGIN = { x: 6, top: 6, bottom: 5 };
+export const MARGIN = { x: 11, top: 14, bottom: 12 }; // gross genug, dass die Aussenwelt jedes Handy fuellt
 const BACK = 2; // Felder Rückwand über Zeile 0
 
 // Ausstattung je Welt: Außenboden, Außen-Requisiten (Art, Häufigkeit), Streugut, Teppich, Lichtfarbe der
@@ -25,10 +25,10 @@ export const DECOR = {
   cherry: { ground: ['#4d7a3a', '#5a8a44', '#3a6230'], props: [['cherry', 0.15], ['bush', 0.1], ['stonelantern', 0.05], ['flowers', 0.22]], scatter: 'petals', rug: ['rug', '#8c3a5c', '#f2b7cf'], torch: '#ffb878', sky: ['#f7b7d2', '#ffe8f1'], wall: ['window', 'painting', 'banner', 'ivy'], ivy: ['#4f8a3a', '#ff9cc8'], motes: 'petals', furn: { bigplant: 'cherry' } },
   jungle: { ground: ['#2f5a24', '#3a6a2c', '#244a1c'], props: [['jtree', 0.17], ['fern', 0.16], ['flowers', 0.12], ['rock', 0.05]], scatter: 'leaves', leaf: ['#5aa047', '#3f7d34'], rug: ['mat', '#8a6b3a', '#c9a35a'], torch: '#ffb060', sky: ['#9fd8a0', '#e0f7d0'], wall: ['ivy', 'window', 'mask', 'ivy', 'shelf'], ivy: ['#3f8a2e', '#ffd166'], motes: 'fireflies', furn: { statue: 'idol', bigplant: 'fern' } },
   night: { ground: ['#1f3a34', '#284840', '#17302a'], props: [['pine', 0.15], ['mushroom', 0.09], ['rock', 0.07], ['grass', 0.14]], scatter: 'mushrooms', rug: ['moss', '#2d4a3e', '#6fa58a'], torch: '#ffcf8a', sky: ['#14204a', '#34467e'], moon: true, wall: ['window', 'ivy', 'painting', 'shelf'], ivy: ['#2f6a4a', '#9ad1ff'], motes: 'fireflies', furn: { bigplant: 'pine' } },
-  volcano: { ground: ['#2a2224', '#3a3034', '#1a1416'], props: [['spire', 0.12], ['deadtree', 0.07], ['lava', 0.1], ['rock', 0.08]], scatter: 'cracks', rug: ['grate', '#231c1e', '#5a4a4e'], torch: '#ff8a3a', sky: ['#ff6a1a', '#ffcf6b'], wall: ['shelf', 'weapons', 'banner', 'window'], motes: 'embers', furn: { bigplant: 'spire', statue: 'anvil' } },
+  volcano: { noPlanter: true, ground: ['#2a2224', '#3a3034', '#1a1416'], props: [['spire', 0.12], ['deadtree', 0.07], ['lava', 0.1], ['rock', 0.08]], scatter: 'cracks', rug: ['grate', '#231c1e', '#5a4a4e'], torch: '#ff8a3a', sky: ['#ff6a1a', '#ffcf6b'], wall: ['shelf', 'weapons', 'banner', 'window'], motes: 'embers', furn: { bigplant: 'spire', statue: 'anvil' } },
   temple: { ground: ['#d4ab6c', '#e0bb80', '#b89058'], props: [['cactus', 0.1], ['rock', 0.08], ['ruin', 0.06], ['grass', 0.06]], scatter: 'sand', rug: ['rug', '#7a4a1e', '#ffd166'], torch: '#ffb060', sky: ['#ffb070', '#ffe6b0'], wall: ['banner', 'painting', 'shelf', 'mask'], motes: 'dust', furn: { barrel: 'urn', bigplant: 'cactus' } },
   aurora: { ground: ['#dde8f4', '#eef4fb', '#c3d2e3'], props: [['snowpine', 0.18], ['icerock', 0.08], ['rock', 0.04]], scatter: 'snow', rug: ['fur', '#e8e4dc', '#b9b0a2'], torch: '#ffc890', sky: ['#0d2a4a', '#4fffb0'], aurora: true, wall: ['window', 'shelf', 'painting', 'banner'], motes: 'snow', furn: { bigplant: 'snowpine', statue: 'icerock' } },
-  reef: { ground: ['#16566c', '#1d6880', '#0f4456'], props: [['coral', 0.13], ['seaweed', 0.16], ['rock', 0.06], ['shell', 0.06]], scatter: 'shells', rug: ['sandpatch', '#c9b07a', '#e8d6a8'], torch: '#7ff0ff', sky: ['#0f5a78', '#5fd0e8'], porthole: true, wall: ['window', 'shelf', 'ivy', 'window'], ivy: ['#2f8a6a', '#ff7a8f'], motes: 'bubbles', furn: { barrel: 'coral', bigplant: 'seaweed' } },
+  reef: { noPlanter: true, ground: ['#16566c', '#1d6880', '#0f4456'], props: [['coral', 0.13], ['seaweed', 0.16], ['rock', 0.06], ['shell', 0.06]], scatter: 'shells', rug: ['sandpatch', '#c9b07a', '#e8d6a8'], torch: '#7ff0ff', sky: ['#0f5a78', '#5fd0e8'], porthole: true, wall: ['window', 'shelf', 'ivy', 'window'], ivy: ['#2f8a6a', '#ff7a8f'], motes: 'bubbles', furn: { barrel: 'coral', bigplant: 'seaweed' } },
   castle: { ground: ['#3a5a34', '#466a3c', '#2c4a28'], props: [['pine', 0.1], ['rock', 0.12], ['ruin', 0.06], ['grass', 0.1]], scatter: 'bones', rug: ['rug', '#5a1e22', '#c9963f'], torch: '#ffa040', sky: ['#1a2440', '#4a5a88'], moon: true, wall: ['banner', 'weapons', 'shelf', 'banner'], motes: 'dust', furn: { bigplant: 'statue', barrel: 'barrel' } },
   shadow: { ground: ['#2a2236', '#332a42', '#1f1a28'], props: [['deadtree', 0.1], ['crystal', 0.08], ['rock', 0.07]], scatter: 'bones', rug: ['rune', '#2a1f38', '#b46bff'], torch: '#c58bff', sky: ['#1a0f2a', '#5a3a8a'], moon: true, wall: ['banner', 'painting', 'shelf', 'mask'], motes: 'motes', furn: { bigplant: 'crystal' } },
   // Nebelmoor: torfiger Boden, knorrige Bäume, Schilf und Pilze, Nebelschwaden mit Irrlichtern
@@ -59,7 +59,8 @@ function planFurniture(level, cfg) {
     }
     if (touches || comp.length > 6) continue;
     const inComp = new Set(comp.map(([a, b]) => b * w + a));
-    const longKind = LONG[Math.floor(hash(x, y, 51) * LONG.length)];
+    const pick = LONG[Math.floor(hash(x, y, 51) * LONG.length)];
+    const longKind = pick === 'planter' && cfg.noPlanter ? 'counter' : pick; // keine Blumenkästen unter Wasser oder am Vulkan
     for (const [cx, cy] of comp) {
       const l = inComp.has(cy * w + cx - 1), r = inComp.has(cy * w + cx + 1);
       let kind, seg = 's';

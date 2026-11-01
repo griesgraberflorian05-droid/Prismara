@@ -75,9 +75,9 @@ export function pickSkin(id) {
 export const bossBeaten = (ci) => load().beaten.includes(CHAPTERS[ci]?.id);
 export function markBoss(ci) { const d = load(); d.beaten = [...new Set([...d.beaten, CHAPTERS[ci].id])]; save(d); }
 export const worldDone = (ci) => CHAPTERS[ci].levels.every((id) => isSolved(id));
-/** Welt, deren Boss als Nächstes dran ist, oder -1. Alte Spielstände mit schon begonnener Folgewelt werden nicht zurückgehalten. */
+/** Erste fertige Welt mit unbesiegtem Boss oder -1. Alle Welten dahinter bleiben gesperrt. */
 export function bossPending() {
   if (isAdmin()) return -1;
-  return CHAPTERS.findIndex((c, i) => worldDone(i) && !bossBeaten(i) && !CHAPTERS[i + 1]?.levels.some((id) => isSolved(id)));
+  return CHAPTERS.findIndex((c, i) => worldDone(i) && !bossBeaten(i));
 }
 export const worldOf = (ci) => CHAPTER_WORLD[CHAPTERS[ci]?.id] || 'beach';
