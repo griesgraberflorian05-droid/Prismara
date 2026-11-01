@@ -1,13 +1,15 @@
-// Updates: Die Seite fragt regelmäßig version.json ab. Liegt auf GitHub eine neuere Version, erscheint
-// eine Nachricht mit „Aktualisieren“. Geladen wird dann über eine neue Adresse (?u=…), damit weder
-// Browser noch GitHub noch die alte Seite aus dem Zwischenspeicher liefern. Der Spielstand bleibt erhalten.
+// Updates: Die Seite fragt jede Minute version.json ab. Liegt auf GitHub eine neuere Version, erscheint
+// unten rechts über den Steuerknöpfen eine Nachricht. „Später“ blendet sie nur kurz aus – sie kommt nach
+// 2 Minuten wieder, bis aktualisiert ist. Geladen wird über eine neue Adresse (?u=…), damit weder Browser
+// noch GitHub die alte Seite aus dem Zwischenspeicher liefern. Der Spielstand bleibt erhalten.
 import { VERSION } from '../version.js';
+import { play } from '../game/sound.js';
 
-const EVERY_MS = 3 * 60 * 1000;
+const EVERY_MS = 60 * 1000, SNOOZE_MS = 2 * 60 * 1000;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-let shown = null;
+let snoozeUntil = 0;
 
-/** Liefert { version, note }, wenn online etwas Neueres liegt, sonst null. */
+/** Liefert { version, build, note }, wenn online etwas Neueres liegt, sonst null. */
 export async function checkUpdate() {
   if (VERSION === 'dev') return null;
   try {
@@ -23,20 +25,19 @@ export function applyUpdate(version = Date.now()) {
 }
 
 export function showUpdate(info) {
-  if (shown === info.version) return;
-  try { if (sessionStorage.getItem('prismara.update.later') === String(info.version)) return; } catch { /* blockiert */ }
-  shown = info.version;
+  if (document.querySelector('.upd-note') || Date.now() < snoozeUntil) return;
   const el = document.createElement('div');
   el.className = 'upd-note';
   el.setAttribute('role', 'status');
-  el.innerHTML = `<div><b>✨ Neues Update!</b>${info.note ? `<span>${esc(info.note)}</span>` : ''}</div>
+  el.innerHTML = `<div><b>✨ Update${info.build ? ` v1.${esc(info.build)}` : ''} ist da!</b>${info.note ? `<span>${esc(info.note)}</span>` : ''}</div>
     <div class="upd-btns"><button class="wbtn sm" data-a="now">Aktualisieren</button><button class="wbtn sm" data-a="later">Später</button></div>`;
   el.addEventListener('click', (e) => {
     const a = e.target.closest('button')?.dataset.a;
     if (a === 'now') applyUpdate(info.version);
-    if (a === 'later') { try { sessionStorage.setItem('prismara.update.later', String(info.version)); } catch { /* blockiert */ } el.remove(); }
+    if (a === 'later') { snoozeUntil = Date.now() + SNOOZE_MS; el.remove(); }
   });
   document.body.appendChild(el);
+  play('ui');
 }
 
 export function startUpdateCheck() {

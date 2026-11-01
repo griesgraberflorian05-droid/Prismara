@@ -885,7 +885,7 @@ ALL_LEVELS.push(
     id: 'w51', name: 'Nebelbank', par: 21, exit: [8, 4], // nach der Lösung ist der obere Steg eingebrochen
     hint: 'Grünes Licht fällt ins Moor. Der Spiegel steht fast richtig – doch um ihn herum ist nur Sumpf und morsches Holz.',
     legend: { a: { type: 'emitter', dir: 'S', color: 'G' }, 2: { type: 'target', color: 'G' } },
-    rows: ['#########', '#.o.a...#', '#.......#', '#O%OOO%O#', '#...m@..#', '#2......#', '#########'],
+    rows: ['#########', '#...a...#', '#.o.....#', '#O%OOO%O#', '#...m@..#', '#2......#', '#########'],
   },
   {
     id: 'w52', name: 'Irrlichtmoor', par: 26, master: true,
