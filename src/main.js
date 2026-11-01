@@ -7,8 +7,10 @@ import { mountAdventure } from './adventure/adventure.js';
 import { mountTextures } from './adventure/textureSheet.js';
 import { setFavicon } from './ui/logo.js';
 import { stopMusic } from './game/music.js';
+import { startUpdateCheck } from './ui/updater.js';
 
 setFavicon();
+startUpdateCheck();
 
 const routes = {
   menu: { tab: 'game', mount: mountMenu },

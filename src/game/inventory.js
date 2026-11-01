@@ -52,12 +52,13 @@ addEventListener('storage', (e) => { if (e.key === KEY) cache = null; });
 
 export const getInv = () => load();
 export const coins = () => load().coins;
-export const count = (id) => load().items[id] || 0;
+export const count = (id) => (isAdmin() ? Infinity : load().items[id] || 0); // Admin: alles unendlich
 export const owns = (id) => count(id) > 0;
 
 export function addCoins(n) { const d = load(); d.coins += n; if (n > 0) d.earned = (d.earned || 0) + n; save(d); return d.coins; }
 export function addItem(id, n = 1) { const d = load(); d.items[id] = (d.items[id] || 0) + n; save(d); return d.items[id]; }
 export function useItem(id) {
+  if (isAdmin()) return true;
   const d = load();
   if (!d.items[id]) return false;
   if (!ITEMS[id]?.permanent) d.items[id]--;

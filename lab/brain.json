@@ -2175,6 +2175,51 @@
       "status": "built",
       "summary": "Menüknopf Code: freeadmin schaltet alle Räume, Welten, Modi, Umhänge und Hüte frei, Shop gratis; abschaltbar.",
       "area": "src/game/admin.js"
+    },
+    {
+      "id": "feat-earworm",
+      "type": "improvement",
+      "label": "Ohrwurm-Musik",
+      "step": 21,
+      "status": "built",
+      "summary": "Eigene 4-Takt-Hooks je Welt (Frage/Antwort), feste 4-Akkord-Folge, Kick, Snare/Clap, Hi-Hats, pumpendes Keyboard, Bass; Aufbau Auftakt–Hook–Break–Hook–Groove.",
+      "area": "src/game/music.js"
+    },
+    {
+      "id": "feat-updater",
+      "type": "improvement",
+      "label": "Update-Nachricht",
+      "step": 21,
+      "status": "built",
+      "summary": "Spiel vergleicht src/version.js mit version.json und meldet neue Versionen; Menüknopf Aktualisieren lädt über neue Adresse. publish.py --note setzt den Text.",
+      "area": "src/ui/updater.js"
+    },
+    {
+      "id": "feat-junglecurtain",
+      "type": "improvement",
+      "label": "Dschungel-Vorhang",
+      "step": 21,
+      "status": "built",
+      "summary": "Blätterdach und Farne schließen sich, Bäume wachsen hoch, Blätter wehen vorbei.",
+      "area": "src/ui/transition.js"
+    },
+    {
+      "id": "fix-eisspalt",
+      "type": "improvement",
+      "label": "Eisspalt leichter",
+      "step": 21,
+      "status": "passed",
+      "summary": "14 statt 24 Züge: Start in der Mitte, unterer Spiegel steht schon richtig.",
+      "area": "src/game/pushLevels.js"
+    },
+    {
+      "id": "feat-watchplay",
+      "type": "test",
+      "label": "Zuschau-Test",
+      "step": 21,
+      "status": "passed",
+      "summary": "tests/watchplay.js spielt Räume sichtbar mit Anzeige, inklusive Vorhängen.",
+      "area": "tests/watchplay.js"
     }
   ],
   "edges": [
@@ -4337,7 +4382,32 @@
       "from": "feat-admincode",
       "to": "feat-titlemenu",
       "rel": "erweitert"
+    },
+    {
+      "from": "feat-earworm",
+      "to": "feat-music",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-junglecurtain",
+      "to": "feat-curtains",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-updater",
+      "to": "feat-titlemenu",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-watchplay",
+      "to": "feat-playtest",
+      "rel": "erweitert"
+    },
+    {
+      "from": "fix-eisspalt",
+      "to": "feat-advrooms",
+      "rel": "verbessert"
     }
   ],
-  "updated": "2026-11-01 22:20"
+  "updated": "2026-11-01 22:33"
 }

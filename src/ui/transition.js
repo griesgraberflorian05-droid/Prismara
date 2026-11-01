@@ -56,16 +56,40 @@ export const CURTAINS = {
       if (hash(x, y, 3) > 0.8) R(g, x + 1, y + 1, 2, 1, '#fff0f6');
     });
   },
-  // Lianen und Blätter wachsen von oben herab
+  // Der Wald wächst zu: Blätterdach von oben, Farne von unten, davor steigen Bäume auf, Blätter wehen vorbei
   jungle(g, W, H, k, t) {
-    if (k > 0.97) R(g, 0, 0, W, H, '#174a18'); // geschlossen: keine Lücken zwischen den Lianen
-    for (let x = 0; x < W; x += 5) {
-      const delay = hash(x, 1) * 0.3, len = ease(clamp((k - delay) / 0.7)) * H * 1.08;
-      const sway = Math.round(Math.sin(t / 700 + x / 9) * 1.5);
-      R(g, x + sway, 0, 6, len, hash(x, 2) > 0.5 ? '#1d5a1c' : '#174a18');
-      R(g, x + 2 + sway, 0, 1, len, '#2f7a2a');
-      for (let y = 6 + Math.floor(hash(x, 3) * 8); y < len; y += 11) { R(g, x - 2 + sway, y, 4, 2, '#3f9a3a'); R(g, x + 4 + sway, y + 5, 4, 2, '#4fb845'); if (hash(x, y) > 0.9) R(g, x + sway, y + 2, 2, 2, '#ffd166'); }
-      R(g, x - 1 + sway, len - 3, 8, 4, '#5ab845');
+    const pal = ['#174a18', '#1d5a1c', '#2f7a2a', '#245f22', '#3f9a3a'];
+    cells(g, W, H, k, 4, (x, y) => Math.min(y / H, (H - y) / H) * 2 * 0.8 + hash(x, y) * 0.2, (x, y) => {
+      const n = hash(Math.floor(x / 12), Math.floor(y / 12), 7) * 0.6 + hash(x, y, 8) * 0.4;
+      R(g, x, y, 4, 4, pal[Math.floor(n * pal.length)]);
+      if (hash(x, y, 9) > 0.86) R(g, x + 1, y + 1, 2, 1, '#6cc455'); // Blattglanz
+      if (hash(x, y, 10) > 0.985) R(g, x + 1, y + 1, 2, 2, '#ffd166'); // Blüte
+    });
+    // Baumstämme wachsen von unten, die Krone breitet sich oben aus
+    const trunks = Math.max(3, Math.round(W / 42));
+    for (let i = 0; i < trunks; i++) {
+      const cx = (i + 0.5) / trunks * W + (hash(i, 11) - 0.5) * 18, tw = 7 + Math.floor(hash(i, 12) * 6);
+      const grow = ease(clamp((k - hash(i, 13) * 0.25) / 0.75)), top = H - grow * H * (0.72 + hash(i, 14) * 0.26);
+      R(g, cx - tw / 2 - 1, top, tw + 2, H - top, '#2a1a0c');
+      R(g, cx - tw / 2, top, tw, H - top, '#5a3a1e');
+      R(g, cx - tw / 2, top, 2, H - top, '#7a5230');
+      for (let y = Math.ceil(top) + 3; y < H; y += 7) R(g, cx - tw / 2 + 2 + (y % 3), y, Math.max(2, tw - 5), 1, '#3a2412');
+      if (grow > 0.15) { // Krone wächst mit
+        const r = (10 + hash(i, 15) * 10) * grow;
+        for (const [dx, dy, s] of [[0, -2, 1], [-1.2, 0.4, 0.75], [1.2, 0.4, 0.75]]) {
+          g.fillStyle = '#123c14'; g.beginPath(); g.arc(Math.round(cx + dx * r), Math.round(top + dy * 6), Math.round(r * s + 1), 0, 7); g.fill();
+          g.fillStyle = '#2f7a2a'; g.beginPath(); g.arc(Math.round(cx + dx * r), Math.round(top + dy * 6 - 1), Math.round(r * s), 0, 7); g.fill();
+        }
+        R(g, cx - r * 0.5, top - r * 0.8, r * 0.5, 2, '#6cc455');
+      }
+    }
+    // lose Blätter wehen quer durchs Bild
+    for (let i = 0; i < 34; i++) {
+      const sp = 0.6 + hash(i, 16) * 0.8, ph = (t / 1400 * sp + hash(i, 17)) % 1;
+      const x = ph * (W + 20) - 10, y = hash(i, 18) * H + Math.sin(t / 300 + i) * 5 + ph * 14;
+      const flip = Math.floor(t / 170 + i) % 2;
+      R(g, x, y, flip ? 6 : 3, flip ? 3 : 5, i % 3 ? '#5ab845' : '#9fd84a');
+      R(g, x + 1, y + 1, flip ? 4 : 1, 1, '#2f7a2a');
     }
   },
   // Das Burggitter rasselt herab

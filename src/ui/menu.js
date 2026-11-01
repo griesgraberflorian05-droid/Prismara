@@ -26,6 +26,8 @@ import { mountScene, roomThumb } from './menuScene.js';
 import { mountTitleArt } from './titleArt.js';
 import { logoCanvas } from './logo.js';
 import { isAdmin, setAdmin, redeem } from '../game/admin.js';
+import { checkUpdate, applyUpdate } from './updater.js';
+import { VERSION } from '../version.js';
 
 // Schwierigkeit einer Welt: 1–5 Punkte nach dem höchsten Zugziel (Meisterprüfung) der Welt.
 const difficulty = (ci) => {
@@ -119,6 +121,7 @@ function mainPage(el) {
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
         return `<a class="wbtn${glow ? ' glow' : ''}" href="${href}">${m.icon} ${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</a>`;
       }).join('')}
+        <button class="wbtn" id="upd" type="button">🔄 Aktualisieren</button>
         <a class="wbtn" href="#/menu/code">🔑 Code</a>
         <a class="wbtn" href="#/menu/settings">⚙ Einstellungen</a>
         <a class="wbtn sm tm-lab" href="#/lab">🧠 Gehirn Lab</a>
@@ -133,6 +136,13 @@ function mainPage(el) {
     </footer>`;
   const logo = logoCanvas(); logo.className = 'logo'; logo.setAttribute('aria-hidden', 'true');
   el.querySelector('.logo-h1').prepend(logo);
+  el.querySelector('#upd').addEventListener('click', async (e) => {
+    const b = e.currentTarget;
+    if (VERSION === 'dev') { b.textContent = 'Lokale Version'; return; }
+    b.textContent = 'Prüfe …';
+    const info = await checkUpdate();
+    if (info) { b.textContent = 'Lade Update …'; applyUpdate(info.version); } else { b.textContent = '✓ Neueste Version'; play('ui'); }
+  });
   el.querySelector('#play').focus();
   el.querySelector('#play').addEventListener('click', () => play('play'));
 }
@@ -144,7 +154,7 @@ function codePage(el) {
     el.innerHTML = `
       ${head('#/menu', '🔑 Code')}
       <form class="parch settings code-form">
-        ${on ? '<p class="code-msg">✓ Admin-Modus ist an: Alle Räume, Welten, Modi, Umhänge und Hüte sind frei, der Shop ist gratis.</p>' : `
+        ${on ? '<p class="code-msg">✓ Admin-Modus ist an: Alle Räume, Welten, Modi, Umhänge und Hüte sind frei, alle Gegenstände unendlich.</p>' : `
         <label for="code">Code eingeben</label>
         <input id="code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="32">
         <button class="wbtn big" type="submit">Einlösen</button>`}

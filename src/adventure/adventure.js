@@ -313,7 +313,7 @@ export function mountAdventure(root, params, opts = {}) {
     $('#undo').disabled = !history.length || done;
     $('#coins').textContent = getInv().coins;
     if (hasKeys) $('#keys').textContent = state.keys || 0;
-    root.querySelectorAll('.inv-slot').forEach((b) => { const n = count(b.dataset.item); b.querySelector('b').textContent = n; b.disabled = !n; });
+    root.querySelectorAll('.inv-slot').forEach((b) => { const n = count(b.dataset.item); b.querySelector('b').textContent = n === Infinity ? '∞' : n; b.disabled = !n; });
     coach();
   }
 

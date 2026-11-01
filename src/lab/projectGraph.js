@@ -112,6 +112,8 @@ const FILES = [
   ['src/ui/transition.js', 'Vorhänge je Welt und Weltenübergang', [], 21],
   ['src/game/music.js', 'Live erzeugte Musik je Welt', [], 21],
   ['src/game/admin.js', 'Code freeadmin: alles freischalten', [], 21],
+  ['src/ui/updater.js', 'Update-Nachricht und Aktualisieren', [], 21],
+  ['src/version.js', 'Spielversion (GitHub setzt Zeitstempel)', [], 21],
   ['src/ui/icons.js', 'Pixel-Symbole für Knöpfe', [], 21],
   ['src/game/roomDecor.js', 'Raumausstattung: hohe Rückwand (Fenster, Fackeln, Bilder, Regale), Möbel aus Innenwänden, Teppiche, Streugut, Außenwelt, Teilchen je Welt', ['wall', 'floor'], 15],
   ['src/adventure/textureSheet.js', 'Texturbogen #/textures: alle Sprites in jeder Welt', [], 13],
