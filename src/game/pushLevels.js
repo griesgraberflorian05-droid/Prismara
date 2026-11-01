@@ -2,6 +2,7 @@
 // 'm' Spiegelblock '/', 'n' Spiegelblock '\', 'o' Steinblock (blockiert Licht),
 // 'h'/'k' Strahlteiler '/' bzw. '\', 'P' Prisma, '~' Eis.
 // Emitter und Ziele über legend. 'par' = Mindestzüge laut Löser (Tests prüfen das).
+import { FORGED_LEVELS } from './forgedLevels.js';
 
 const R_E = { type: 'emitter', dir: 'E', color: 'R' };
 
@@ -911,6 +912,13 @@ export const CHAPTERS = [
   { id: 'c8', name: 'Strömungen', icon: '≋', summary: 'Einbahnfelder lenken dich und die Blöcke – nur in Pfeilrichtung.', levels: ['w33', 'w34', 'w35'] },
 ];
 
+// Zusatzräume der Schmiede erben Legende und Hinweis von ihrem Grundriss
+const FORGED = FORGED_LEVELS.map(({ chapter, base, ...room }) => {
+  const b = ALL_LEVELS.find((l) => l.id === base), ch = CHAPTERS.find((c) => c.id === chapter);
+  ch.levels.splice(ch.levels.length - 1, 0, room.id);
+  return { ...room, legend: b.legend, hint: b.hint };
+});
+
 // Spielreihenfolge = Kapitel nacheinander.
 const ORDER = CHAPTERS.flatMap((c) => c.levels);
-export const PUSH_LEVELS = ORDER.map((id) => ALL_LEVELS.find((l) => l.id === id));
+export const PUSH_LEVELS = ORDER.map((id) => [...ALL_LEVELS, ...FORGED].find((l) => l.id === id));

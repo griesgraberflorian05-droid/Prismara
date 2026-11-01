@@ -92,6 +92,10 @@ export function scream(sec = 1.3) {
     o.connect(g); g.connect(out);
     o.start(t); o.stop(t + sec);
   }
+  const rumble = c.createOscillator(); // tiefes Grollen spürt man mehr, als man es hört
+  rumble.type = 'square'; rumble.frequency.value = 48;
+  const rg = c.createGain(); rg.gain.value = 0.3;
+  rumble.connect(rg); rg.connect(out); rumble.start(t); rumble.stop(t + sec);
   const noise = c.createBuffer(1, c.sampleRate * sec, c.sampleRate);
   const data = noise.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;

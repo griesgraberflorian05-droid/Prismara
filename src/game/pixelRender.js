@@ -5,6 +5,7 @@
 // Gezeichnet wird in einen kleinen Puffer, der ohne Glättung hochskaliert wird.
 import { COLOR_INFO, DIRS } from './engine.js';
 import { getSkin, getLook, isDinnerbone } from './skins.js';
+import { drawMinion } from './monsters.js';
 import { hat as currentHat } from './inventory.js';
 import { MARGIN, makeDecor, DecorSteps, drawFlames, drawGlows, drawShafts, drawMotes, shadeMargin } from './roomDecor.js';
 
@@ -559,6 +560,7 @@ export class PixelRenderer {
   /** Abenteuer-Fundstücke: Münze (dreht sich), Dietrich, Kraftbrot, Wegrolle, Lupe. */
   loot(it, t) {
     if (it.got) return;
+    if (it.kind === 'critter') { drawMinion((x, y, w, h, c) => this.r(x, y, w, h, c), it.foe.minion, it.foe.colors, it.x * T, it.y * T, t); return; }
     const px = it.x * T, py = it.y * T + Math.round(Math.sin(t / 260 + it.x * 2) * 1.5);
     this.r(px + 5, py + 12, 7, 2, 'rgba(0,0,0,0.25)');
     if (it.kind === 'coin') {

@@ -14,6 +14,7 @@ import { play, isMuted, toggleMute } from '../game/sound.js';
 import { setMusic } from '../game/music.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
+import { foeOf, bossBeaten } from '../game/combat.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
 import { isAdmin } from '../game/admin.js';
 import { WORLDS } from '../game/worlds.js';
@@ -159,6 +160,7 @@ export function planLoot(level, def, exit, fragments) {
   const spots = [];
   for (let x = 1; x < w - 1; x++) if (x % 4 !== 2 && cells[w + x].type !== 'wall' && !(exit && exit.y === 0 && Math.abs(exit.x - x) < 2)) spots.push({ x, y: 0 });
   const sign = spots.length ? spots[Math.floor(rnd() * spots.length)] : null;
+  if (free.length) loot.push({ ...pick(), kind: 'critter', id: 'critter' }); // Teaser auf den Kampf am Weltende
   return { loot, chest, sign };
 }
 
@@ -201,7 +203,8 @@ export function mountAdventure(root, params, opts = {}) {
   const frags = loadFrags();
   const fragments = placeFragments(level, def).map((f, i) => ({ ...f, got: (frags[def.id] || []).includes(i), i }));
   const plan = planLoot(level, def, exit, fragments);
-  const loot = plan.loot.map((l) => ({ ...l, got: isFound(def.id, l.id) }));
+  const foe = foeOf(themeId);
+  const loot = plan.loot.filter((l) => l.kind !== 'critter' || chapter).map((l) => ({ ...l, foe, got: isFound(def.id, l.id) }));
   const chest = plan.chest && { ...plan.chest, open: isFound(def.id, 'chest') };
   const sign = plan.sign && { ...plan.sign, read: isFound(def.id, 'sign') };
   const guide = roomGuide(level);
@@ -376,7 +379,8 @@ export function mountAdventure(root, params, opts = {}) {
   function pickup() {
     for (const it of loot) if (!it.got && it.x === state.player.x && it.y === state.player.y) {
       it.got = true; markFound(def.id, it.id);
-      if (it.kind === 'coin') { addCoins(2); play('target', 1); toast('🪙 +2 Münzen'); }
+      if (it.kind === 'critter') { addCoins(1); play('swipe'); toast(`⚔ ${foe.critter} besiegt! +1 Münze. Am Weltende wartet ${foe.boss}`); }
+      else if (it.kind === 'coin') { addCoins(2); play('target', 1); toast('🪙 +2 Münzen'); }
       else { addItem(it.kind); play('target', 7); toast(`${ITEMS[it.kind].icon} ${ITEMS[it.kind].name} gefunden!`); }
       dust.push({ x: it.x + 0.5, y: it.y + 0.6, a: -Math.PI / 2, t0: performance.now() });
       devlog('SPIEL', `${def.id}: Fundstück ${it.kind} eingesammelt`);
@@ -576,15 +580,15 @@ export function mountAdventure(root, params, opts = {}) {
         ${unlockedNow.map((m) => `<p class="win-unlock">🔓 Neu freigeschaltet: ${m.icon} <b>${esc(m.name)}</b></p>`).join('')}
         <p>Rätsel in ${counted} Zügen · Ziel ≤ ${def.par}${improved && prevBest != null ? ' · neue Bestleistung' : ''} · Fragmente ${fragments.filter((f) => f.got).length}/${fragments.length}</p>
         <div class="win-actions">
-          ${tutorial ? '<a class="btn btn-primary" href="#/adv/0" id="win-next">Los geht’s: Raum 1 →</a>' : nextIndex != null ? `<a class="btn btn-primary" href="#/adv/${nextIndex}" id="win-next">${lastInWorld ? 'Nächste Welt →' : 'Nächster Raum →'}</a>` : (custom ? `<a class="btn btn-primary" href="${esc(opts.back || '#/menu')}" id="win-next">${esc(opts.backLabel || 'Zurück zum Menü')}</a>` : '<a class="btn btn-primary" href="#/menu" id="win-next">Alle Räume geschafft!</a>')}
+          ${tutorial ? '<a class="btn btn-primary" href="#/adv/0" id="win-next">Los geht’s: Raum 1 →</a>' : nextIndex != null ? (lastInWorld && !bossBeaten(chIndex) ? `<a class="btn btn-primary" href="#/arena/${chIndex}" id="win-boss">⚔ Zum Bosskampf</a>` : `<a class="btn btn-primary" href="#/adv/${nextIndex}" id="win-next">${lastInWorld ? 'Nächste Welt →' : 'Nächster Raum →'}</a>`) : (custom ? `<a class="btn btn-primary" href="${esc(opts.back || '#/menu')}" id="win-next">${esc(opts.backLabel || 'Zurück zum Menü')}</a>` : '<a class="btn btn-primary" href="#/menu" id="win-next">Alle Räume geschafft!</a>')}
           <button class="btn" id="win-retry">Nochmal (R)</button>
         </div>
       </div>`;
-    later(() => { win.hidden = false; $('#win-next')?.focus(); }, 1500); // erst die Blüte genießen
+    later(() => { win.hidden = false; ($('#win-next') || $('#win-boss'))?.focus(); }, 1500); // erst die Blüte genießen
     $('#win-retry').addEventListener('click', () => { reset(); canvas.focus(); });
     // Weiter mit Vorhang: im Raum der Vorhang der nächsten Welt, beim Weltwechsel erst ihr Panorama
     const nextDef = tutorial ? PUSH_LEVELS[0] : nextIndex != null ? PUSH_LEVELS[nextIndex] : null;
-    if (nextDef) $('#win-next').addEventListener('click', (e) => {
+    if (nextDef) $('#win-next')?.addEventListener('click', (e) => {
       e.preventDefault();
       const nci = CHAPTERS.findIndex((c) => c.levels.includes(nextDef.id)), nch = CHAPTERS[nci];
       const to = CHAPTER_WORLD[nch.id] || 'default';
@@ -679,20 +683,41 @@ export function mountAdventure(root, params, opts = {}) {
       const b = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.dpad button');
       if (b && +b.dataset.d !== held) held = +b.dataset.d;
     });
-    // Wischen übers Spielfeld: ein Feld in Wischrichtung (Tippen fokussiert nur)
+    // Wischen übers Spielfeld: Held läuft in Wischrichtung, solange der Finger unten bleibt
     let swipe = null;
-    canvas.addEventListener('pointerdown', (ev) => { swipe = { x: ev.clientX, y: ev.clientY }; });
-    canvas.addEventListener('pointerup', (ev) => {
+    canvas.addEventListener('pointerdown', (ev) => { swipe = { x: ev.clientX, y: ev.clientY, moved: false, dir: null }; canvas.setPointerCapture?.(ev.pointerId); });
+    canvas.addEventListener('pointermove', (ev) => {
       if (!swipe) return;
       const dx = ev.clientX - swipe.x, dy = ev.clientY - swipe.y;
-      swipe = null;
       if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
-      stepDir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0));
+      const d = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0);
+      swipe.x = ev.clientX; swipe.y = ev.clientY; swipe.moved = true;
+      if (d === swipe.dir) return; // gleiche Richtung: läuft schon oder steht an der Wand
+      swipe.dir = held = d; stepDir(d); lastStep = performance.now();
     });
+    const endSwipe = (ev) => {
+      if (swipe && !swipe.moved && ev.type === 'pointerup') tapBoard(ev);
+      swipe = null; held = null;
+    };
+    canvas.addEventListener('pointerup', endSwipe);
+    canvas.addEventListener('pointercancel', endSwipe);
+  } else canvas.addEventListener('click', (ev) => tapBoard(ev));
+
+  // Block antippen oder anklicken: steht der Held direkt davor, dreht er ihn (und schaut dabei hin)
+  function tapBoard(ev) {
+    if (!view || done || caught || paused) return;
+    const r = canvas.getBoundingClientRect(), k = canvas.width / r.width;
+    const x = Math.floor((((ev.clientX - r.left) * k - view.dx) / view.scale - pix.ox) / T);
+    const y = Math.floor((((ev.clientY - r.top) * k - view.dy) / view.scale - pix.oy) / T);
+    const d = DIRS.findIndex(([dx, dy]) => state.player.x + dx === x && state.player.y + dy === y);
+    const b = state.blocks.find((o) => o.x === x && o.y === y);
+    if (d < 0 || !b || (!b.orient && b.kind !== 'lamp')) return;
+    state = { ...state, player: { ...state.player, dir: d } };
+    rotate();
   }
 
   // ---------- Zeichnen ----------
-  let running = true, shownStamina = '';
+  let running = true, shownStamina = '', view = null;
   const staminaEl = $('#stamina');
   const lerp = (a, b, k) => a + (b - a) * k;
   function frame(t) {
@@ -752,6 +777,7 @@ export function mountAdventure(root, params, opts = {}) {
     const v = pix.view;
     const scale = Math.max(1, Math.floor(Math.min(cw / v.w, chh / v.h)));
     const dx = Math.floor((cw - v.w * scale) / 2) - v.x * scale, dy = Math.floor((chh - v.h * scale) / 2) - v.y * scale;
+    view = { dx, dy, scale };
     ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
     requestAnimationFrame(frame);
   }

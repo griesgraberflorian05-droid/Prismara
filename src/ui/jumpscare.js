@@ -2,21 +2,20 @@
 // Liegt direkt am body, läuft also auch weiter, wenn man die Seite inzwischen gewechselt hat.
 import { prefersReducedMotion } from '../settings.js';
 import { scream } from '../game/sound.js';
+import { stopMusic } from '../game/music.js';
 
 const S = 80; // Pixelraster des Gesichts
 
 function drawFace(g, open) {
   g.fillStyle = '#050205'; g.fillRect(0, 0, S, S);
   const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
-  // Stiel
-  R(36, 6, 8, 8, '#2f4a1e'); R(38, 3, 6, 4, '#20330f'); R(36, 6, 2, 8, '#4a6a2a');
   // Kopf: Ellipse mit Rippen, oben heller, unten fast schwarz
   for (let y = 10; y < 76; y++) for (let x = 2; x < 78; x++) {
     const nx = (x - 40) / 38, ny = (y - 43) / 33;
     if (nx * nx + ny * ny >= 1) continue;
     const rib = Math.abs(Math.sin(nx * 7.5));
     const shade = (y - 10) / 66 + (rib < 0.3 ? 0.28 : 0);
-    R(x, y, 1, 1, shade < 0.3 ? '#f08a24' : shade < 0.55 ? '#c85a12' : shade < 0.8 ? '#8a3208' : '#3e1404');
+    R(x, y, 1, 1, shade < 0.3 ? '#c9c2a8' : shade < 0.55 ? '#8f8870' : shade < 0.8 ? '#4e4436' : '#1c1412'); // bleich und faulig
   }
   // Böse Brauen und glühende Dreiecksaugen
   for (let side = -1; side <= 1; side += 2) {
@@ -24,10 +23,10 @@ function drawFace(g, open) {
     for (let i = 0; i < 16; i++) R(cx - side * 8 + side * i, 19 + Math.floor(i / 2), 1, 3, '#1a0804');
     for (let y = 0; y < 14; y++) {
       const half = 1 + Math.floor(y * 0.62);
-      R(cx - half, 25 + y, half * 2, 1, y < 2 ? '#ff3a1a' : '#ffd84a');
-      R(cx - half, 25 + y, 1, 1, '#ff3a1a'); R(cx + half - 1, 25 + y, 1, 1, '#ff3a1a');
+      R(cx - half, 25 + y, half * 2, 1, '#020102'); // leere schwarze Höhlen
     }
-    R(cx - 1, 29, 3, 10, '#120406'); // Schlitzpupille
+    R(cx - 1, 33, 2, 2, '#ffffff'); R(cx, 34, 1, 1, '#ff2010'); // winzige starrende Pupille
+    R(cx - 2, 39, 2, 12, '#5a0a0c'); // Blutspur
   }
   // Nase
   for (let y = 0; y < 5; y++) R(39 - y, 41 + y, 2 + y * 2, 1, '#1a0804');
@@ -59,6 +58,7 @@ export function jumpscare(ms = 1600) {
   let open = true;
   drawFace(g, open);
   const chew = setInterval(() => { open = !open; drawFace(g, open); }, 170);
+  stopMusic();
   scream();
   const close = () => {
     clearInterval(chew); clearTimeout(timer);

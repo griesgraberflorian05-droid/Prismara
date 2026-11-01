@@ -2409,6 +2409,51 @@
       "status": "built",
       "summary": "Die Anzeigen im Raum nutzen den Stil der Menü-Leiste mit Pixel-Symbolen.",
       "area": "src/styles.css"
+    },
+    {
+      "id": "feat-swipetap",
+      "type": "improvement",
+      "label": "Wischen und Block antippen",
+      "step": 21,
+      "status": "built",
+      "summary": "Wischen läuft, solange der Finger unten bleibt; Block antippen oder anklicken dreht ihn, wenn der Held davor steht.",
+      "area": "src/adventure/adventure.js"
+    },
+    {
+      "id": "feat-combat",
+      "type": "improvement",
+      "label": "Kampfsystem",
+      "step": 21,
+      "status": "built",
+      "summary": "Redstone-Schwert, teure Verbesserungen und Waffen-Skins in der Schmiede.",
+      "area": "src/game/combat.js"
+    },
+    {
+      "id": "feat-arena",
+      "type": "improvement",
+      "label": "Kampflevel und Bosse",
+      "step": 21,
+      "status": "built",
+      "summary": "Am Ende jeder Welt zwei Gegnerwellen und ein eigener Boss; erst danach geht es weiter.",
+      "area": "src/adventure/arena.js"
+    },
+    {
+      "id": "feat-critter",
+      "type": "improvement",
+      "label": "Teaser-Monster",
+      "step": 21,
+      "status": "built",
+      "summary": "In jedem Raum ein schwaches Wesen der Welt, das auf den Kampf einstimmt.",
+      "area": "src/game/monsters.js"
+    },
+    {
+      "id": "feat-forged",
+      "type": "improvement",
+      "label": "Zusatzräume",
+      "step": 21,
+      "status": "built",
+      "summary": "21 neue, vom Löser bestätigte Räume aus den Grundrissen jeder Welt.",
+      "area": "src/game/forgedLevels.js"
     }
   ],
   "edges": [
@@ -4716,7 +4761,32 @@
       "from": "feat-roomhud",
       "to": "feat-menu3",
       "rel": "erweitert"
+    },
+    {
+      "from": "feat-swipetap",
+      "to": "feat-advrooms",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-combat",
+      "to": "feat-advrooms",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-arena",
+      "to": "feat-combat",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-critter",
+      "to": "feat-arena",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-forged",
+      "to": "feat-advrooms",
+      "rel": "erweitert"
     }
   ],
-  "updated": "2026-11-01 23:09"
+  "updated": "2026-11-01 23:17"
 }

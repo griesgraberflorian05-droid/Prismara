@@ -1240,3 +1240,17 @@ body.wood .ihud-chip { gap: 5px; padding: 6px 8px; font-size: 0.5rem; color: var
 body.wood .ihud-chip .pxi { width: 13px; height: 13px; color: var(--gold); }
 body.wood .ihud-door.open { border-color: var(--leaf-2); color: #bff2a8; }
 body.wood .ihud-door.open .pxi { color: #7dff6a; }
+
+/* Kampflevel */
+.ar-hearts { position: absolute; z-index: 5; top: 12px; left: 50%; display: flex; gap: 3px; padding: 6px 8px; transform: translateX(-50%); background: rgba(20, 10, 4, 0.72); border: 3px solid var(--wood-0); }
+.ar-hearts .pxi { width: 18px; height: 18px; color: rgba(255, 255, 255, 0.2); }
+.ar-hearts .on .pxi { color: #e8384a; }
+.ar-boss { position: absolute; z-index: 5; top: 58px; left: 50%; display: grid; gap: 4px; width: min(420px, 62vw); transform: translateX(-50%); font-size: 0.48rem; text-align: center; color: var(--parch); text-shadow: 0 2px 0 #000; }
+.ar-boss i { display: block; height: 12px; background: rgba(20, 10, 4, 0.8); border: 3px solid var(--wood-0); }
+.ar-boss b { display: block; height: 100%; width: 100%; background: #e0342c; transition: width 0.12s steps(3); }
+.rboss { justify-content: center; min-height: 100%; border-color: #8a2420 !important; background: linear-gradient(#5a1c1a, #2a0e0e) !important; color: var(--parch) !important; }
+.rboss .rnum, .rboss .rmeta { color: #ffb0a0; }
+.rboss .rname { white-space: normal !important; line-height: 1.6; }
+.lv-trail li:nth-last-child(2)::after { display: none; }
+@media (max-width: 520px) { .ar-hearts { top: 58px; } .ar-boss { top: 100px; width: 86vw; } }
+.sword-skins { margin: 0; }

@@ -6,10 +6,11 @@ import { isSolved, bestMoves, starsFor } from '../game/progress.js';
 import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
+import { UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
-import { setMusic } from '../game/music.js';
+import { setMusic, stopMusic } from '../game/music.js';
 import { volumeHtml, bindVolume } from './volume.js';
 import { WORLDS, worldForChapter, CHAPTER_WORLD } from '../game/worlds.js';
 import { todayKey } from '../game/daily.js';
@@ -59,7 +60,7 @@ function chapterInfo(ci) {
   const solved = idx.filter((i) => isSolved(PUSH_LEVELS[i].id)).length;
   const stars = idx.reduce((n, i) => n + starsOf(PUSH_LEVELS[i]), 0);
   const { firstOpen } = totals();
-  const open = isAdmin() || idx.some((i) => isSolved(PUSH_LEVELS[i].id) || i === firstOpen) || firstOpen < 0;
+  const open = isAdmin() || idx.some((i) => isSolved(PUSH_LEVELS[i].id) || (i === firstOpen && bossPending() < 0)) || firstOpen < 0 || (ci > 0 && bossBeaten(ci - 1));
   return { ch, idx, solved, stars, open, done: solved === idx.length };
 }
 const currentChapter = () => { const t = totals(); return t.firstOpen < 0 ? 0 : Math.max(0, CHAPTERS.findIndex((c) => c.levels.includes(PUSH_LEVELS[t.firstOpen].id))); };
@@ -114,6 +115,7 @@ function mainPage(el) {
   const world = worldForChapter(info.ch.id);
   const pct = Math.round((info.solved / info.idx.length) * 100);
   const newModes = takeNewUnlocks(), freshModes = new Set(newModes.map((m) => m.id));
+  const boss = bossPending();
   const MODE_ICON = { worlds: 'map', kit: 'hero', daily: 'cal', shop: 'cart' };
   el.innerHTML = `
     <ul class="mm-stats" aria-label="Fortschritt">
@@ -124,8 +126,8 @@ function mainPage(el) {
     </ul>
     <div class="mm-a">
       <header class="mm-logo" aria-label="Prismara"><h1 class="logo-h1"><span class="sr">PRISMARA</span></h1><p>${isAdmin() ? 'ADMIN-MODUS' : 'Ein Licht-Abenteuer'}</p></header>
-      <a class="wbtn big mm-play" id="play" href="${fresh ? '#/adv/tutorial' : next ? `#/adv/${t.firstOpen}` : '#/menu/chapters'}">
-        <span class="mm-play-ic">${icon('play')}</span><span class="mm-play-txt"><b>${fresh ? 'ABENTEUER BEGINNEN' : 'SPIELEN'}</b><small>${fresh ? 'Mit dem Lehrzimmer' : next ? `Weiter: ${esc(next.name)}` : 'Alle Räume geschafft!'}</small></span></a>
+      <a class="wbtn big mm-play" id="play" href="${fresh ? '#/adv/tutorial' : boss >= 0 ? `#/arena/${boss}` : next ? `#/adv/${t.firstOpen}` : '#/menu/chapters'}">
+        <span class="mm-play-ic">${icon('play')}</span><span class="mm-play-txt"><b>${fresh ? 'ABENTEUER BEGINNEN' : boss >= 0 ? 'BOSSKAMPF' : 'SPIELEN'}</b><small>${fresh ? 'Mit dem Lehrzimmer' : boss >= 0 ? esc(foeOf(themeOf(boss)).boss) : next ? `Weiter: ${esc(next.name)}` : 'Alle Räume geschafft!'}</small></span></a>
     </div>
     <div class="mm-b">
       ${newModes.length ? `<div class="tm-unlock parch" role="status">Neu freigeschaltet: <b>${newModes.map((m) => esc(m.name)).join(', ')}</b></div>` : ''}
@@ -187,7 +189,7 @@ function codePage(el) {
       play('chapter');
       if (code === 'halloween') {
         render('🎃 Halloween-Umhang freigeschaltet und angelegt!');
-        setTimeout(jumpscare, 4000); // erst in Sicherheit wiegen …
+        setTimeout(() => { stopMusic(); setTimeout(jumpscare, 1400); }, 4000 + Math.random() * 5000); // erst in Sicherheit wiegen, dann Stille, dann zuschlagen
       } else render(code === 'dinnerbone' ? 'Dein Held steht jetzt auf dem Kopf.' : '');
     });
     el.querySelector('[data-d="coins"]')?.addEventListener('click', () => { addCoins(1000); play('target', 7); render(`🪙 Jetzt ${getInv().coins} Münzen`); });
@@ -323,8 +325,9 @@ function chapterPage(el, ci) {
   const info = chapterInfo(ci);
   const { firstOpen } = totals();
   const w = worldForChapter(info.ch.id);
-  const nextRoom = info.idx.find((i) => !isSolved(PUSH_LEVELS[i].id) && (isAdmin() || i === firstOpen));
+  const nextRoom = info.idx.find((i) => !isSolved(PUSH_LEVELS[i].id) && (isAdmin() || (i === firstOpen && bossPending() < 0)));
   const pct = Math.round((info.solved / info.idx.length) * 100);
+  const bossOpen = isAdmin() || worldDone(ci);
   el.innerHTML = `
     ${head(`#/menu/chapters/${ci}`, `${w ? `${w.icon} ${esc(w.name)}` : esc(info.ch.name)}`, `${icon('coin')} ${getInv().coins}`)}
     <div class="lv">
@@ -339,7 +342,7 @@ function chapterPage(el, ci) {
       <ol class="rooms lv-trail">${info.idx.map((i, k) => {
         const l = PUSH_LEVELS[i];
         const solved = isSolved(l.id);
-        const open = isAdmin() || solved || i === firstOpen;
+        const open = isAdmin() || solved || (i === firstOpen && bossPending() < 0);
         const inner = `<span class="rthumb"><canvas data-i="${i}"></canvas>
           <span class="rbadge">${k + 1}</span>
           ${solved ? `<span class="rstamp">${icon('check')}</span>` : ''}
@@ -350,7 +353,8 @@ function chapterPage(el, ci) {
         return open
           ? `<li><a class="room parch${solved ? ' solved' : ' next'}${l.master ? ' master' : ''}" href="#/adv/${i}" style="--k:${k}">${inner}</a></li>`
           : `<li><span class="room parch locked${l.master ? ' master' : ''}" style="--k:${k}">${inner}</span></li>`;
-      }).join('')}</ol>
+      }).join('')}
+        <li><${bossOpen ? `a href="#/arena/${ci}"` : 'span'} class="room parch rboss${bossOpen ? '' : ' locked'}" style="--k:${info.idx.length}"><span class="rinfo"><span class="rnum">KAMPF</span><span class="rname">${esc(foeOf(themeOf(ci)).boss)}</span><span class="rmeta">${bossBeaten(ci) ? 'Besiegt' : bossOpen ? 'Bereit zum Kampf' : 'Erst alle Räume schaffen'}</span></span></${bossOpen ? 'a' : 'span'}></li></ol>
     </div>`;
   el.querySelectorAll('.rthumb canvas').forEach((c) => roomThumb(c, PUSH_LEVELS[+c.dataset.i], themeOf(ci), 1));
   (el.querySelector('.room.next') || el.querySelector('a.room'))?.focus();
@@ -372,12 +376,22 @@ function shopPage(el) {
             <button class="wbtn sm" data-buy="${id}" ${sold || (!isAdmin() && inv.coins < it.price) ? 'disabled' : ''}>${sold ? '✓ gekauft' : isAdmin() ? 'GRATIS' : `🪙 ${it.price}`}</button></li>`;
         }).join('')}</ul>
         <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">🎩</span><p>Der Hutmacher nimmt keine Münzen – nur Kristalle 💎 aus den Räumen. Du hast <b>${fragmentCount() - crystalsSpent()}</b> übrig.</p></div>
+        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">⚒</span><p>Die Schmiede verbessert dein Redstone-Schwert. Billig ist hier nichts, spar gut.</p></div>
+        <ul class="shop-list">${Object.entries(UPGRADES).map(([id, u]) => {
+          const cost = nextCost(id), lvl = getCombat()[id];
+          return `<li class="parch shop-item"><span class="si-icon">${icon(id === 'armor' ? 'heart' : 'sword')}</span>
+            <span class="si-text"><b>${esc(u.name)} ${lvl + 1}/${u.values.length}</b><small>${esc(u.info)}</small><em>${u.values[lvl]} ${u.unit}</em></span>
+            <button class="wbtn sm" data-up="${id}" ${cost == null || inv.coins < cost ? 'disabled' : ''}>${cost == null ? 'MAX' : cost ? `${icon('coin')} ${cost}` : 'GRATIS'}</button></li>`;
+        }).join('')}</ul>
+        <div class="kit-row sword-skins">${shownSkins().map((s) => `<button class="kit-swatch${swordSkin().id === s.id ? ' active' : ''}" data-sword="${s.id}" aria-pressed="${swordSkin().id === s.id}"><span class="ks-dot" style="background:${s.blade};box-shadow:0 0 0 3px ${s.edge}"></span><small>${esc(s.name)}${ownsSkin(s.id) ? '' : ` ${s.price}`}</small></button>`).join('')}</div>
         <ul class="hat-list">${Object.entries(HATS).map(([id, h]) => {
           const own = ownsHat(id), worn = hat() === id;
           return `<li class="parch hat-item${worn ? ' worn' : ''}"><canvas class="hat-prev" data-hat="${id}" width="24" height="28"></canvas><b>${esc(h.name)}</b>
             ${own ? `<button class="wbtn sm" data-wear="${worn ? '' : id}">${worn ? 'ABSETZEN' : 'AUFSETZEN'}</button>` : `<button class="wbtn sm" data-hat-buy="${id}" ${fragmentCount() - crystalsSpent() < h.price ? 'disabled' : ''}>💎 ${h.price}</button>`}</li>`;
         }).join('')}</ul>
       </div>`;
+    el.querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { if (upgrade(b.dataset.up)) play('target', 7); render('Die Klinge glüht – Verbesserung geschafft!'); }));
+    el.querySelectorAll('[data-sword]').forEach((b) => b.addEventListener('click', () => { const ok = pickSkin(b.dataset.sword); play(ok ? 'ui' : 'bump'); render(ok ? 'Schöne Waffe!' : 'Dafür fehlen dir Münzen.'); }));
     el.querySelectorAll('.hat-prev').forEach((c) => drawHatPreview(c, c.dataset.hat));
     el.querySelectorAll('[data-hat-buy]').forEach((b) => b.addEventListener('click', () => {
       const id = b.dataset.hatBuy;
