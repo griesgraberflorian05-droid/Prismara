@@ -168,6 +168,19 @@ function mainPage(el) {
 
 // ---------- Code eingeben: „freeadmin“ schaltet alles frei ----------
 function codePage(el) {
+  const applyCode = (text) => {
+    const code = redeem(text);
+    if (code === 'resetall') { play('bump'); confirmReset(); return; }
+    if (code === 'function') { play('ui'); askPassword(); return; }
+    if (code === 'used') { play('bump'); render('Diesen Code hast du schon eingelöst.'); return; }
+    if (code === 'moneten') { play('chapter'); render('250 Münzen gehören dir!'); return; }
+    if (!code) { play('bump'); render('Dieser Code stimmt nicht.'); return; }
+    play('chapter');
+    if (code === 'halloween') {
+      render('🎃 Halloween-Umhang freigeschaltet und angelegt!');
+      setTimeout(() => { stopMusic(); setTimeout(jumpscare, 1400); }, 4000 + Math.random() * 5000); // erst in Sicherheit wiegen, dann Stille, dann zuschlagen
+    } else render(code === 'dinnerbone' ? 'Dein Held steht jetzt auf dem Kopf.' : '');
+  };
   const render = (msg = '') => {
     const on = isAdmin();
     el.innerHTML = `
@@ -187,17 +200,7 @@ function codePage(el) {
       </form>`;
     el.querySelector('form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const code = redeem(el.querySelector('#code').value);
-      if (code === 'resetall') { play('bump'); confirmReset(); return; }
-      if (code === 'function') { play('ui'); askPassword(); return; }
-      if (code === 'used') { play('bump'); render('Diesen Code hast du schon eingelöst.'); return; }
-      if (code === 'moneten') { play('chapter'); render('250 Münzen gehören dir!'); return; }
-      if (!code) { play('bump'); render('Dieser Code stimmt nicht.'); return; }
-      play('chapter');
-      if (code === 'halloween') {
-        render('🎃 Halloween-Umhang freigeschaltet und angelegt!');
-        setTimeout(() => { stopMusic(); setTimeout(jumpscare, 1400); }, 4000 + Math.random() * 5000); // erst in Sicherheit wiegen, dann Stille, dann zuschlagen
-      } else render(code === 'dinnerbone' ? 'Dein Held steht jetzt auf dem Kopf.' : '');
+      applyCode(el.querySelector('#code').value);
     });
     el.querySelector('[data-d="coins"]')?.addEventListener('click', () => { addCoins(1000); play('target', 7); render(`🪙 Jetzt ${getInv().coins} Münzen`); });
     el.querySelector('[data-d="update"]')?.addEventListener('click', () => showUpdate({ version: '0', label: 'Test', note: 'So sieht die Update-Nachricht aus.' }));
@@ -223,8 +226,9 @@ function codePage(el) {
       play('chapter');
       el.innerHTML = `
         ${head('#/menu/code', 'Geheime Codes')}
-        <div class="parch settings">${ALL_CODES.map(([id, info]) => `<div class="set-row"><span class="code-row"><b>${esc(id)}</b><small>${esc(info)}</small></span></div>`).join('')}</div>`;
+        <div class="parch settings">${ALL_CODES.map(([id, info]) => `<div class="set-row"><span class="code-row"><b>${esc(id)}</b><small>${esc(info)}</small></span><button class="wbtn sm" type="button" data-apply="${esc(id)}">Anwenden</button></div>`).join('')}</div>`;
       backToForm();
+      el.querySelectorAll('[data-apply]').forEach((b) => b.addEventListener('click', () => applyCode(b.dataset.apply)));
     });
     el.querySelector('#pw').focus();
   };
