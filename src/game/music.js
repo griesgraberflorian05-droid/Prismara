@@ -4,7 +4,7 @@
 // Beat (Kick, Snare/Clap, Hi-Hats), Keyboard-Akkorde, die zum Kick „pumpen“, und ein Bass auf den
 // Grundtönen. Aufbau: kurzer Auftakt → Hook → Break → Hook mit Oktave → Groove → wieder von vorn.
 // Alle Melodien sind eigene Kompositionen. Lautstärke: musicVolume; Stumm schaltet alles ab.
-import { getSettings, updateSettings, onSettingsChange } from '../settings.js';
+import { getSettings, onSettingsChange } from '../settings.js';
 import { audioContext, isMuted } from './sound.js';
 
 // Tonleitern als Halbtöne über dem Grundton
@@ -87,7 +87,7 @@ let song = null, songId = null, songBus = null, keysBus = null, timer = 0;
 let nextTime = 0, step = 0;
 export const stats = { notes: 0, hits: 0 }; // für den Test: was geplant wurde
 
-function targetGain() { return isMuted() ? 0 : (getSettings().musicVolume ?? 0.5) * 0.7; }
+function targetGain() { return isMuted() ? 0 : (getSettings().musicVolume ?? 0.5) * 0.5; }
 
 function ensure() {
   if (ctx) return true;
@@ -96,8 +96,11 @@ function ensure() {
   // Begrenzer gegen Übersteuern (viele Stimmen gleichzeitig, kleine Handy-Lautsprecher)
   const comp = ctx.createDynamicsCompressor();
   comp.threshold.value = -14; comp.ratio.value = 6; comp.attack.value = 0.004; comp.release.value = 0.16;
+  // Gedämpft: Tiefpass nimmt die Höhen weg, die Musik klingt wie aus dem Nebenraum und drängt sich nicht vor
+  const muffle = ctx.createBiquadFilter();
+  muffle.type = 'lowpass'; muffle.frequency.value = 1500; muffle.Q.value = 0.4;
   bus = ctx.createGain(); bus.gain.value = targetGain();
-  bus.connect(comp).connect(ctx.destination);
+  bus.connect(muffle).connect(comp).connect(ctx.destination);
   echo = ctx.createDelay(1);
   const fb = ctx.createGain(); fb.gain.value = 0.26;
   const wet = ctx.createGain(); wet.gain.value = 0.22;
@@ -243,8 +246,6 @@ export function stopMusic() {
   if (songBus && ctx) { const b = songBus; b.gain.setTargetAtTime(0, ctx.currentTime, 0.25); setTimeout(() => b.disconnect(), 1500); songBus = null; }
 }
 
-export const musicOn = () => (getSettings().musicVolume ?? 0.5) > 0;
-export function toggleMusic() { updateSettings({ musicVolume: musicOn() ? 0 : 0.5 }); return musicOn(); }
 export const currentSong = () => songId;
 
 // Lautstärke folgt den Einstellungen; Browser erlauben Ton erst nach der ersten Berührung

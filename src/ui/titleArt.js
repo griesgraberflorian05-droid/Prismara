@@ -6,6 +6,10 @@
 // vorn der Held am Lagerfeuer zwischen Blumen und den Teilchen der Welt. 384×216 Pixel, ohne
 // Glättung bildschirmfüllend hochskaliert.
 import { prefersReducedMotion } from '../settings.js';
+import { getSkin, getLook, isDinnerbone } from '../game/skins.js';
+import { play } from '../game/sound.js';
+import { hat as currentHat } from '../game/inventory.js';
+import { PixelRenderer } from '../game/pixelRender.js';
 
 const W = 384, H = 216;
 const hash = (x, y, k = 0) => {
@@ -14,6 +18,7 @@ const hash = (x, y, k = 0) => {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 };
 const BAND = 12; // Höhe eines Himmelsbands
+const painter = Object.create(PixelRenderer.prototype); // leiht sich die Hut-Zeichnung des Spiels
 
 // Stil je Welt: Himmel (11 Bänder), Himmelslicht, Wolken [Körper, Saum, Oberkante], ferne Berge
 // [Farbe, Hang, Kappe|null], mittlere Kette, See (4 Tiefen) + Glitzer, Hügel, Baumart + Farben,
@@ -269,13 +274,51 @@ function particles(g, S, t) {
   g.restore();
 }
 
+// Fertige Ebenen je Welt zwischenspeichern: Weltwechsel und Vorschaubilder sind so sofort da
+const cache = new Map();
+function layers(id) {
+  const key = TITLE_STYLES[id] ? id : 'default';
+  if (!cache.has(key)) cache.set(key, { back: drawBack(TITLE_STYLES[key]), front: drawFront(TITLE_STYLES[key]) });
+  return cache.get(key);
+}
+
+/** Standbild einer Welt für die Weltenauswahl. */
+export function titleThumb(canvas, id) {
+  const { back, front } = layers(id);
+  canvas.width = W; canvas.height = H;
+  const g = canvas.getContext('2d');
+  g.drawImage(back, 0, 0); g.drawImage(front, 0, 0);
+}
+
 /** Startet das Titelbild in canvas, im Stil der Welt worldId. Liefert { stop, setWorld }. */
 export function mountTitleArt(canvas, worldId = 'default') {
   let S = TITLE_STYLES[worldId] || TITLE_STYLES.default;
-  let back = drawBack(S), front = drawFront(S);
+  let { back, front } = layers(worldId);
   const [buf, g] = layer();
   const ctx = canvas.getContext('2d');
-  let run = true;
+  let run = true, fade = null;
+  // Streicheln: Held am Lagerfeuer antippen oder überstreichen, dann freut er sich und Herzen steigen auf
+  const HERO = { x: 217, y: 186 }, hearts = [];
+  let happyUntil = 0, lastHeart = 0, lastPurr = 0;
+  const overHero = (e) => {
+    const r = canvas.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+    const cw = canvas.width, ch = canvas.height, s = Math.max(1, Math.ceil(Math.max(cw / W, ch / H)));
+    const x = ((e.clientX - r.left) * dpr - Math.round((cw - W * s) * 0.65)) / s, y = ((e.clientY - r.top) * dpr - (ch - H * s)) / s;
+    return x > HERO.x - 8 && x < HERO.x + 16 && y > HERO.y - 10 && y < HERO.y + 18;
+  };
+  const stage = canvas.parentElement;
+  const onPoint = (e) => {
+    if (e.target.closest('a, button, input, .parch')) { stage.style.cursor = ''; return; }
+    const hit = overHero(e);
+    stage.style.cursor = hit ? 'grab' : '';
+    if (!hit || (e.type === 'pointermove' && e.pointerType === 'mouse' && !e.buttons)) return;
+    const now = performance.now();
+    happyUntil = now + 900;
+    if (now - lastHeart > 160) { lastHeart = now; hearts.push({ x: HERO.x + (now % 13) - 4, t0: now }); }
+    if (now - lastPurr > 420) { lastPurr = now; play('target', 2 + Math.floor(now / 7) % 5); }
+  };
+  stage.addEventListener('pointerdown', onPoint);
+  stage.addEventListener('pointermove', onPoint);
   function frame(tms) {
     if (!run) return;
     const t = prefersReducedMotion() ? 0 : tms;
@@ -366,14 +409,31 @@ export function mountTitleArt(canvas, worldId = 'default') {
     if (S.noFire) { R(g, fx - 4, fy - 1, 8, 4, '#ffd6c0'); R(g, fx - 3, fy - 2, 6, 1, '#ffe9de'); R(g, fx - 1, fy, 2, 2, '#bff8ff'); }
     g.globalAlpha = 1;
     // Held sitzt auf dem Baumstamm, Laterne neben sich, blinzelt und wärmt sich
-    const hx = 217, hy = 186, blink = Math.floor(t / 180) % 24 === 0;
+    const happy = tms < happyUntil;
+    const hx = HERO.x, hy = HERO.y - (happy && Math.floor(tms / 110) % 2 ? 1 : 0), blink = happy || Math.floor(t / 180) % 24 === 0;
+    // Aussehen aus dem Held-Menü: Umhang, Hautton, Laterne, Hut
+    const skin = getSkin(), look = getLook(), body = skin.color.stops[Math.min(1, skin.color.stops.length - 1)], light = skin.color.stops[0];
+    const face = look.tone.color, lamp = look.lantern;
+    g.save();
+    if (isDinnerbone()) { g.translate(0, (hy + 6) * 2); g.scale(1, -1); }
     R(g, hx - 1, hy + 2, 10, 10, '#120a1c');
-    R(g, hx, hy + 3, 8, 8, '#2f6f86'); R(g, hx, hy + 3, 2, 8, '#4fa3c0'); R(g, hx + 1, hy, 6, 5, '#2f6f86'); R(g, hx + 2, hy - 1, 4, 1, '#2f6f86');
-    R(g, hx + 3, hy + 2, 4, 3, '#f2c8a0'); if (!blink) { R(g, hx + 4, hy + 3, 1, 1, '#120a1c'); R(g, hx + 6, hy + 3, 1, 1, '#120a1c'); }
-    R(g, hx + 7, hy + 7, 4, 2, '#2f6f86'); R(g, hx + 10, hy + 7, 2, 2, '#f2c8a0');
+    R(g, hx, hy + 3, 8, 8, body); R(g, hx, hy + 3, 2, 8, light); R(g, hx + 1, hy, 6, 5, body); R(g, hx + 2, hy - 1, 4, 1, body);
+    R(g, hx + 3, hy + 2, 4, 3, face); if (!blink) { R(g, hx + 4, hy + 3, 1, 1, '#120a1c'); R(g, hx + 6, hy + 3, 1, 1, '#120a1c'); }
+    R(g, hx + 7, hy + 7, 4, 2, body); R(g, hx + 10, hy + 7, 2, 2, face);
     R(g, hx + 1, hy + 11, 3, 2, '#3a2414'); R(g, hx + 5, hy + 11, 3, 2, '#3a2414');
-    R(g, hx - 6, hy + 6, 4, 6, '#6b4426'); R(g, hx - 5, hy + 7, 2, 4, '#ffcf6b'); R(g, hx - 5, hy + 5, 2, 1, '#3a2414');
-    glow(hx - 4, hy + 9, 14, 'rgba(255,210,120,A)', 0.3);
+    R(g, hx - 6, hy + 6, 4, 6, '#6b4426'); R(g, hx - 5, hy + 7, 2, 4, lamp.color); R(g, hx - 5, hy + 5, 2, 1, '#3a2414');
+    const n = parseInt(lamp.glow.slice(1), 16);
+    glow(hx - 4, hy + 9, 14, `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},A)`, 0.3);
+    painter.ctx = g; painter.r = (x, y, w, h, c) => R(g, x, y, w, h, c); painter.hat(currentHat(), hx, hy, t);
+    g.restore();
+    for (let i = hearts.length - 1; i >= 0; i--) {
+      const h = hearts[i], k = (tms - h.t0) / 1100;
+      if (k >= 1) { hearts.splice(i, 1); continue; }
+      const x = Math.round(h.x + Math.sin(k * 7) * 3), y = Math.round(HERO.y - 8 - k * 26);
+      g.globalAlpha = 1 - k * k;
+      R(g, x, y, 2, 1, '#ff5a7a'); R(g, x + 3, y, 2, 1, '#ff5a7a'); R(g, x, y + 1, 5, 2, '#ff5a7a'); R(g, x + 1, y + 3, 3, 1, '#ff5a7a'); R(g, x + 2, y + 4, 1, 1, '#ff5a7a');
+    }
+    g.globalAlpha = 1;
     // Blumen im Vordergrund wiegen sich
     for (let i = 0; i < 26; i++) {
       const x = Math.floor(hash(i, 91) * W);
@@ -384,6 +444,14 @@ export function mountTitleArt(canvas, worldId = 'default') {
       R(g, x, base - h, 1, h, '#3f8a3a'); R(g, x + sway - 1, base - h - 1, 3, 1, col); R(g, x + sway, base - h - 2, 1, 3, col); R(g, x + sway, base - h - 1, 1, 1, '#ffd166');
     }
     particles(g, S, t);
+    // Weltwechsel: das alte Bild löst sich Pixelblock für Pixelblock in Wechselrichtung auf
+    if (fade) {
+      const k = (tms - fade.t0) / 620;
+      if (k >= 1 || t === 0) fade = null;
+      else for (let y = 0; y < H; y += 8) for (let x = 0; x < W; x += 8) {
+        if (k < (fade.dir > 0 ? 1 - x / W : x / W) * 0.72 + hash(x, y, 300) * 0.28) g.drawImage(fade.img, x, y, 8, 8, x, y, 8, 8);
+      }
+    }
     g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
     // bildschirmfüllend, unten bündig
     const dpr = devicePixelRatio || 1;
@@ -396,7 +464,13 @@ export function mountTitleArt(canvas, worldId = 'default') {
   }
   requestAnimationFrame(frame);
   return {
-    stop() { run = false; },
-    setWorld(id) { S = TITLE_STYLES[id] || TITLE_STYLES.default; back = drawBack(S); front = drawFront(S); },
+    stop() { run = false; stage.removeEventListener('pointerdown', onPoint); stage.removeEventListener('pointermove', onPoint); stage.style.cursor = ''; },
+    setWorld(id, dir = 1) {
+      const next = TITLE_STYLES[id] || TITLE_STYLES.default;
+      if (next === S) return;
+      const [img, ig] = layer(); ig.drawImage(buf, 0, 0); // aktuelles Bild festhalten
+      fade = { img, dir, t0: performance.now() };
+      S = next; ({ back, front } = layers(id));
+    },
   };
 }

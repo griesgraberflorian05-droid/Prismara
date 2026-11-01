@@ -2247,6 +2247,168 @@
       "status": "built",
       "summary": "Vollansicht füllt das Fenster, Werkzeuge und Legende klappen auf Wunsch auf, höchstens 12 Schilder in der Übersicht, mehr beim Zoomen.",
       "area": "src/lab/lab.css"
+    },
+    {
+      "id": "feat-worldselect",
+      "type": "improvement",
+      "label": "Neue Weltenauswahl",
+      "step": 21,
+      "status": "built",
+      "summary": "Wischbare Leiste mit Panorama-Kacheln jeder Welt, Infotafel mit Betreten; Hintergrund, Farben und Musik wechseln mit.",
+      "area": "src/ui/menu.js"
+    },
+    {
+      "id": "feat-volumes",
+      "type": "improvement",
+      "label": "Musik und Effekte getrennt",
+      "step": 21,
+      "status": "built",
+      "summary": "Zwei Regler in Einstellungen und Pausenmenü, eigener Stumm-Zustand; Musik läuft gedämpft durch einen Tiefpass.",
+      "area": "src/ui/volume.js"
+    },
+    {
+      "id": "feat-admindebug",
+      "type": "improvement",
+      "label": "Admin-Debug",
+      "step": 21,
+      "status": "built",
+      "summary": "Rotes Logo, Debug-Fach im Pausenmenü (Tür öffnen, Raum lösen, Nächster Zug, Raum wechseln, Vorhang testen), unbegrenzte Kraft, im Code-Menü Münzen, Update-Test und alle Vorhänge.",
+      "area": "src/adventure/adventure.js"
+    },
+    {
+      "id": "feat-pxslider",
+      "type": "improvement",
+      "label": "Regler im Spiel-Design",
+      "step": 21,
+      "status": "built",
+      "summary": "Lautstärke-Regler als Holzleiste mit Füllung in der Weltfarbe und Goldschieber, Pixel-Symbole statt Emojis.",
+      "area": "src/ui/volume.js"
+    },
+    {
+      "id": "feat-wheelworlds",
+      "type": "improvement",
+      "label": "Mausrad durch die Welten",
+      "step": 21,
+      "status": "built",
+      "summary": "Mausrad blättert die Weltenauswahl durch, gedrosselt auf einen Schritt je Rastung.",
+      "area": "src/ui/menu.js"
+    },
+    {
+      "id": "feat-worldfade",
+      "type": "improvement",
+      "label": "Pixel-Weltwechsel",
+      "step": 21,
+      "status": "built",
+      "summary": "Das Panorama löst sich in Blättererrichtung Pixelblock für Pixelblock auf (rund 0,6 s), die Infotafel gleitet nach. Gemessen: 0 auf 97 % stetig.",
+      "area": "src/ui/titleArt.js"
+    },
+    {
+      "id": "feat-titlehero",
+      "type": "improvement",
+      "label": "Held im Titelbild",
+      "step": 21,
+      "status": "built",
+      "summary": "Der Held am Lagerfeuer übernimmt Umhang, Hautton, Laterne und Hut aus dem Held-Menü.",
+      "area": "src/ui/titleArt.js"
+    },
+    {
+      "id": "feat-nocontext",
+      "type": "improvement",
+      "label": "Rechtsklick gesperrt",
+      "step": 21,
+      "status": "built",
+      "summary": "Kein Kontextmenü im Spiel; Eingabefelder behalten es.",
+      "area": "src/main.js"
+    },
+    {
+      "id": "feat-wallstop",
+      "type": "improvement",
+      "label": "Held stoppt an der Wand",
+      "step": 21,
+      "status": "built",
+      "summary": "Ein blockierter Schritt löscht die gehaltene Richtung, weiter geht es erst nach neuem Druck.",
+      "area": "src/adventure/adventure.js"
+    },
+    {
+      "id": "feat-halloween",
+      "type": "improvement",
+      "label": "Code halloween",
+      "step": 21,
+      "status": "built",
+      "summary": "Geheimer Halloween-Umhang, vier Sekunden später Kürbis-Jumpscare mit Schrei.",
+      "area": "src/ui/jumpscare.js"
+    },
+    {
+      "id": "feat-onereset",
+      "type": "improvement",
+      "label": "Ein Zurücksetz-Knopf",
+      "step": 21,
+      "status": "built",
+      "summary": "Unten rechts nur noch „Raum neu“; Drehen und Zug zurück sind aus der Leiste und dem Pausenmenü raus. Eingesammelte Münzen bleiben weg.",
+      "area": "src/adventure/adventure.js"
+    },
+    {
+      "id": "feat-menu3",
+      "type": "improvement",
+      "label": "Hauptmenü neu",
+      "step": 21,
+      "status": "built",
+      "summary": "Freies Logo, großer Spielen-Knopf, Modi als Kacheln, Pixel-Symbole statt Emojis, Handy quer ohne Scrollen.",
+      "area": "src/ui/menu.js"
+    },
+    {
+      "id": "feat-resetall",
+      "type": "improvement",
+      "label": "Code resetall",
+      "step": 21,
+      "status": "built",
+      "summary": "Setzt nach Rückfrage das ganze Spiel auf den Anfang zurück.",
+      "area": "src/game/codes.js"
+    },
+    {
+      "id": "feat-dinnerbone",
+      "type": "improvement",
+      "label": "Code dinnerbone",
+      "step": 21,
+      "status": "built",
+      "summary": "Stellt den Helden im Spiel und im Menü auf den Kopf.",
+      "area": "src/game/codes.js"
+    },
+    {
+      "id": "feat-mycodes",
+      "type": "improvement",
+      "label": "Meine Codes",
+      "step": 21,
+      "status": "built",
+      "summary": "Seite, auf der jede eingelöste Code-Funktion einzeln an- und ausgeht.",
+      "area": "src/ui/menu.js"
+    },
+    {
+      "id": "feat-menubg-last",
+      "type": "improvement",
+      "label": "Menü folgt der Welt",
+      "step": 21,
+      "status": "built",
+      "summary": "Beim Betreten einer Welt zeigt das Hauptmenü sofort deren Hintergrund; alle Welten frei: Anpassung im Held-Menü.",
+      "area": "src/ui/menu.js"
+    },
+    {
+      "id": "feat-pethero",
+      "type": "improvement",
+      "label": "Held streicheln",
+      "step": 21,
+      "status": "built",
+      "summary": "Antippen oder Überstreichen des Helden am Lagerfeuer lässt Herzen aufsteigen.",
+      "area": "src/ui/titleArt.js"
+    },
+    {
+      "id": "feat-roomhud",
+      "type": "improvement",
+      "label": "Raum-HUD neu",
+      "step": 21,
+      "status": "built",
+      "summary": "Die Anzeigen im Raum nutzen den Stil der Menü-Leiste mit Pixel-Symbolen.",
+      "area": "src/styles.css"
     }
   ],
   "edges": [
@@ -4449,7 +4611,112 @@
       "from": "fix-brainlayout",
       "to": "feat-brain3d",
       "rel": "verbessert"
+    },
+    {
+      "from": "feat-worldselect",
+      "to": "feat-worldcards",
+      "rel": "ersetzt"
+    },
+    {
+      "from": "feat-volumes",
+      "to": "feat-music",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-admindebug",
+      "to": "feat-admincode",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-pxslider",
+      "to": "feat-volumes",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-wheelworlds",
+      "to": "feat-worldselect",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-worldfade",
+      "to": "feat-worldselect",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-worldfade",
+      "to": "feat-worldbg",
+      "rel": "nutzt"
+    },
+    {
+      "from": "feat-titlehero",
+      "to": "feat-looks",
+      "rel": "nutzt"
+    },
+    {
+      "from": "feat-nocontext",
+      "to": "feat-menu2",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-wallstop",
+      "to": "feat-advrooms",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-halloween",
+      "to": "feat-admincode",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-halloween",
+      "to": "feat-kit",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-onereset",
+      "to": "feat-advrooms",
+      "rel": "verbessert"
+    },
+    {
+      "from": "feat-menu3",
+      "to": "feat-menu2",
+      "rel": "ersetzt"
+    },
+    {
+      "from": "feat-levelselect",
+      "to": "feat-menu3",
+      "rel": "nutzt"
+    },
+    {
+      "from": "feat-resetall",
+      "to": "feat-admincode",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-dinnerbone",
+      "to": "feat-admincode",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-mycodes",
+      "to": "feat-admincode",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-menubg-last",
+      "to": "feat-worldbg",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-pethero",
+      "to": "feat-heromenu",
+      "rel": "erweitert"
+    },
+    {
+      "from": "feat-roomhud",
+      "to": "feat-menu3",
+      "rel": "erweitert"
     }
   ],
-  "updated": "2026-11-01 22:36"
+  "updated": "2026-11-01 23:09"
 }

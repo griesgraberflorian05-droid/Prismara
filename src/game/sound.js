@@ -22,10 +22,12 @@ function audio() {
 /** Gemeinsamer Audio-Kontext (auch für die Musik). */
 export const audioContext = () => audio();
 
-export const isMuted = () => (getSettings().sfxVolume ?? 0.7) <= 0;
+// Stumm-Knopf (Musik und Effekte); die Lautstärken selbst bleiben dabei erhalten
+if (getSettings().sfxVolume === 0 && getSettings().muted === undefined) updateSettings({ muted: true, sfxVolume: 0.7 }); // alter Stumm-Zustand
+export const isMuted = () => !!getSettings().muted;
+const silent = () => isMuted() || (getSettings().sfxVolume ?? 0.7) <= 0;
 export function toggleMute() {
-  const v = getSettings().sfxVolume ?? 0.7;
-  updateSettings({ sfxVolume: v > 0 ? 0 : 0.7, lastVolume: v > 0 ? v : undefined });
+  updateSettings({ muted: !isMuted() });
   if (!isMuted()) play('ui');
   return isMuted();
 }
@@ -33,7 +35,7 @@ export function toggleMute() {
 /** Ein Ton: Oszillator mit Hüllkurve, optional Tonhöhen-Gleiten. */
 function tone(freq, { type = 'sine', dur = 0.12, vol = 0.25, to = null, delay = 0, attack = 0.005 } = {}) {
   const a = audio();
-  if (!a || isMuted()) return;
+  if (!a || silent()) return;
   const t0 = a.currentTime + delay;
   const osc = a.createOscillator();
   const g = a.createGain();
@@ -51,7 +53,7 @@ function tone(freq, { type = 'sine', dur = 0.12, vol = 0.25, to = null, delay = 
 /** Rauschen (für Rutschen und Schieben), gefiltert. */
 function noise({ dur = 0.15, vol = 0.15, freq = 800, q = 1, delay = 0 } = {}) {
   const a = audio();
-  if (!a || isMuted()) return;
+  if (!a || silent()) return;
   const t0 = a.currentTime + delay;
   const buf = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate);
   const d = buf.getChannelData(0);
@@ -68,6 +70,36 @@ function noise({ dur = 0.15, vol = 0.15, freq = 800, q = 1, delay = 0 } = {}) {
 
 // Tonhöhe je Farbe (Rot tief, Grün Mitte, Blau hoch) – Mischfarben spielen einen Akkord.
 const COLOR_NOTES = { 1: 523.25, 2: 659.25, 4: 783.99 };
+
+/** Schrei für den Jumpscare: verstimmte Sägezähne fallen ab, darüber Rauschen. */
+export function scream(sec = 1.3) {
+  if (silent()) return;
+  const c = audio();
+  if (!c) return;
+  const t = c.currentTime;
+  const out = c.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
+  out.gain.setValueAtTime(0.5, t + sec * 0.6);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + sec);
+  out.connect(master);
+  for (const f of [620, 655, 930, 1390]) {
+    const o = c.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 0.34, t + sec);
+    const g = c.createGain(); g.gain.value = 0.16;
+    o.connect(g); g.connect(out);
+    o.start(t); o.stop(t + sec);
+  }
+  const noise = c.createBuffer(1, c.sampleRate * sec, c.sampleRate);
+  const data = noise.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = noise;
+  const g = c.createGain(); g.gain.value = 0.22;
+  src.connect(g); g.connect(out);
+  src.start(t);
+}
 
 export function play(name, arg) {
   switch (name) {

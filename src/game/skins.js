@@ -14,7 +14,17 @@ export const SKIN_COLORS = [
   { id: 'midnight', name: 'Mitternacht', stops: ['#c8d4f0', '#2e3f6e', '#1a2444'], glow: '#c8d4f0', stars: 3 },
   { id: 'plum', name: 'Pflaume', stops: ['#f0d8f0', '#7a3f7a', '#4a2448'], glow: '#f0d8f0', stars: 9 },
   { id: 'prism', name: 'Regenbogen', stops: ['#ff4d6d', '#ffd166', '#3ddc97', '#4da3ff', '#b18cff'], glow: '#ffffff', stars: 45 },
+  // Nur über den Code „halloween“, bis dahin in der Auswahl unsichtbar
+  { id: 'halloween', name: 'Halloween', stops: ['#2a1a30', '#e8701a', '#7a2f0a'], glow: '#ff8a2a', stars: 0, secret: true },
 ];
+export const hasHalloween = () => !!getSettings().halloween;
+export function setHalloween(on) {
+  updateSettings({ halloween: on });
+  if (on) setSkin({ color: 'halloween' });
+  else if (getSkin().color.id === 'halloween') setSkin({ color: 'gold' });
+}
+export const isDinnerbone = () => !!getSettings().dinnerbone;
+export const setDinnerbone = (on) => updateSettings({ dinnerbone: on });
 
 export const SKIN_SYMBOLS = [
   { id: 'prism', name: 'Prisma', stars: 0 },

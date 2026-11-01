@@ -3,14 +3,18 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween } from '../game/skins.js';
+import { redeem, usedCodes, toggleCode, resetAll } from '../game/codes.js';
+import { jumpscare } from './jumpscare.js';
+import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
-import { setMusic, musicOn, toggleMusic } from '../game/music.js';
+import { setMusic } from '../game/music.js';
+import { volumeHtml, bindVolume } from './volume.js';
 import { WORLDS, worldForChapter, CHAPTER_WORLD } from '../game/worlds.js';
 import { todayKey } from '../game/daily.js';
 import { tutorialSeen, fragmentCount } from '../adventure/adventure.js';
-import { ITEMS, HATS, getInv, buy, buyHat, wearHat, hat, ownsHat, crystalsSpent } from '../game/inventory.js';
+import { ITEMS, HATS, getInv, addCoins, buy, buyHat, wearHat, hat, ownsHat, crystalsSpent } from '../game/inventory.js';
 import { PixelRenderer } from '../game/pixelRender.js';
 import { MODES, isUnlocked, solvedCount, takeNewUnlocks, lockedHtml } from '../game/unlocks.js';
 
@@ -23,10 +27,11 @@ function drawHatPreview(canvas, id) {
   pr.ctx.restore();
 }
 import { roomThumb } from './menuScene.js';
-import { mountTitleArt } from './titleArt.js';
+import { mountTitleArt, titleThumb } from './titleArt.js';
 import { logoCanvas } from './logo.js';
-import { isAdmin, setAdmin, redeem } from '../game/admin.js';
-import { checkUpdate, applyUpdate } from './updater.js';
+import { isAdmin } from '../game/admin.js';
+import { checkUpdate, applyUpdate, showUpdate } from './updater.js';
+import { transitionTo, CURTAINS } from './transition.js';
 import { VERSION, LABEL } from '../version.js';
 
 // Schwierigkeit einer Welt: 1–5 Punkte nach dem höchsten Zugziel (Meisterprüfung) der Welt.
@@ -59,8 +64,8 @@ function chapterInfo(ci) {
 }
 const currentChapter = () => { const t = totals(); return t.firstOpen < 0 ? 0 : Math.max(0, CHAPTERS.findIndex((c) => c.levels.includes(PUSH_LEVELS[t.firstOpen].id))); };
 
-/** Menü-Hintergrund: selbst gewählte Welt oder (auto) die aktuelle. */
-const menuBackground = () => { const b = getSettings().menuBg; return b && WORLDS[b] ? b : themeOf(currentChapter()); };
+/** Menü-Hintergrund: selbst gewählte Welt, sonst die zuletzt betretene, sonst die aktuelle. */
+const menuBackground = () => { const { menuBg, lastWorld } = getSettings(); return [menuBg, lastWorld].find((w) => WORLDS[w]) || themeOf(currentChapter()); };
 
 export function mountMenu(root, params = []) {
   const page = params[0] || 'main';
@@ -69,7 +74,8 @@ export function mountMenu(root, params = []) {
   const startCh = page === 'chapter' || page === 'chapters' ? Math.max(0, parseInt(params[1] ?? currentChapter(), 10) || 0) : currentChapter();
   // Welt-Seiten zeigen einen lebendigen Raum der Welt, alle anderen das eigene Titelbild
   const worldPage = page === 'chapter' || page === 'chapters';
-  document.body.dataset.world = themeOf(worldPage ? startCh : currentChapter()); // Oberflächenfarben der Welt
+  if (page === 'chapter') updateSettings({ lastWorld: themeOf(startCh) }); // Welt betreten: Hauptmenü zeigt sie ab sofort
+  document.body.dataset.world = worldPage ? themeOf(startCh) : menuBackground(); // Oberflächenfarben der Welt
   setMusic(worldPage ? themeOf(startCh) : 'menu');
   // Panorama der Welt: auf Welten-Seiten die gezeigte, sonst die aktuelle – oder das selbst gewählte
   const scene = mountTitleArt(root.querySelector('.tm-scene'), worldPage ? themeOf(startCh) : menuBackground());
@@ -84,10 +90,11 @@ export function mountMenu(root, params = []) {
   else if (page === 'shop') shopPage(ui);
   else if (page === 'settings') settingsPage(ui);
   else if (page === 'code') codePage(ui);
-  else { ui.classList.add('tm-main'); mainPage(ui); }
+  else if (page === 'codes') myCodesPage(ui);
+  else { ui.classList.add('tm-main', 'mm'); mainPage(ui); }
 
   const onKey = (e) => {
-    if (e.key === 'Escape' && page !== 'main') location.hash = page === 'chapter' ? `#/menu/chapters/${params[1] || 0}` : '#/menu';
+    if (e.key === 'Escape' && page !== 'main') location.hash = page === 'chapter' ? `#/menu/chapters/${params[1] || 0}` : page === 'codes' ? '#/menu/code' : '#/menu';
   };
   window.addEventListener('keydown', onKey);
   return () => { cleanup(); scene.stop(); window.removeEventListener('keydown', onKey); };
@@ -107,46 +114,47 @@ function mainPage(el) {
   const world = worldForChapter(info.ch.id);
   const pct = Math.round((info.solved / info.idx.length) * 100);
   const newModes = takeNewUnlocks(), freshModes = new Set(newModes.map((m) => m.id));
+  const MODE_ICON = { worlds: 'map', kit: 'hero', daily: 'cal', shop: 'cart' };
   el.innerHTML = `
-    ${newModes.length ? `<div class="tm-unlock parch" role="status">🔓 Neu freigeschaltet: <b>${newModes.map((m) => `${m.icon} ${esc(m.name)}`).join(', ')}</b></div>` : ''}
-    <header class="tm-sign" aria-label="Prismara"><i class="rope l"></i><i class="rope r"></i>
-      <h1 class="logo-h1"><span class="sr">PRISMARA</span></h1><p>Ein Licht-Abenteuer</p></header>
-    ${fresh ? '' : `<a class="tm-journey parch" href="#/menu/chapter/${ci}" data-world="${esc(wid || '')}">
-      <span class="tj-icon" aria-hidden="true">${world?.icon || info.ch.icon}</span>
-      <span class="tj-body"><span class="tj-kicker">WELT ${ci + 1} VON ${CHAPTERS.length}</span><span class="tj-name">${esc(world?.name || info.ch.name)}</span>
-        <span class="tj-bar" aria-label="${info.solved} von ${info.idx.length} Räumen"><i style="width:${pct}%"></i></span>
-        <span class="tj-meta">${info.solved}/${info.idx.length} Räume · ★ ${info.stars}/${info.idx.length * 3}${next ? ` · als Nächstes: ${esc(next.name)}` : ''}</span></span></a>`}
-    <nav class="tm-menu tm-board" aria-label="Hauptmenü">
-      <a class="wbtn big" id="play" href="${fresh ? '#/adv/tutorial' : next ? `#/adv/${t.firstOpen}` : '#/menu/chapters'}">
-        ▶ ${fresh ? 'ABENTEUER BEGINNEN' : 'SPIELEN'}<small>${fresh ? 'Mit dem Lehrzimmer' : next ? `Weiter: ${esc(next.name)}` : 'Alle Räume geschafft!'}</small></a>
-      <div class="tm-grid">${MODES.map((m) => {
+    <ul class="mm-stats" aria-label="Fortschritt">
+      <li title="Räume">${icon('door')}<b>${t.solved}</b>/${PUSH_LEVELS.length}</li>
+      <li title="Sterne">${icon('star')}<b>${t.stars}</b>/${t.maxStars}</li>
+      <li title="Münzen">${icon('coin')}<b>${getInv().coins}</b></li>
+      <li title="Kristalle">${icon('gem')}<b>${fragmentCount()}</b></li>
+    </ul>
+    <div class="mm-a">
+      <header class="mm-logo" aria-label="Prismara"><h1 class="logo-h1"><span class="sr">PRISMARA</span></h1><p>${isAdmin() ? 'ADMIN-MODUS' : 'Ein Licht-Abenteuer'}</p></header>
+      <a class="wbtn big mm-play" id="play" href="${fresh ? '#/adv/tutorial' : next ? `#/adv/${t.firstOpen}` : '#/menu/chapters'}">
+        <span class="mm-play-ic">${icon('play')}</span><span class="mm-play-txt"><b>${fresh ? 'ABENTEUER BEGINNEN' : 'SPIELEN'}</b><small>${fresh ? 'Mit dem Lehrzimmer' : next ? `Weiter: ${esc(next.name)}` : 'Alle Räume geschafft!'}</small></span></a>
+    </div>
+    <div class="mm-b">
+      ${newModes.length ? `<div class="tm-unlock parch" role="status">Neu freigeschaltet: <b>${newModes.map((m) => esc(m.name)).join(', ')}</b></div>` : ''}
+      ${fresh ? '' : `<a class="tm-journey parch" href="#/menu/chapter/${ci}" data-world="${esc(wid || '')}">
+        <span class="tj-icon" aria-hidden="true">${world?.icon || info.ch.icon}</span>
+        <span class="tj-body"><span class="tj-kicker">WELT ${ci + 1} VON ${CHAPTERS.length}</span><span class="tj-name">${esc(world?.name || info.ch.name)}</span>
+          <span class="tj-bar" aria-label="${info.solved} von ${info.idx.length} Räumen"><i style="width:${pct}%"></i></span></span></a>`}
+      <nav class="mm-tiles" aria-label="Hauptmenü">${MODES.map((m) => {
         const href = { worlds: `#/menu/chapters/${currentChapter()}`, kit: '#/menu/kit', daily: '#/daily', shop: '#/menu/shop' }[m.id];
-        if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn locked" aria-disabled="true" title="${esc(m.info)}">🔒 ${m.name}<small>ab ${m.need} Räumen</small></span>`;
+        if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn mm-tile locked" aria-disabled="true" title="${esc(m.info)}">${icon('lock')}<span>${m.name}</span><small>ab ${m.need} Räumen</small></span>`;
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
-        return `<a class="wbtn${glow ? ' glow' : ''}" href="${href}">${m.icon} ${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</a>`;
-      }).join('')}
-        <button class="wbtn" id="upd" type="button">🔄 Aktualisieren</button>
-        <a class="wbtn" href="#/menu/code">🔑 Code</a>
-        <a class="wbtn" href="#/menu/settings">⚙ Einstellungen</a>
-        <a class="wbtn sm tm-lab" href="#/lab">🧠 Gehirn Lab</a>
+        return `<a class="wbtn mm-tile${glow ? ' glow' : ''}" href="${href}">${icon(MODE_ICON[m.id])}<span>${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</span></a>`;
+      }).join('')}</nav>
+      <div class="mm-tools">
+        <a class="wbtn sm" href="#/menu/code">${icon('key')}<span>Code</span></a>
+        <a class="wbtn sm" href="#/menu/settings">${icon('gear')}<span>Optionen</span></a>
+        <button class="wbtn sm" id="upd" type="button">${icon('reset')}<span>Update</span></button>
+        <a class="wbtn sm" href="#/lab">${icon('brain')}<span>Lab</span></a>
       </div>
-    </nav>
-    <footer class="tm-stats parch">
-      <span>🚪 <b>${t.solved}</b>/${PUSH_LEVELS.length} Räume</span>
-      <span>★ <b>${t.stars}</b>/${t.maxStars}</span>
-      <span>🗺 <b>${CHAPTERS.filter((_, i) => chapterInfo(i).done).length}</b>/${CHAPTERS.length} Welten</span>
-      <span>🪙 <b>${getInv().coins}</b></span>
-      <span>💎 <b>${fragmentCount()}</b></span>
-    </footer>
-    <p class="tm-version">Version ${VERSION === 'dev' ? 'lokal' : LABEL}</p>`;
-  const logo = logoCanvas(); logo.className = 'logo'; logo.setAttribute('aria-hidden', 'true');
+      <p class="tm-version">Version ${VERSION === 'dev' ? 'lokal' : LABEL}</p>
+    </div>`;
+  const logo = logoCanvas(); logo.className = isAdmin() ? 'logo admin' : 'logo'; // Admin-Modus: rotes Logo logo.setAttribute('aria-hidden', 'true');
   el.querySelector('.logo-h1').prepend(logo);
   el.querySelector('#upd').addEventListener('click', async (e) => {
-    const b = e.currentTarget;
-    if (VERSION === 'dev') { b.textContent = 'Lokale Version'; return; }
+    const b = e.currentTarget.querySelector('span');
+    if (VERSION === 'dev') { b.textContent = 'Lokal'; return; }
     b.textContent = 'Prüfe …';
     const info = await checkUpdate();
-    if (info) { b.textContent = 'Lade Update …'; applyUpdate(info.version); } else { b.textContent = '✓ Neueste Version'; play('ui'); }
+    if (info) { b.textContent = 'Lädt …'; applyUpdate(info.version); } else { b.textContent = '✓ Aktuell'; play('ui'); }
   });
   el.querySelector('#play').focus();
   el.querySelector('#play').addEventListener('click', () => play('play'));
@@ -159,19 +167,63 @@ function codePage(el) {
     el.innerHTML = `
       ${head('#/menu', '🔑 Code')}
       <form class="parch settings code-form">
-        ${on ? '<p class="code-msg">✓ Admin-Modus ist an: Alle Räume, Welten, Modi, Umhänge und Hüte sind frei, alle Gegenstände unendlich.</p>' : `
+        ${on ? '<p class="code-msg">✓ Admin-Modus ist an: Alle Räume, Welten, Modi, Umhänge und Hüte sind frei, alle Gegenstände unendlich.</p>' : ''}
         <label for="code">Code eingeben</label>
         <input id="code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="32">
-        <button class="wbtn big" type="submit">Einlösen</button>`}
+        <button class="wbtn big" type="submit">Einlösen</button>
+        ${usedCodes().length ? '<a class="wbtn" href="#/menu/codes">Meine Codes verwalten</a>' : ''}
         ${msg ? `<p class="code-msg">${esc(msg)}</p>` : ''}
-        ${on ? '<a class="wbtn big" href="#/menu/chapters/0">🗺 Zu den Welten</a><button class="wbtn sm" type="button" id="adm-off">Admin-Modus ausschalten</button>' : ''}
+        ${on ? `<a class="wbtn big" href="#/menu/chapters/0">🗺 Zu den Welten</a>
+        <h3>🐞 Debug</h3>
+        <div class="dbg-grid"><button class="wbtn sm" type="button" data-d="coins">+1000 Münzen</button><button class="wbtn sm" type="button" data-d="update">Update-Nachricht testen</button></div>
+        <h3>Vorhänge testen</h3>
+        <div class="dbg-grid">${Object.keys(CURTAINS).map((id) => `<button class="wbtn sm" type="button" data-curtain="${id}">${esc(WORLDS[id]?.name || 'Lehrzimmer')}</button>`).join('')}</div>` : ''}
       </form>`;
     el.querySelector('form').addEventListener('submit', (e) => {
       e.preventDefault();
-      if (redeem(el.querySelector('#code').value)) { play('chapter'); render(); } else { play('bump'); render('Dieser Code stimmt nicht.'); }
+      const code = redeem(el.querySelector('#code').value);
+      if (code === 'resetall') { play('bump'); confirmReset(); return; }
+      if (!code) { play('bump'); render('Dieser Code stimmt nicht.'); return; }
+      play('chapter');
+      if (code === 'halloween') {
+        render('🎃 Halloween-Umhang freigeschaltet und angelegt!');
+        setTimeout(jumpscare, 4000); // erst in Sicherheit wiegen …
+      } else render(code === 'dinnerbone' ? 'Dein Held steht jetzt auf dem Kopf.' : '');
     });
-    el.querySelector('#adm-off')?.addEventListener('click', () => { setAdmin(false); play('ui'); render(); });
+    el.querySelector('[data-d="coins"]')?.addEventListener('click', () => { addCoins(1000); play('target', 7); render(`🪙 Jetzt ${getInv().coins} Münzen`); });
+    el.querySelector('[data-d="update"]')?.addEventListener('click', () => showUpdate({ version: '0', label: 'Test', note: 'So sieht die Update-Nachricht aus.' }));
+    el.querySelectorAll('[data-curtain]').forEach((b) => b.addEventListener('click', () => transitionTo(location.hash, { from: b.dataset.curtain, to: b.dataset.curtain, label: 'Vorhang-Test' })));
     el.querySelector('#code')?.focus();
+  };
+  // resetall löscht alles und lässt sich nicht rückgängig machen, darum einmal nachfragen
+  const confirmReset = () => {
+    el.innerHTML = `
+      ${head('#/menu', 'Spiel zurücksetzen')}
+      <div class="parch settings code-form">
+        <p class="code-msg">Wirklich alles löschen? Räume, Sterne, Münzen, Gegenstände, Aussehen und Codes sind danach weg.</p>
+        <button class="wbtn" type="button" id="rs-no">Abbrechen</button>
+        <button class="wbtn big rs-yes" type="button" id="rs-yes">Alles löschen</button>
+      </div>`;
+    el.querySelector('#rs-no').addEventListener('click', () => { play('ui'); render(); });
+    el.querySelector('#rs-yes').addEventListener('click', resetAll);
+    el.querySelector('#rs-no').focus();
+  };
+  render();
+}
+
+// ---------- Meine Codes: jede eingelöste Code-Funktion einzeln an- und ausschalten ----------
+function myCodesPage(el) {
+  const render = () => {
+    el.innerHTML = `
+      ${head('#/menu/code', 'Meine Codes')}
+      <div class="parch settings">
+        ${usedCodes().map((c) => `<div class="set-row"><span class="code-row"><b>${esc(c.name)}</b><small>${esc(c.info)}</small></span>
+          <button class="wbtn sm" type="button" data-code="${c.id}" aria-pressed="${c.on()}">${c.on() ? 'AN' : 'AUS'}</button></div>`).join('') || '<p class="code-msg">Du hast noch keine Codes eingelöst.</p>'}
+      </div>`;
+    el.querySelectorAll('[data-code]').forEach((b) => b.addEventListener('click', () => {
+      toggleCode(b.dataset.code); play('ui'); render();
+      el.querySelector(`[data-code="${b.dataset.code}"]`)?.focus();
+    }));
   };
   render();
 }
@@ -183,14 +235,14 @@ function settingsPage(el) {
     el.innerHTML = `
       ${head('#/menu', '⚙ Einstellungen')}
       <div class="parch settings">
-        <div class="set-row"><span>🔊 Ton</span><button class="wbtn sm" id="snd" aria-pressed="${!isMuted()}">${isMuted() ? 'AUS' : 'AN'}</button></div>
-        <div class="set-row"><span>🎵 Musik</span><button class="wbtn sm" id="mus" aria-pressed="${musicOn()}">${musicOn() ? 'AN' : 'AUS'}</button></div>
+        <div class="set-row"><span>🔇 Alles stumm</span><button class="wbtn sm" id="snd" aria-pressed="${isMuted()}">${isMuted() ? 'AN' : 'AUS'}</button></div>
+        <div class="set-row vol-box">${volumeHtml()}</div>
         <div class="set-row"><span>🌀 Bewegung reduzieren</span><button class="wbtn sm" id="motion" aria-pressed="${!!rm}">${rm === null ? 'SYSTEM' : rm ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📖 Tutorial (Lehrzimmer)</span><a class="wbtn sm" href="#/adv/tutorial">NOCHMAL SPIELEN</a></div>
         <div class="set-row"><span>◈ Prismara Lab</span><a class="wbtn sm" href="#/lab">ÖFFNEN</a></div>
       </div>`;
     el.querySelector('#snd').addEventListener('click', () => { toggleMute(); play('ui'); render(); el.querySelector('#snd').focus(); });
-    el.querySelector('#mus').addEventListener('click', () => { toggleMusic(); play('ui'); render(); el.querySelector('#mus').focus(); });
+    bindVolume(el);
     el.querySelector('#motion').addEventListener('click', () => {
       updateSettings({ reducedMotion: rm === null ? true : rm ? false : null }); play('ui'); render(); el.querySelector('#motion').focus();
     });
@@ -198,59 +250,71 @@ function settingsPage(el) {
   render();
 }
 
-// ---------- Welten-Karussell: Bild eines echten Raums + Pergament mit Infos ----------
+// ---------- Weltenauswahl: Leiste mit dem Panorama jeder Welt; Hintergrund, Farben und Musik wechseln mit ----------
 function chaptersPage(el, start, scene) {
   const t = totals();
   let cur = start >= 0 && start < CHAPTERS.length ? start : currentChapter();
+  let musicTimer = 0;
+  el.closest('.tm').classList.add('worlds');
   el.innerHTML = `
     ${head('#/menu', 'Welten', `★ ${t.stars}/${t.maxStars}`)}
-    <div class="carousel">
-      <button class="wbtn arrow" id="prev" aria-label="Vorherige Welt">◀</button>
-      <div class="car-stage" id="stage" aria-live="polite"></div>
-      <button class="wbtn arrow" id="next" aria-label="Nächste Welt">▶</button>
-    </div>
-    <div class="tm-dots" id="dots">${CHAPTERS.map((_, i) => `<button aria-label="Welt ${i + 1}" data-i="${i}"></button>`).join('')}</div>
-    <p class="tm-tip">← → wechseln · Enter öffnen · Esc zurück</p>`;
-  const stage = el.querySelector('#stage');
+    <div class="wsel-info parch" id="info" aria-live="polite"></div>
+    <div class="wstrip" id="strip" role="listbox" aria-label="Welten">${CHAPTERS.map((ch, i) => {
+      const info = chapterInfo(i), w = worldForChapter(ch.id);
+      return `<button class="wtile${info.open ? '' : ' locked'}${info.done ? ' done' : ''}" role="option" data-i="${i}">
+        <canvas></canvas>${info.open ? '' : '<span class="wlock">🔒</span>'}${info.done ? '<span class="wdone">✓</span>' : ''}
+        <span class="wt-name">${esc(w?.name || ch.name)}</span>
+        <span class="wbar"><i style="width:${Math.round((info.solved / info.idx.length) * 100)}%"></i></span></button>`;
+    }).join('')}</div>
+    <p class="tm-tip">Mausrad oder ← → wählen · Enter betreten · Esc zurück</p>`;
+  const strip = el.querySelector('#strip'), tiles = [...strip.children];
+  tiles.forEach((b, i) => titleThumb(b.querySelector('canvas'), themeOf(i)));
 
-  function show(dirClass = '') {
-    const info = chapterInfo(cur);
-    const w = worldForChapter(info.ch.id);
-    const pct = Math.round((info.solved / info.idx.length) * 100);
-    scene.setWorld(themeOf(cur));
-    document.body.dataset.world = themeOf(cur);
-    setMusic(themeOf(cur));
-    stage.innerHTML = `
-      <a class="wcard ${dirClass}${info.open ? '' : ' locked'}${info.done ? ' done' : ''}" ${info.open ? `href="#/menu/chapter/${cur}"` : 'aria-disabled="true"'}>
-        <span class="wframe"><canvas class="wthumb"></canvas>${info.open ? '' : '<span class="wlock">🔒</span>'}</span>
-        <span class="parch wbody">
-          <span class="wnum">WELT ${cur + 1}</span>
-          <span class="wname">${w?.icon || ''} ${esc(w?.name || info.ch.name)}</span>
-          <span class="wsum">${esc(info.ch.summary)}</span>
-          <span class="wrow">Schwierigkeit ${skulls(difficulty(cur))}</span>
-          <span class="wbar"><i style="width:${pct}%"></i></span>
-          <span class="wrow"><b>${info.solved}/${info.idx.length}</b> Räume · <b class="gold">★ ${info.stars}/${info.idx.length * 3}</b>${info.done ? ' · ✓ geschafft' : ''}</span>
-        </span>
-      </a>`;
-    roomThumb(stage.querySelector('.wthumb'), PUSH_LEVELS[info.idx[0]], themeOf(cur), 2);
-    el.querySelectorAll('#dots button').forEach((b, i) => b.classList.toggle('on', i === cur));
-    history.replaceState(null, '', `#/menu/chapters/${cur}`);
-    stage.querySelector('a').focus({ preventScroll: true });
+  function select(i, smooth = true, dir = 0) {
+    cur = i;
+    const info = chapterInfo(i), w = worldForChapter(info.ch.id), id = themeOf(i);
+    scene.setWorld(id, dir || 1);
+    document.body.dataset.world = id;
+    clearTimeout(musicTimer); musicTimer = setTimeout(() => setMusic(id), 350); // beim schnellen Durchblättern nicht jedes Lied anspielen
+    const next = info.idx.find((n) => !isSolved(PUSH_LEVELS[n].id));
+    const infoEl = el.querySelector('#info');
+    infoEl.classList.remove('in-right', 'in-left'); void infoEl.offsetWidth; // Animation neu starten
+    if (dir) infoEl.classList.add(dir > 0 ? 'in-right' : 'in-left');
+    infoEl.innerHTML = `
+      <span class="wnum">WELT ${i + 1} VON ${CHAPTERS.length}</span>
+      <span class="wname">${w?.icon || ''} ${esc(w?.name || info.ch.name)}</span>
+      <span class="wsum">${esc(info.ch.summary)}</span>
+      <span class="wrow">Schwierigkeit ${skulls(difficulty(i))} · <b>${info.solved}/${info.idx.length}</b> Räume · <b class="gold">★ ${info.stars}/${info.idx.length * 3}</b></span>
+      ${info.open ? `<a class="wbtn big" id="enter" href="#/menu/chapter/${i}">▶ ${info.done ? 'Räume ansehen' : next != null ? 'Betreten' : 'Betreten'}</a>` : '<span class="wlocked">🔒 Schaffe zuerst die Welt davor</span>'}`;
+    tiles.forEach((b, n) => { b.classList.toggle('on', n === i); b.setAttribute('aria-selected', String(n === i)); });
+    history.replaceState(null, '', `#/menu/chapters/${i}`);
+    tiles[i].scrollIntoView({ behavior: smooth && !prefersReducedMotion() ? 'smooth' : 'auto', inline: 'center', block: 'nearest' });
   }
-  const go = (d) => { cur = (cur + d + CHAPTERS.length) % CHAPTERS.length; play('swipe'); show(d > 0 ? 'in-right' : 'in-left'); };
-  el.querySelector('#prev').addEventListener('click', () => go(-1));
-  el.querySelector('#next').addEventListener('click', () => go(1));
-  el.querySelector('#dots').addEventListener('click', (e) => { const i = e.target.dataset.i; if (i != null) { const d = +i - cur; cur = +i; show(d >= 0 ? 'in-right' : 'in-left'); } });
+  const go = (d) => { play('swipe'); select((cur + d + CHAPTERS.length) % CHAPTERS.length, true, d); tiles[cur].focus({ preventScroll: true }); };
+  // Mausrad blättert durch die Welten (Hochkant-Handy wischt die Leiste direkt)
+  let wheelSum = 0, wheelAt = 0;
+  el.closest('.tm').addEventListener('wheel', (e) => {
+    e.preventDefault();
+    wheelSum += Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    const now = performance.now();
+    if (Math.abs(wheelSum) < 30 || now - wheelAt < 240) return;
+    wheelAt = now; go(wheelSum > 0 ? 1 : -1); wheelSum = 0;
+  }, { passive: false });
+  strip.addEventListener('click', (e) => {
+    const b = e.target.closest('.wtile'); if (!b) return;
+    const i = +b.dataset.i;
+    if (i === cur && chapterInfo(i).open) location.hash = `#/menu/chapter/${i}`;
+    else { play('swipe'); select(i, true, Math.sign(i - cur)); }
+  });
   const onKey = (e) => {
     if (e.key === 'ArrowRight' || e.key === 'd') { go(1); e.preventDefault(); }
     if (e.key === 'ArrowLeft' || e.key === 'a') { go(-1); e.preventDefault(); }
+    if (e.key === 'Enter' && chapterInfo(cur).open) { location.hash = `#/menu/chapter/${cur}`; e.preventDefault(); }
   };
   window.addEventListener('keydown', onKey);
-  let sx = null;
-  stage.addEventListener('pointerdown', (e) => { sx = e.clientX; });
-  stage.addEventListener('pointerup', (e) => { if (sx != null && Math.abs(e.clientX - sx) > 50) go(e.clientX < sx ? 1 : -1); sx = null; });
-  show();
-  return () => window.removeEventListener('keydown', onKey);
+  select(cur, false);
+  tiles[cur].focus({ preventScroll: true });
+  return () => { clearTimeout(musicTimer); window.removeEventListener('keydown', onKey); };
 }
 
 // ---------- Weltseite: Raumkarten mit Vorschaubild ----------
@@ -259,20 +323,35 @@ function chapterPage(el, ci) {
   const info = chapterInfo(ci);
   const { firstOpen } = totals();
   const w = worldForChapter(info.ch.id);
+  const nextRoom = info.idx.find((i) => !isSolved(PUSH_LEVELS[i].id) && (isAdmin() || i === firstOpen));
+  const pct = Math.round((info.solved / info.idx.length) * 100);
   el.innerHTML = `
-    ${head(`#/menu/chapters/${ci}`, `${w ? `${w.icon} ${esc(w.name)}` : esc(info.ch.name)}`, `★ ${info.stars}/${info.idx.length * 3}`)}
-    <p class="tm-tip">Welt ${ci + 1} · ${esc(info.ch.name)} · Schwierigkeit ${skulls(difficulty(ci))}</p>
-    <ol class="rooms">${info.idx.map((i, k) => {
-      const l = PUSH_LEVELS[i];
-      const solved = isSolved(l.id);
-      const open = isAdmin() || solved || i === firstOpen;
-      const inner = `<span class="rthumb"><canvas data-i="${i}"></canvas>${open ? '' : '<span class="wlock">🔒</span>'}${l.master ? '<span class="rcrown">👑</span>' : ''}</span>
-        <span class="rinfo"><span class="rnum">RAUM ${k + 1}</span><span class="rname">${esc(l.name)}</span>
-        <span class="rstars">${starRow(starsOf(l))}</span><span class="rmeta">Ziel ≤ ${l.par} Züge${solved ? ` · Best ${bestMoves(l.id)}` : ''}</span></span>`;
-      return open
-        ? `<li><a class="room parch${solved ? ' solved' : ' next'}${l.master ? ' master' : ''}" href="#/adv/${i}" style="--k:${k}">${inner}</a></li>`
-        : `<li><span class="room parch locked${l.master ? ' master' : ''}" style="--k:${k}">${inner}</span></li>`;
-    }).join('')}</ol>`;
+    ${head(`#/menu/chapters/${ci}`, `${w ? `${w.icon} ${esc(w.name)}` : esc(info.ch.name)}`, `${icon('coin')} ${getInv().coins}`)}
+    <div class="lv">
+      <aside class="lv-side parch">
+        <span class="wnum">WELT ${ci + 1} VON ${CHAPTERS.length}</span>
+        <span class="lv-name">${esc(info.ch.name)}</span>
+        <span class="lv-row">Schwierigkeit ${skulls(difficulty(ci))}</span>
+        <span class="wbar" aria-label="${info.solved} von ${info.idx.length} Räumen"><i style="width:${pct}%"></i></span>
+        <span class="lv-count"><span>${icon('door')} ${info.solved}/${info.idx.length}</span><span>${icon('star')} ${info.stars}/${info.idx.length * 3}</span></span>
+        ${nextRoom != null ? `<a class="wbtn big lv-go" href="#/adv/${nextRoom}">${icon('play')} WEITER<small>${esc(PUSH_LEVELS[nextRoom].name)}</small></a>` : `<span class="lv-done">${icon('check')} Welt geschafft</span>`}
+      </aside>
+      <ol class="rooms lv-trail">${info.idx.map((i, k) => {
+        const l = PUSH_LEVELS[i];
+        const solved = isSolved(l.id);
+        const open = isAdmin() || solved || i === firstOpen;
+        const inner = `<span class="rthumb"><canvas data-i="${i}"></canvas>
+          <span class="rbadge">${k + 1}</span>
+          ${solved ? `<span class="rstamp">${icon('check')}</span>` : ''}
+          ${open ? '' : `<span class="wlock">${icon('lock')}</span>`}${l.master ? `<span class="rcrown">${icon('crown')}</span>` : ''}
+          ${i === nextRoom ? '<span class="rflag">HIER</span>' : ''}</span>
+          <span class="rinfo"><span class="rname">${esc(l.name)}</span>
+          <span class="rfoot"><span class="rstars">${starRow(starsOf(l))}</span><span class="rmeta">${solved ? `Best ${bestMoves(l.id)} / ${l.par}` : `Ziel ${l.par}`}</span></span></span>`;
+        return open
+          ? `<li><a class="room parch${solved ? ' solved' : ' next'}${l.master ? ' master' : ''}" href="#/adv/${i}" style="--k:${k}">${inner}</a></li>`
+          : `<li><span class="room parch locked${l.master ? ' master' : ''}" style="--k:${k}">${inner}</span></li>`;
+      }).join('')}</ol>
+    </div>`;
   el.querySelectorAll('.rthumb canvas').forEach((c) => roomThumb(c, PUSH_LEVELS[+c.dataset.i], themeOf(ci), 1));
   (el.querySelector('.room.next') || el.querySelector('a.room'))?.focus();
 }
@@ -320,6 +399,7 @@ function kitPage(el, scene) {
   const { stars } = totals();
   const render = () => {
     const skin = getSkin(), worn = hat(), look = getLook(), bg = getSettings().menuBg || '';
+    const allOpen = CHAPTERS.every((_, i) => chapterInfo(i).open);
     const bgWorlds = CHAPTERS.map((c) => CHAPTER_WORLD[c.id]).filter((id) => WORLDS[id]);
     const owned = Object.entries(HATS).filter(([id]) => ownsHat(id));
     el.innerHTML = `
@@ -328,7 +408,7 @@ function kitPage(el, scene) {
         <div class="kit-stage"><canvas class="kit-big" width="48" height="48" aria-label="Vorschau deines Helden: Umhang ${esc(skin.color.name)}${worn ? `, ${esc(HATS[worn].name)}` : ''}"></canvas></div>
         <div>
           <h3>Umhang</h3>
-          <div class="kit-row">${SKIN_COLORS.map((c) => {
+          <div class="kit-row">${SKIN_COLORS.filter((c) => !c.secret || isAdmin() || hasHalloween()).map((c) => {
             const locked = !isAdmin() && stars < c.stars, active = skin.color.id === c.id;
             return `<button class="kit-swatch${active ? ' active' : ''}" ${locked ? 'disabled' : `data-pick="color" data-id="${c.id}"`} aria-pressed="${active}" title="${esc(c.name)}${locked ? ` – ab ★ ${c.stars}` : ''}">
               <canvas class="ks-cloak" data-color="${c.id}" width="12" height="12"></canvas><small>${locked ? `🔒 ★${c.stars}` : esc(c.name)}</small></button>`;
@@ -342,11 +422,11 @@ function kitPage(el, scene) {
           <div class="kit-row">${SKIN_TONES.map((t) => `<button class="kit-swatch${look.tone.id === t.id ? ' active' : ''}" data-tone="${t.id}" aria-pressed="${look.tone.id === t.id}"><span class="ks-dot" style="background:${t.color}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
           <h3>Laterne</h3>
           <div class="kit-row">${LANTERNS.map((t) => `<button class="kit-swatch${look.lantern.id === t.id ? ' active' : ''}" data-lantern="${t.id}" aria-pressed="${look.lantern.id === t.id}"><span class="ks-dot" style="background:${t.color};box-shadow:0 0 0 3px ${t.glow}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
-          <h3>Menü-Hintergrund</h3>
+          ${allOpen ? `<h3>Anpassung: Menü-Hintergrund</h3>
           <div class="kit-row">
-            <button class="kit-swatch${bg ? '' : ' active'}" data-bg="" aria-pressed="${!bg}"><small>Aktuelle Welt</small></button>
+            <button class="kit-swatch${bg ? '' : ' active'}" data-bg="" aria-pressed="${!bg}"><small>Zuletzt betreten</small></button>
             ${bgWorlds.map((id) => `<button class="kit-swatch${bg === id ? ' active' : ''}" data-bg="${id}" aria-pressed="${bg === id}"><small>${WORLDS[id].icon} ${esc(WORLDS[id].name)}</small></button>`).join('')}
-          </div>
+          </div>` : ''}
           <p class="small">Neue Umhänge schaltest du mit Sternen frei, Hüte gibt es im Shop gegen Kristalle 💎.</p>
         </div>
       </div>`;
@@ -362,7 +442,7 @@ function kitPage(el, scene) {
     }));
     pick('tone', (id) => setLook({ tone: id }));
     pick('lantern', (id) => setLook({ lantern: id }));
-    pick('bg', (id) => { updateSettings({ menuBg: id || null }); scene.setWorld(id || themeOf(currentChapter())); document.body.dataset.world = id || themeOf(currentChapter()); });
+    pick('bg', (id) => { updateSettings({ menuBg: id || null }); scene.setWorld(menuBackground()); document.body.dataset.world = menuBackground(); });
     el.querySelectorAll('button[data-hat]').forEach((b) => b.addEventListener('click', () => {
       wearHat(b.dataset.hat || null); play('ui'); render();
       el.querySelector(`button[data-hat="${b.dataset.hat}"]`)?.focus();

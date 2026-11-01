@@ -14,6 +14,8 @@ import { play, isMuted, toggleMute } from '../game/sound.js';
 import { setMusic } from '../game/music.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
+import { volumeHtml, bindVolume } from '../ui/volume.js';
+import { isAdmin } from '../game/admin.js';
 import { WORLDS } from '../game/worlds.js';
 import { prefersReducedMotion } from '../settings.js';
 import { stopCelebration } from '../ui/celebrate.js';
@@ -205,7 +207,7 @@ export function mountAdventure(root, params, opts = {}) {
   const guide = roomGuide(level);
   const hasKeys = level.cells.some((c) => c.key);
   // Dauerhafte Ausrüstung aus dem Shop
-  const pushCost = owns('gloves') ? 0.11 : PUSH_COST, stepRegen = owns('boots') ? STEP_REGEN * 2 : STEP_REGEN;
+  const pushCost = isAdmin() ? 0 : owns('gloves') ? 0.11 : PUSH_COST, stepRegen = owns('boots') ? STEP_REGEN * 2 : STEP_REGEN;
 
   // Vollbild-Spiel mit Ingame-HUD (wie Shell Shockers): keine Webseiten-Leiste, alle Anzeigen
   // liegen als Pixel-Panels direkt über dem Spielbild; Esc/⏸ öffnet das Pausenmenü.
@@ -223,11 +225,11 @@ export function mountAdventure(root, params, opts = {}) {
         <div class="ihud-name">${def.master ? '👑 ' : ''}${esc(def.name)}</div>
       </div>
       <div class="ihud ihud-tc pixel" aria-live="polite">
-        <span class="ihud-chip" title="Fragmente"><i class="ico-frag"></i><b id="frags">0/2</b></span>
-        <span class="ihud-chip" title="Beleuchtete Ziele"><i class="ico-gem"></i><b id="targets">0/0</b></span>
-        <span class="ihud-chip ihud-door" title="Ausgangstür"><i class="ico-door"></i><b id="exit-state">ZU</b></span>
-        <span class="ihud-chip" title="Münzen">🪙<b id="coins">0</b></span>
-        ${hasKeys ? '<span class="ihud-chip" title="Schlüssel in der Tasche">🗝<b id="keys">0</b></span>' : ''}
+        <span class="ihud-chip" title="Fragmente">${icon('gem')}<b id="frags">0/2</b></span>
+        <span class="ihud-chip" title="Beleuchtete Ziele">${icon('star')}<b id="targets">0/0</b></span>
+        <span class="ihud-chip ihud-door" title="Ausgangstür">${icon('door')}<b id="exit-state">ZU</b></span>
+        <span class="ihud-chip" title="Münzen">${icon('coin')}<b id="coins">0</b></span>
+        ${hasKeys ? `<span class="ihud-chip" title="Schlüssel in der Tasche">${icon('key')}<b id="keys">0</b></span>` : ''}
       </div>
       <div class="ihud ihud-tr">
         <button class="ibtn" id="snd" title="Ton an/aus" aria-label="Ton an oder aus">${icon(isMuted() ? 'mute' : 'sound')}</button>
@@ -247,8 +249,6 @@ export function mountAdventure(root, params, opts = {}) {
         <button class="btn btn-primary" id="sign-close">Verstanden</button>
       </div></div>
       <div class="ihud ihud-br">
-        <button class="ibtn" id="rotate" title="Drehen (Leertaste)" aria-label="Drehen">${icon('turn')}</button>
-        <button class="ibtn" id="undo" title="Zug zurück (Z)" aria-label="Zug zurück">${icon('undo')}</button>
         <button class="ibtn" id="reset" title="Raum neu (R)" aria-label="Raum neu">${icon('reset')}</button>
       </div>
       ${tutorial ? `<div class="coach pixel" id="coach" aria-live="polite"><div class="coach-owl" aria-hidden="true"><i></i></div><div class="coach-body"><div class="coach-step" id="coach-step"></div><p id="coach-text"></p><div class="coach-dots" id="coach-dots"></div></div></div>` : `<div class="ihud-note pixel" id="note"><span>📜</span> ${esc(def.hint)}</div>`}
@@ -259,8 +259,13 @@ export function mountAdventure(root, params, opts = {}) {
         <div class="pause-card pixel-card">
           <h2 class="pixel">PAUSE</h2>
           <p class="pause-hint">📜 ${esc(def.hint)}</p>
+          <div class="vol-box">${volumeHtml()}</div>
+          ${isAdmin() ? `<div class="dbg"><b>🐞 ADMIN-DEBUG</b><p id="dbg-info"></p><div class="dbg-grid">
+            <button class="btn" data-dbg="open">Tür öffnen</button><button class="btn" data-dbg="solve">Raum lösen</button>
+            <button class="btn" data-dbg="hint">Nächster Zug</button><button class="btn" data-dbg="curtain">Vorhang testen</button>
+            <button class="btn" data-dbg="prev" ${index > 0 ? '' : 'disabled'}>◀ Raum</button><button class="btn" data-dbg="next" ${index >= 0 && index + 1 < PUSH_LEVELS.length ? '' : 'disabled'}>Raum ▶</button>
+          </div></div>` : ''}
           <button class="btn btn-primary" id="p-resume">${icon('play')} Weiter</button>
-          <button class="btn" id="p-undo">${icon('undo')} Zug zurück</button>
           <button class="btn" id="p-reset">${icon('reset')} Raum neu</button>
           ${isUnlocked('worlds') ? `<a class="btn" href="#/menu/chapter/${Math.max(0, chIndex)}">🗺 Weltkarte</a>` : ''}
           ${opts.back ? `<a class="btn" href="${esc(opts.back)}">${esc(opts.backLabel || 'Zurück')}</a>` : ''}
@@ -310,7 +315,6 @@ export function mountAdventure(root, params, opts = {}) {
     $('#exit-state').textContent = exitOpen ? 'OFFEN' : 'ZU';
     $('#exit-state').closest('.ihud-chip').classList.toggle('open', exitOpen);
     $('#frags').textContent = `${fragments.filter((f) => f.got).length}/${fragments.length}`;
-    $('#undo').disabled = !history.length || done;
     $('#coins').textContent = getInv().coins;
     if (hasKeys) $('#keys').textContent = state.keys || 0;
     root.querySelectorAll('.inv-slot').forEach((b) => { const n = count(b.dataset.item); b.querySelector('b').textContent = n === Infinity ? '∞' : n; b.disabled = !n; });
@@ -508,6 +512,7 @@ export function mountAdventure(root, params, opts = {}) {
     if (!n || n.moves === state.moves) {
       { const [dx, dy] = DIRS[d]; if (interact(state.player.x + dx, state.player.y + dy)) { if (n) { state = n; anim = snap(n, 0); } return; } }
       if (level.cells[(state.player.y + DIRS[d][1]) * level.w + state.player.x + DIRS[d][0]]?.type === 'lock' && !(state.keys > 0)) toast('⛓ Gesperrt – du brauchst einen Schlüssel 🗝');
+      held = null; // gegen die Wand: Held bleibt stehen, auch wenn die Taste gehalten wird
       play('bump'); bumpT0 = now;
       const [dx, dy] = DIRS[d];
       dust.push({ x: state.player.x + 0.5 + dx * 0.45, y: state.player.y + 0.8 + dy * 0.3, a: Math.atan2(-dy, -dx), t0: now });
@@ -608,12 +613,31 @@ export function mountAdventure(root, params, opts = {}) {
   function setPaused(on) {
     paused = on; held = null;
     $('#pausemenu').hidden = !on;
+    if (on) debugInfo();
     if (on) { play('ui'); $('#p-resume').focus(); } else canvas.focus();
   }
   $('#pause').addEventListener('click', () => setPaused(true));
   $('#p-resume').addEventListener('click', () => setPaused(false));
-  $('#p-undo').addEventListener('click', () => { setPaused(false); undo(); });
   $('#p-reset').addEventListener('click', () => { setPaused(false); reset(); });
+  bindVolume($('#pausemenu'));
+  // Admin-Debug im Pausenmenü
+  function debugInfo() {
+    const el = $('#dbg-info');
+    if (el) el.textContent = `${def.id} · ${themeId} · Held ${state.player.x},${state.player.y} · Züge ${state.moves}/${def.par ?? '–'} · Blöcke ${state.blocks.length} · Tür ${exit.x},${exit.y}${exitOpen ? ' offen' : ' zu'}`;
+  }
+  function debug(a) {
+    setPaused(false);
+    if (a === 'open') { exitOpen = true; if (solveMoves == null) solveMoves = state.moves; play('exitopen'); updateHud(); }
+    if (a === 'hint') { hintMark = null; use('scroll'); }
+    if (a === 'next' || a === 'prev') location.hash = `#/adv/${index + (a === 'next' ? 1 : -1)}`;
+    if (a === 'curtain') transitionTo(location.hash, { from: themeId, to: themeId, label: 'Vorhang-Test' });
+    if (a === 'solve') {
+      const res = solvePush(level, { from: state, limit: 800000 });
+      if (!res.solvable) { toast('Von hier aus nicht lösbar – erst Zurück oder Neu'); return; }
+      res.path.forEach((p, i) => later(() => { if (p === 'rot') rotate(); else stepDir(String(p).startsWith('turn') ? +String(p).slice(4) : p); }, i * 170));
+    }
+  }
+  root.querySelectorAll('[data-dbg]').forEach((b) => b.addEventListener('click', () => debug(b.dataset.dbg)));
   const sndBtn = $('#snd');
   const showSnd = () => { sndBtn.innerHTML = icon(isMuted() ? 'mute' : 'sound'); };
   showSnd();
@@ -638,8 +662,6 @@ export function mountAdventure(root, params, opts = {}) {
   function onKeyUp(e) { if (e.key in KEYS && KEYS[e.key] === held) held = null; }
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
-  $('#rotate').addEventListener('click', () => { rotate(); canvas.focus(); });
-  $('#undo').addEventListener('click', () => { undo(); canvas.focus(); });
   $('#reset').addEventListener('click', () => { reset(); canvas.focus(); });
   if (touch) {
     root.querySelectorAll('.dpad button').forEach((b) => {
@@ -738,7 +760,7 @@ export function mountAdventure(root, params, opts = {}) {
   requestAnimationFrame(frame);
   canvas.focus();
   devlog('SPIEL', `Abenteuer: Raum „${def.name}“ (${def.id}) betreten · Ausgang (${exit?.x},${exit?.y}) · Welt ${themeId}`);
-  if (location.hostname === 'localhost') window.__adv = { get state() { return { moves: state.moves, player: state.player, exitOpen, done, caught, solved: tr.solved, exit, fragments, loot, chest, sign, keys: state.keys, level, blocks: state.blocks, raw: state }; }, step: stepDir, rotate, use };
+  if (location.hostname === 'localhost') window.__adv = { get state() { return { moves: state.moves, player: state.player, exitOpen, done, caught, solved: tr.solved, exit, fragments, loot, chest, sign, keys: state.keys, level, blocks: state.blocks, raw: state, held }; }, step: stepDir, rotate, use };
 
   return () => {
     running = false;

@@ -11,6 +11,8 @@ import { startUpdateCheck } from './ui/updater.js';
 
 setFavicon();
 startUpdateCheck();
+// Rechtsklick gesperrt (in Eingabefeldern bleibt er für Einfügen & Co.)
+addEventListener('contextmenu', (e) => { if (!e.target.closest?.('input, textarea')) e.preventDefault(); });
 
 const routes = {
   menu: { tab: 'game', mount: mountMenu },

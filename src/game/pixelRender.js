@@ -4,7 +4,7 @@
 // erfüllte Ziele werfen farbiges, weiches Licht – in groben Blöcken (Lichtkarte in 1/4 Auflösung).
 // Gezeichnet wird in einen kleinen Puffer, der ohne Glättung hochskaliert wird.
 import { COLOR_INFO, DIRS } from './engine.js';
-import { getSkin, getLook } from './skins.js';
+import { getSkin, getLook, isDinnerbone } from './skins.js';
 import { hat as currentHat } from './inventory.js';
 import { MARGIN, makeDecor, DecorSteps, drawFlames, drawGlows, drawShafts, drawMotes, shadeMargin } from './roomDecor.js';
 
@@ -299,6 +299,15 @@ export class PixelRenderer {
   part(x, y, w, h, c) { this.r(x - 1, y - 1, w + 2, h + 2, '#120a1c'); this.r(x, y, w, h, c); }
 
   player(p, t) {
+    if (!isDinnerbone()) { this.hero(p, t); return; }
+    // Code „dinnerbone“: Held steht auf dem Kopf (gespiegelt um die Feldmitte)
+    const { ctx } = this, mid = Math.round(p.y * T) + T / 2;
+    ctx.save(); ctx.translate(0, mid * 2); ctx.scale(1, -1);
+    this.hero(p, t);
+    ctx.restore();
+  }
+
+  hero(p, t) {
     const skin = getSkin();
     const body = skin.color.stops[Math.min(1, skin.color.stops.length - 1)];
     const light = skin.color.stops[0];
