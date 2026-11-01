@@ -16,6 +16,7 @@ import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 import { foeOf, bossBeaten, bossPending } from '../game/combat.js';
 import { getLook } from '../game/skins.js';
+import { codeOn } from '../game/codes.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
 import { isAdmin } from '../game/admin.js';
 import { WORLDS } from '../game/worlds.js';
@@ -308,6 +309,7 @@ export function mountAdventure(root, params, opts = {}) {
     tr = pushTrace(state);
     history = [];
     anim = snap(state, 0);
+    inputs = [];
     exitOpen = false; done = false; caught = false; dissolving = []; dock = null; squash = null; solveMoves = null;
     growStart = performance.now(); bloom = null;
     stamina = 1; restUntil = 0; bumpT0 = 0; pushT0 = 0; celebrateT0 = 0; dust = []; lastInput = performance.now();
@@ -505,8 +507,10 @@ export function mountAdventure(root, params, opts = {}) {
     return true;
   }
 
+  let inputs = []; // Lauf des Spielers für den Code „replay“
   function stepDir(d) {
     if (done || caught || paused) return;
+    inputs.push(d);
     // durch die offene Ausgangstür gehen
     if (exit && exitOpen) {
       const [dx, dy] = DIRS[d];
@@ -542,7 +546,7 @@ export function mountAdventure(root, params, opts = {}) {
     } else stamina = Math.min(1, stamina + stepRegen);
     commit(n);
   }
-  function rotate() { if (done || caught) return; const r = rotateFront(state); if (!r) { play('bump'); return; } commit(r); }
+  function rotate() { if (done || caught) return; inputs.push('rot'); const r = rotateFront(state); if (!r) { play('bump'); return; } commit(r); }
   function undo() {
     if (!history.length || done) return;
     state = history.pop(); anim = snap(state, 0); tr = pushTrace(state);
@@ -585,11 +589,20 @@ export function mountAdventure(root, params, opts = {}) {
         <p>Rätsel in ${counted} Zügen · Ziel ≤ ${def.par}${improved && prevBest != null ? ' · neue Bestleistung' : ''} · Fragmente ${fragments.filter((f) => f.got).length}/${fragments.length}</p>
         <div class="win-actions">
           ${tutorial ? '<a class="btn btn-primary" href="#/adv/0" id="win-next">Los geht’s: Raum 1 →</a>' : nextIndex != null ? (lastInWorld && !bossBeaten(chIndex) ? `<a class="btn btn-primary" href="#/arena/${chIndex}" id="win-boss">⚔ Zum Bosskampf</a>` : `<a class="btn btn-primary" href="#/adv/${nextIndex}" id="win-next">${lastInWorld ? 'Nächste Welt →' : 'Nächster Raum →'}</a>`) : (custom ? `<a class="btn btn-primary" href="${esc(opts.back || '#/menu')}" id="win-next">${esc(opts.backLabel || 'Zurück zum Menü')}</a>` : '<a class="btn btn-primary" href="#/menu" id="win-next">Alle Räume geschafft!</a>')}
+          ${codeOn('replay') ? '<button class="btn" id="win-replay">Replay ansehen</button>' : ''}
           <button class="btn" id="win-retry">Nochmal (R)</button>
         </div>
       </div>`;
     later(() => { win.hidden = false; ($('#win-next') || $('#win-boss'))?.focus(); }, 1500); // erst die Blüte genießen
     $('#win-retry').addEventListener('click', () => { reset(); canvas.focus(); });
+    $('#win-replay')?.addEventListener('click', () => {
+      const run = [...inputs];
+      reset();
+      run.forEach((p, i) => later(() => {
+        if (p === 'rot') rotate();
+        else if (String(p).startsWith('face')) { state = { ...state, player: { ...state.player, dir: +String(p).slice(4) } }; inputs.push(p); } else stepDir(p);
+      }, 300 + i * 190));
+    });
     // Weiter mit Vorhang: im Raum der Vorhang der nächsten Welt, beim Weltwechsel erst ihr Panorama
     const nextDef = tutorial ? PUSH_LEVELS[0] : nextIndex != null ? PUSH_LEVELS[nextIndex] : null;
     if (nextDef) $('#win-next')?.addEventListener('click', (e) => {
@@ -717,6 +730,7 @@ export function mountAdventure(root, params, opts = {}) {
     const b = state.blocks.find((o) => o.x === x && o.y === y);
     if (d < 0 || !b || (!b.orient && b.kind !== 'lamp')) { if (touch) rotate(); return; } // am Handy dreht jeder Tipp den Block, auf den der Held schaut
     state = { ...state, player: { ...state.player, dir: d } };
+    inputs.push(`face${d}`);
     rotate();
   }
 
@@ -727,7 +741,7 @@ export function mountAdventure(root, params, opts = {}) {
   const lerp = (a, b, k) => a + (b - a) * k;
   function frame(t) {
     if (!running) return;
-    if (held != null && t - lastStep >= REPEAT_MS && (!anim.t0 || t - anim.t0 >= STEP_MS)) {
+    if (held != null && t - lastStep >= REPEAT_MS / (codeOn('turbo') ? 2 : 1) && (codeOn('turbo') || !anim.t0 || t - anim.t0 >= STEP_MS)) {
       // Anschluss genau am Ende des vorigen Schritts (nicht erst beim nächsten Bild) → keine Lücke
       const chainT0 = anim.t0 && t - anim.t0 < STEP_MS + 60 ? anim.t0 + STEP_MS : 0;
       const before = anim;

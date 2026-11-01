@@ -13,12 +13,18 @@ function fx(id, name, info) {
     applyFx();
   } };
 }
+function toggle(id, name, info) {
+  return { id, name, info, on: () => fxOn(id), set: (on) => updateSettings({ fx: on ? [...new Set([...(getSettings().fx || []), id])] : (getSettings().fx || []).filter((x) => x !== id) }) };
+}
+export const codeOn = fxOn;
 export function applyFx() { for (const id of ['retro', 'disco', 'nachtsicht', 'kopfueber']) document.body.classList.toggle(`fx-${id}`, fxOn(id)); }
 
 export const CODES = [
   { id: 'freeadmin', name: 'Admin-Modus', info: 'Alles frei, alle Gegenstände unendlich.', on: isAdmin, set: setAdmin },
   { id: 'halloween', name: 'Halloween-Umhang', info: 'Der geheime Kürbis-Umhang.', on: hasHalloween, set: setHalloween },
   { id: 'dinnerbone', name: 'Dinnerbone', info: 'Dein Held steht auf dem Kopf.', on: isDinnerbone, set: setDinnerbone },
+  toggle('replay', 'Replay', 'Nach jedem geschafften Raum kannst du deinen Lauf noch einmal ansehen.'),
+  toggle('turbo', 'Turbo', 'Dein Held rennt doppelt so schnell.'),
   fx('retro', 'Retro', 'Alles in alten Grautönen.'),
   fx('disco', 'Disco', 'Die Farben tanzen durch die Welt.'),
   fx('nachtsicht', 'Nachtsicht', 'Die Welt in Grün wie durch ein Nachtsichtgerät.'),

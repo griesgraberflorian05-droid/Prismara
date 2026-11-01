@@ -205,6 +205,8 @@ function codePage(el) {
     el.querySelector('#code')?.focus();
   };
   // Code „function“: nach dem Passwort die Liste aller Codes
+  // Die Unterseiten liegen auf derselben Adresse, der Link allein löst also nichts aus
+  const backToForm = () => el.querySelector('.tm-head a').addEventListener('click', (e) => { e.preventDefault(); play('ui'); render(); });
   const askPassword = (msg = '') => {
     el.innerHTML = `
       ${head('#/menu/code', 'Passwort')}
@@ -214,6 +216,7 @@ function codePage(el) {
         <button class="wbtn big" type="submit">Öffnen</button>
         ${msg ? `<p class="code-msg">${esc(msg)}</p>` : ''}
       </form>`;
+    backToForm();
     el.querySelector('form').addEventListener('submit', (e) => {
       e.preventDefault();
       if (el.querySelector('#pw').value !== CODE_PASSWORD) { play('bump'); askPassword('Falsches Passwort.'); return; }
@@ -221,6 +224,7 @@ function codePage(el) {
       el.innerHTML = `
         ${head('#/menu/code', 'Geheime Codes')}
         <div class="parch settings">${ALL_CODES.map(([id, info]) => `<div class="set-row"><span class="code-row"><b>${esc(id)}</b><small>${esc(info)}</small></span></div>`).join('')}</div>`;
+      backToForm();
     });
     el.querySelector('#pw').focus();
   };
