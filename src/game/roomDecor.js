@@ -603,7 +603,7 @@ export function shadeMargin(p, level, th, rgb) {
   ctx.fillStyle = rgb;
   ctx.beginPath();
   ctx.rect(-M.x * T, -M.top * T, (level.w + 2 * M.x) * T, (level.h + M.top + M.bottom) * T);
-  ctx.rect(0, 0, level.w * T, level.h * T);
+  ctx.rect(0, -BACK * T, level.w * T, (level.h + BACK) * T); // Raum + Rückwand bekommen die echte Lichtkarte
   ctx.fill('evenodd');
   ctx.restore();
 }

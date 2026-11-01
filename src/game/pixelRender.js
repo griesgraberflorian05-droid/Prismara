@@ -699,10 +699,14 @@ export class PixelRenderer {
     ctx.imageSmoothingEnabled = true;
     ctx.globalCompositeOperation = 'multiply';
     ctx.drawImage(this.light, 0, 0, w, h, 0, 0, w * T, h * T);
+    // Hohe Rückwand über Zeile 0: oberste Lichtzeile nach oben ziehen – sonst lag dort ein dunkler Balken
+    ctx.drawImage(this.light, 0, 0, w, 1, 0, -2 * T, w * T, 2 * T);
     // Bloom: helle Bereiche leuchten zusätzlich auf (additiv)
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = 0.22;
     ctx.drawImage(this.light, 0, 0, w, h, -T * 0.3, -T * 0.3, w * T + T * 0.6, h * T + T * 0.6);
+    // Leuchten auch über die Rückwand ziehen – sonst bleibt an seiner Oberkante eine harte Linie
+    ctx.drawImage(this.light, 0, 0, w, 1, -T * 0.3, -2 * T, w * T + T * 0.6, 2 * T - T * 0.3);
     ctx.restore();
   }
 
@@ -861,7 +865,8 @@ export class PixelRenderer {
   /** Grundton der Dunkelheit (wie in lighting) als CSS-Farbe – für die Außenwelt. */
   ambientCss(th) {
     const amb = hexRgb(th.ambient), a = (1 - th.dark01) * 0.7;
-    const ch = (v, k) => Math.round(Math.min(255, (v * 0.25 + a * k) * 255 * 1.12));
+    // etwas heller als der Raum: außen liegt nur noch die Welt, kein grauer Streifen um das Gebäude
+    const ch = (v, k) => Math.round(Math.min(255, (v * 0.25 + a * k) * 255 * 1.4));
     return `rgb(${ch(amb[0], 0.75)},${ch(amb[1], 0.75)},${ch(amb[2], 0.85)})`;
   }
 }
