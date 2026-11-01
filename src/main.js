@@ -9,9 +9,11 @@ import { mountTextures } from './adventure/textureSheet.js';
 import { setFavicon } from './ui/logo.js';
 import { stopMusic } from './game/music.js';
 import { startUpdateCheck } from './ui/updater.js';
+import { applyFx } from './game/codes.js';
 
 setFavicon();
 startUpdateCheck();
+applyFx();
 // Rechtsklick gesperrt (in Eingabefeldern bleibt er für Einfügen & Co.)
 addEventListener('contextmenu', (e) => { if (!e.target.closest?.('input, textarea')) e.preventDefault(); });
 

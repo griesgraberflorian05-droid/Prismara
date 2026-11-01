@@ -30,7 +30,8 @@ export function mountArena(root, params) {
   const room = createPushState(level), tr = pushTrace(room);
   const pix = new PixelRenderer(level);
   const damage = stat('sword'), maxHp = stat('armor'), reach = stat('reach'), skin = swordSkin();
-  const minionHp = 1 + Math.floor(ci / 4), minionMs = Math.max(420, 760 - ci * 28);
+  // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
+  const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(420, 760 - ci * 28) * (touch ? 1.4 : 1)), windMs = touch ? 700 : 430;
   const bossHp = 14 + ci * 4;
 
   document.body.classList.add('ingame');
@@ -64,7 +65,7 @@ export function mountArena(root, params) {
     hero = { x: 1, y: 4, dir: 1, hp: maxHp, safe: 0, next: 0, swing: 0, moved: 0 };
     mobs = []; tele = []; shots = []; sparks = []; boss = null; phase = 1;
     setMusic(world); held = null; paused = false;
-    spawnMobs(3);
+    spawnMobs(touch ? 2 : 3);
     $('#wave').textContent = 'WELLE 1/2'; $('#bossbar').hidden = true; $('#panel').hidden = true;
     showHearts();
     canvas.focus();
@@ -147,7 +148,7 @@ export function mountArena(root, params) {
         if (now >= m.wind) { m.wind = 0; m.next = now + minionMs; if (near) hurt(now); }
       } else if (now >= m.next) {
         m.next = now + minionMs;
-        if (near) { m.wind = now + 430; continue; }
+        if (near) { m.wind = now + windMs; continue; }
         const dx = Math.sign(hero.x - m.x), dy = Math.sign(hero.y - m.y);
         const tries = Math.abs(hero.x - m.x) >= Math.abs(hero.y - m.y) ? [[dx, 0], [0, dy]] : [[0, dy], [dx, 0]];
         for (const [a, b] of tries) {

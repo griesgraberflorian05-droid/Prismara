@@ -4,7 +4,7 @@
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
 import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS } from '../game/skins.js';
-import { redeem, usedCodes, toggleCode, resetAll } from '../game/codes.js';
+import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
@@ -189,6 +189,9 @@ function codePage(el) {
       e.preventDefault();
       const code = redeem(el.querySelector('#code').value);
       if (code === 'resetall') { play('bump'); confirmReset(); return; }
+      if (code === 'function') { play('ui'); askPassword(); return; }
+      if (code === 'used') { play('bump'); render('Diesen Code hast du schon eingelöst.'); return; }
+      if (code === 'moneten') { play('chapter'); render('250 Münzen gehören dir!'); return; }
       if (!code) { play('bump'); render('Dieser Code stimmt nicht.'); return; }
       play('chapter');
       if (code === 'halloween') {
@@ -200,6 +203,26 @@ function codePage(el) {
     el.querySelector('[data-d="update"]')?.addEventListener('click', () => showUpdate({ version: '0', label: 'Test', note: 'So sieht die Update-Nachricht aus.' }));
     el.querySelectorAll('[data-curtain]').forEach((b) => b.addEventListener('click', () => transitionTo(location.hash, { from: b.dataset.curtain, to: b.dataset.curtain, label: 'Vorhang-Test' })));
     el.querySelector('#code')?.focus();
+  };
+  // Code „function“: nach dem Passwort die Liste aller Codes
+  const askPassword = (msg = '') => {
+    el.innerHTML = `
+      ${head('#/menu/code', 'Passwort')}
+      <form class="parch settings code-form">
+        <label for="pw">Passwort eingeben</label>
+        <input id="pw" type="password" inputmode="numeric" autocomplete="off" maxlength="16">
+        <button class="wbtn big" type="submit">Öffnen</button>
+        ${msg ? `<p class="code-msg">${esc(msg)}</p>` : ''}
+      </form>`;
+    el.querySelector('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (el.querySelector('#pw').value !== CODE_PASSWORD) { play('bump'); askPassword('Falsches Passwort.'); return; }
+      play('chapter');
+      el.innerHTML = `
+        ${head('#/menu/code', 'Geheime Codes')}
+        <div class="parch settings">${ALL_CODES.map(([id, info]) => `<div class="set-row"><span class="code-row"><b>${esc(id)}</b><small>${esc(info)}</small></span></div>`).join('')}</div>`;
+    });
+    el.querySelector('#pw').focus();
   };
   // resetall löscht alles und lässt sich nicht rückgängig machen, darum einmal nachfragen
   const confirmReset = () => {

@@ -1290,3 +1290,10 @@ body.wood .ihud-door.open .pxi { color: #7dff6a; }
 @media (orientation: portrait) {
   .adv-full.touch .ihud-bl { top: auto !important; bottom: 10px !important; left: 6px !important; right: 62px !important; }
 }
+
+/* Bildeffekte der Codes */
+body.fx-retro #view { filter: grayscale(1) contrast(1.1); }
+body.fx-nachtsicht #view { filter: grayscale(1) sepia(1) hue-rotate(70deg) saturate(3); }
+body.fx-kopfueber #view { transform: rotate(180deg); }
+body.fx-disco #view { animation: fx-disco 3s linear infinite; }
+@keyframes fx-disco { to { filter: hue-rotate(360deg); } }

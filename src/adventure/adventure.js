@@ -430,10 +430,10 @@ export function mountAdventure(root, params, opts = {}) {
   // ---------- Tutorial-Eule: Schritt für Schritt, mit hüpfendem Pfeil aufs nächste Ziel ----------
   const mirror = () => state.blocks.find((b) => b.kind === 'mirror');
   const TUT_STEPS = [
-    { text: `Willkommen im Lehrzimmer! Lauf mit ${touch ? 'dem Steuerkreuz' : 'WASD oder den Pfeiltasten'} ein paar Schritte.`, done: () => state.moves >= 2, mark: () => null },
-    { text: 'Siehst du den Spiegel? Stell dich unter ihn und lauf dagegen – so schiebst du ihn nach oben.', done: () => mirror().y < 4, mark: () => ({ x: 6, y: 5 }) },
+    { text: `Willkommen im Lehrzimmer! ${touch ? 'Wisch übers Spielfeld, um zu laufen. Lässt du den Finger unten, läuft der Held weiter.' : 'Lauf mit WASD oder den Pfeiltasten ein paar Schritte.'}`, done: () => state.moves >= 2, mark: () => null },
+    { text: `Siehst du den Spiegel? Stell dich unter ihn und ${touch ? 'wisch nach oben' : 'lauf dagegen'} – so schiebst du ihn nach oben.`, done: () => mirror().y < 4, mark: () => ({ x: 6, y: 5 }) },
     { text: 'Schieb ihn bis ganz nach oben an die Wand. Schieben kostet KRAFT (unten links) – ist sie leer, verschnaufst du kurz.', done: () => mirror().y === 1, mark: () => ({ x: 6, y: 1 }) },
-    { text: `${touch ? '⟳' : 'Leertaste'} dreht den Spiegel, auf den du schaust. Dreh ihn, damit die Leitung nach unten läuft.`, done: () => mirror().y === 1 && mirror().orient === '\\', mark: () => mirror() },
+    { text: `${touch ? 'Tipp irgendwo aufs Spielfeld: Das dreht den Spiegel vor dir.' : 'Leertaste oder ein Klick auf den Spiegel dreht ihn, wenn du davor stehst.'} Dreh ihn, damit die Leitung nach unten läuft.`, done: () => mirror().y === 1 && mirror().orient === '\\', mark: () => mirror() },
     { text: 'Die Leitung läuft zu dir! Tritt zur Seite, damit sie die Redstone-Lampe erreicht.', done: () => tr.solved, mark: () => ({ x: 6, y: 6 }) },
     { text: 'Die Lampe leuchtet – die Tür ist offen! Hol dir noch einen Kristall, wenn du magst, und geh dann durch die Tür.', done: () => done, mark: () => exit },
   ];
@@ -715,13 +715,13 @@ export function mountAdventure(root, params, opts = {}) {
     const y = Math.floor((((ev.clientY - r.top) * k - view.dy) / view.scale - pix.oy) / T);
     const d = DIRS.findIndex(([dx, dy]) => state.player.x + dx === x && state.player.y + dy === y);
     const b = state.blocks.find((o) => o.x === x && o.y === y);
-    if (d < 0 || !b || (!b.orient && b.kind !== 'lamp')) return;
+    if (d < 0 || !b || (!b.orient && b.kind !== 'lamp')) { if (touch) rotate(); return; } // am Handy dreht jeder Tipp den Block, auf den der Held schaut
     state = { ...state, player: { ...state.player, dir: d } };
     rotate();
   }
 
   // ---------- Zeichnen ----------
-  let running = true, shownStamina = '', view = null, trail = [], trailAt = { x: -1, y: -1 };
+  let running = true, shownStamina = '', view = null, chipTop = null, trail = [], trailAt = { x: -1, y: -1 };
   const trailColor = getLook().trail.color;
   const staminaEl = $('#stamina');
   const lerp = (a, b, k) => a + (b - a) * k;
@@ -784,6 +784,11 @@ export function mountAdventure(root, params, opts = {}) {
     const scale = Math.max(1, Math.floor(Math.min(cw / v.w, chh / v.h)));
     const dx = Math.floor((cw - v.w * scale) / 2) - v.x * scale, dy = Math.floor((chh - v.h * scale) / 2) - v.y * scale;
     view = { dx, dy, scale };
+    if (touch && chh > cw) { // Handy hochkant: Anzeigen mittig zwischen oberen Knöpfen und Raumkante
+      const k = canvas.getBoundingClientRect().width / cw, roomTop = (dy + v.y * scale) * k;
+      const tc = $('.ihud-tc'), top = Math.round(($('.ihud-tr').getBoundingClientRect().bottom + roomTop - tc.getBoundingClientRect().height) / 2);
+      if (top !== chipTop) { chipTop = top; tc.style.setProperty('top', `${top}px`, 'important'); }
+    }
     if (trail.length) { // Spur auf den Boden, verblasst in zwei Sekunden
       const g = img.getContext('2d');
       trail = trail.filter((p) => t - p.t0 < 2000);
