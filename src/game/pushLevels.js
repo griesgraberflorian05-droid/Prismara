@@ -798,10 +798,11 @@ ALL_LEVELS.push(
     rows: ['#############', '#.a...#.....#', '#.@.ooA.....#', '#.....#.....#', '#.m..nA....2#', '#.....#.....#', '#############'],
   },
   {
-    id: 'w41', name: 'Eisspalt', par: 24, exit: [0, 3],
-    hint: 'Ein Strahlteiler oben, zwei rote Ziele unten in den Ecken – und dazwischen glattes Eis.',
+    // Nutzerwunsch „zu schwer“: unterer Spiegel steht schon richtig, Start in der Mitte (14 statt 24 Züge)
+    id: 'w41', name: 'Eisspalt', par: 14, exit: [0, 3],
+    hint: 'Der untere Spiegel steht schon richtig. Bring den rechten Spiegel hoch in die Ecke und dreh ihn – aufs Eis kommst du nur rutschend!',
     legend: { a: R_E, 1: { type: 'target', color: 'R' } },
-    rows: ['###########', '#a..k.....#', '#.~~~~~~~.#', '#.~~~~~~~m#', '#.~~~~~~~.#', '#1@.n....1#', '###########'],
+    rows: ['###########', '#a..k.....#', '#.~~~~~~~.#', '#.~~~~~~~m#', '#.~~~~~~~.#', '#1..m@...1#', '###########'],
   },
 );
 
