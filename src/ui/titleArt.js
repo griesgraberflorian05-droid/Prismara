@@ -6,7 +6,7 @@
 // vorn der Held am Lagerfeuer zwischen Blumen und den Teilchen der Welt. 384×216 Pixel, ohne
 // Glättung bildschirmfüllend hochskaliert.
 import { prefersReducedMotion } from '../settings.js';
-import { getSkin, getLook, isDinnerbone } from '../game/skins.js';
+import { getLook } from '../game/skins.js';
 import { play } from '../game/sound.js';
 import { hat as currentHat } from '../game/inventory.js';
 import { PixelRenderer } from '../game/pixelRender.js';
@@ -412,20 +412,11 @@ export function mountTitleArt(canvas, worldId = 'default') {
     const happy = tms < happyUntil;
     const hx = HERO.x, hy = HERO.y - (happy && Math.floor(tms / 110) % 2 ? 1 : 0), blink = happy || Math.floor(t / 180) % 24 === 0;
     // Aussehen aus dem Held-Menü: Umhang, Hautton, Laterne, Hut
-    const skin = getSkin(), look = getLook(), body = skin.color.stops[Math.min(1, skin.color.stops.length - 1)], light = skin.color.stops[0];
-    const face = look.tone.color, lamp = look.lantern;
-    g.save();
-    if (isDinnerbone()) { g.translate(0, (hy + 6) * 2); g.scale(1, -1); }
-    R(g, hx - 1, hy + 2, 10, 10, '#120a1c');
-    R(g, hx, hy + 3, 8, 8, body); R(g, hx, hy + 3, 2, 8, light); R(g, hx + 1, hy, 6, 5, body); R(g, hx + 2, hy - 1, 4, 1, body);
-    R(g, hx + 3, hy + 2, 4, 3, face); if (!blink) { R(g, hx + 4, hy + 3, 1, 1, '#120a1c'); R(g, hx + 6, hy + 3, 1, 1, '#120a1c'); }
-    R(g, hx + 7, hy + 7, 4, 2, body); R(g, hx + 10, hy + 7, 2, 2, face);
-    R(g, hx + 1, hy + 11, 3, 2, '#3a2414'); R(g, hx + 5, hy + 11, 3, 2, '#3a2414');
-    R(g, hx - 6, hy + 6, 4, 6, '#6b4426'); R(g, hx - 5, hy + 7, 2, 4, lamp.color); R(g, hx - 5, hy + 5, 2, 1, '#3a2414');
-    const n = parseInt(lamp.glow.slice(1), 16);
-    glow(hx - 4, hy + 9, 14, `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},A)`, 0.3);
-    painter.ctx = g; painter.r = (x, y, w, h, c) => R(g, x, y, w, h, c); painter.hat(currentHat(), hx, hy, t);
-    g.restore();
+    // Derselbe Held wie im Spiel: Skin, Accessoires, Umhang und Hut kommen aus dem echten Sprite
+    const look = getLook(), n = parseInt(look.lantern.glow.slice(1), 16);
+    glow(hx + 12, hy + 9, 14, `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},A)`, 0.3);
+    painter.ctx = g; painter.r = (x, y, w, h, c) => R(g, x, y, w, h, c);
+    painter.player({ x: (hx - 4) / 16, y: (hy - 3) / 16, dir: 2, walk: null, stamina: 1, hat: currentHat() }, t);
     for (let i = hearts.length - 1; i >= 0; i--) {
       const h = hearts[i], k = (tms - h.t0) / 1100;
       if (k >= 1) { hearts.splice(i, 1); continue; }

@@ -1500,3 +1500,4 @@ body.wood .kit-swatch small { color: inherit; font-size: 0.36rem; line-height: 1
 .kit-cape b { font-weight: normal; font-size: 0.55rem; text-align: center; color: var(--parch); }
 .tm:has(.sg) .tm-scene, .tm:has(.kit) .tm-scene { filter: blur(0.8px) opacity(0.85); }
 .tm:has(.kit) .tm-shade { background: rgba(8, 4, 2, 0.25); }
+.mm-tools { grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); }
