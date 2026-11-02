@@ -495,9 +495,13 @@ export function mountTitleArt(canvas, worldId = 'default') {
     ragStep(tms);
     const going = rag.mode === 'walk' || rag.mode === 'tofire';
     if (rag.mode === 'lighting') { // Feuerzeug: Daumenrad schlägt Funken, dann brennt die kleine Flamme
-      const lx = Math.round(rag.x) + 15, ly = Math.round(rag.y) + 8, on = (rag.until - tms) < 700;
-      R(g, lx, ly, 3, 4, '#c0342c'); R(g, lx, ly - 1, 3, 1, '#c8c8d0');
-      if (on) { R(g, lx + 1, ly - 3, 1, 2, '#ffd166'); R(g, lx + 1, ly - 2, 1, 1, '#ff7a2a'); } else if (Math.floor(tms / 90) % 2) R(g, lx + 2, ly - 3, 1, 1, '#fff6b0');
+      // Hand zieht das Feuerzeug heraus, Daumen schlägt dreimal, die Flamme steht und wandert ans Holz
+      const k = 1 - (rag.until - tms) / 1300, reach = Math.round(Math.min(1, k * 3) * 3 + Math.max(0, k - 0.65) * 12);
+      const lx = Math.round(rag.x) + 13 + reach, ly = Math.round(rag.y) + 8, thumb = k < 0.55 && Math.floor(tms / 110) % 2;
+      R(g, lx - 3, ly + 1, 3, 2, getLook().tone.color); // Hand
+      R(g, lx, ly, 3, 5, '#c0342c'); R(g, lx, ly, 1, 5, '#e0605a'); R(g, lx, ly - 1, 3, 1, '#c8c8d0'); R(g, lx + 1, ly - 2 + (thumb ? 1 : 0), 1, 1, '#8a8a92');
+      if (k < 0.55) { if (thumb) { R(g, lx + 2, ly - 3, 1, 1, '#fff6b0'); R(g, lx + 3, ly - 2, 1, 1, '#ffd166'); } } else { const h = 2 + Math.floor(tms / 80) % 2; R(g, lx + 1, ly - 1 - h, 1, h, '#ff7a2a'); R(g, lx + 1, ly - 1 - h - 1, 1, 1, '#ffd166'); }
+      if (k > 0.9) for (let i = 0; i < 6; i++) R(g, FIRE.x + Math.cos(i + tms / 60) * (k - 0.9) * 120, FIRE.y - 4 + Math.sin(i * 2) * (k - 0.9) * 80, 1, 1, '#ffd166'); // Funke springt über
     }
     hg.save(); hg.translate(16, 16);
     painter.player({ x: -0.5, y: -0.5, dir: rag.mode === 'lighting' ? 1 : going ? ((rag.mode === 'tofire' ? FIRE.x - 17 : home.x) > rag.x ? 1 : 3) : 2, walk: going ? (tms / 280) % 1 : null, stamina: 1, hat: currentHat() }, t);
