@@ -15,6 +15,7 @@ function show() {
   o.innerHTML = '<div class="sp-logo"></div><div class="sp-bar"><i></i></div><p></p>';
   const logo = logoCanvas(); logo.className = 'logo'; o.querySelector('.sp-logo').append(logo);
   document.body.append(o);
+  location.hash = '#/menu'; // nach dem Startbild immer im Hauptmenü
   const text = o.querySelector('p'), ms = prefersReducedMotion() ? 700 : 2200;
   o.querySelector('.sp-bar i').style.animationDuration = `${ms}ms`;
   text.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
