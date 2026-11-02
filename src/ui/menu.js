@@ -8,6 +8,7 @@ import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } fro
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
 import * as fx from '../game/fx.js';
+const fxNs = fx;
 import { TEXTURES, texture } from '../game/textures.js';
 import { swordTint, setSwordTint, MAGIC_COLORS, magicColor, ownsMagic, pickMagic, PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
@@ -511,7 +512,7 @@ function selectGrid(el, cfg) {
         <b class="sg-name">${esc(cur.name)}</b><small class="sg-sub">${esc(cur.owned ? cur.sub : cur.lockText || `${cur.price} Münzen`)}</small>
         ${info ? `<p class="sg-info">${esc(cur.sub)}</p>` : ''}
         ${cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label></div>` : ''}
-        <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}${it.rarity ? ` r-${it.rarity}` : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}</button>`).join('')}</div>
+        <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}${it.rarity && it.owned ? ` r-${it.rarity}` : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}${it.rarity && it.owned ? `<small class="sg-r">${RARITY[it.rarity].name}</small>` : ''}</button>`).join('')}</div>
         <div class="sg-bar"><button class="wbtn" type="button" id="sg-info">Info</button>
           <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? (isAdmin() ? 'Gratis kaufen' : `Kaufen ${cur.price}`) : 'Gesperrt'}</button></div>
       </div>`;
@@ -549,8 +550,16 @@ function wardrobePage(el, msg = '') {
     const c = rollSkin();
     if (!c) { wardrobePage(el, 'Du hast schon alle Skins!'); return; }
     if (!isAdmin()) addCoins(-SPIN_PRICE);
-    buyHero(c.id); play('chapter');
-    wardrobePage(el, `${RARITY[rarityOf(c)].name}: ${c.name}`);
+    buyHero(c.id);
+    // Bekomm-Animation: Kiste bebt und platzt auf, dann kommt der Skin in der Farbe seiner Seltenheit
+    const r = rarityOf(c), o = document.createElement('div');
+    o.className = `spin-show r-${r}`;
+    o.innerHTML = `<div class="spin-box">?</div><div class="spin-ray"></div><canvas width="24" height="28"></canvas><b>${esc(c.name)}</b><small>${RARITY[r].name}</small><p>Antippen</p>`;
+    document.body.append(o);
+    paint(c.id)(o.querySelector('canvas'));
+    [0, 300, 600, 900].forEach((ms, i) => setTimeout(() => play('lamp', i), ms));
+    setTimeout(() => { o.classList.add('open'); play('chapter'); fxNs.flash(); }, 1300);
+    o.addEventListener('pointerdown', () => { if (o.classList.contains('open')) { o.remove(); wardrobePage(el, `${RARITY[r].name}: ${c.name}`); } });
   });
   const active = getSkin().color.id;
   selectGrid(el.querySelector('#sel'), {
