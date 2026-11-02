@@ -1,4 +1,4 @@
-// Kampf: Redstone-Schwert mit teuren Verbesserungen, Waffen-Skins, Gegner und Boss je Welt.
+// Kampf: Glut-Schwert mit teuren Verbesserungen, Waffen-Skins, Gegner und Boss je Welt.
 // Die Teaser-Monster in den Räumen und die Kampflevel am Weltende nutzen dieselben Wesen.
 import { CHAPTERS } from './pushLevels.js';
 import { isSolved } from './progress.js';
@@ -17,7 +17,7 @@ export const UPGRADES = {
 };
 
 export const SWORD_SKINS = [
-  { id: 'redstone', name: 'Redstone', blade: '#e0342c', edge: '#ff8a70', grip: '#5a2a1a', price: 0 },
+  { id: 'redstone', name: 'Glutstein', blade: '#e0342c', edge: '#ff8a70', grip: '#5a2a1a', price: 0 },
   { id: 'gold', name: 'Gold', blade: '#e8b04a', edge: '#fff0a8', grip: '#6b4426', price: 500 },
   { id: 'ice', name: 'Eis', blade: '#7fc8ea', edge: '#e4f8ff', grip: '#2e5a7a', price: 800 },
   { id: 'emerald', name: 'Smaragd', blade: '#3fae6a', edge: '#b8f2c4', grip: '#23502e', price: 1200 },

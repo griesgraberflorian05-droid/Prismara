@@ -76,7 +76,7 @@ export function logoCanvas() {
 }
 
 /** Setzt das Wappen als Favicon. */
-/** Browser-Symbol: leuchtende Redstone-Lampe (wie assets/icon.svg), Kacheln in Rot, Grün, Blau, Gold.
+/** Browser-Symbol: leuchtende Glutlampe (wie assets/icon.svg), Kacheln in Rot, Grün, Blau, Gold.
  *  Die Kacheln glimmen abwechselnd nach, damit der Tab lebendig wirkt (alle 1,2 s, nicht auf Akkukosten). */
 export function setFavicon() {
   const sq = document.createElement('canvas'); sq.width = 64; sq.height = 64;

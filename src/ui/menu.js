@@ -8,6 +8,7 @@ import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } fro
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
 import * as fx from '../game/fx.js';
+import { TEXTURES, texture } from '../game/textures.js';
 import { UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
@@ -410,7 +411,7 @@ function forgePage(el) {
     el.innerHTML = `
       ${head('#/menu', 'Schmiede', `${icon('coin')} ${inv.coins}`)}
       <div class="shop">
-        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">⚒</span><p>Die Schmiede verbessert dein Redstone-Schwert. ${msg || 'Billig ist hier nichts, spar gut.'}</p></div>
+        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">⚒</span><p>Die Schmiede verbessert dein Glut-Schwert. ${msg || 'Billig ist hier nichts, spar gut.'}</p></div>
         <ul class="shop-list">${Object.entries(UPGRADES).map(([id, u]) => {
           const cost = nextCost(id), lvl = getCombat()[id];
           return `<li class="parch shop-item"><span class="si-icon">${icon(id === 'armor' ? 'heart' : 'sword')}</span>
@@ -465,6 +466,7 @@ function galleryPage(el) {
     ${head('#/menu', 'Galerie')}
     <div class="rd"><p class="gal-name parch" id="gal-name">Tippe auf „Alle vorführen“</p><canvas class="gal-canvas" width="128" height="80"></canvas>
       <button class="wbtn big" type="button" id="gal-all">Alle vorführen</button>
+      <div class="parch settings gal-tex">${Object.entries(TEXTURES).map(([id, t]) => `<span><canvas data-tex="${id}" width="32" height="32"></canvas><small>${esc(t.name)}</small></span>`).join('')}</div>
       <div class="parch settings"><div class="dbg-grid">${Object.keys(BTN).map((k) => `<button class="wbtn sm" type="button" data-fx="${k}">${k}</button>`).join('')}</div></div></div>`;
   el.querySelectorAll('[data-fx]').forEach((b) => b.addEventListener('click', () => BTN[b.dataset.fx]()));
   el.querySelector('#gal-all').addEventListener('click', () => {
@@ -474,7 +476,8 @@ function galleryPage(el) {
       BTN[k]();
     }, i * 1800));
   });
-  const c = el.querySelector('canvas'), g = c.getContext('2d');
+  el.querySelectorAll('[data-tex]').forEach((t) => { const q = t.getContext('2d'); texture(t.dataset.tex).forEach((row, y) => row.forEach((col, x) => { q.fillStyle = col; for (const [a, b] of [[0, 0], [16, 0], [0, 16], [16, 16]]) q.fillRect(x + a, y + b, 1, 1); })); });
+  const c = el.querySelector('.gal-canvas'), g = c.getContext('2d');
   const loop = (t) => {
     if (!c.isConnected) return;
     requestAnimationFrame(loop);

@@ -6,6 +6,7 @@
 import { COLOR_INFO, DIRS } from './engine.js';
 import { getSkin, getLook, isDinnerbone } from './skins.js';
 import { drawMinion } from './monsters.js';
+import { texture } from './textures.js';
 import { squashScale } from './fx.js';
 import { hat as currentHat } from './inventory.js';
 import { MARGIN, makeDecor, DecorSteps, drawFlames, drawGlows, drawShafts, drawMotes, shadeMargin } from './roomDecor.js';
@@ -26,16 +27,16 @@ const hash = (x, y, k = 0) => {
 export const PIXEL_THEMES = {
   default: { floor: ['#6b4a32', '#5a3d29', '#43301f'], top: '#8a6a4f', face: '#5b4030', dark: '#2e1f15', trim: '#a8835f', pattern: 'planks', dark01: 0.62, ambient: '#0c0814' },
   beach:   { floor: ['#d9b37a', '#c79f64', '#a9824c'], top: '#e8c999', face: '#b98a52', dark: '#7a5531', trim: '#f6e3bd', pattern: 'sand', dark01: 0.25, ambient: '#1a1430' },
-  cherry:  { floor: ['#7a5233', '#69462b', '#4f3420'], top: '#a5785a', face: '#6e4a35', dark: '#3c261b', trim: '#f2b7cf', pattern: 'planks', dark01: 0.45, ambient: '#1c0e1e' },
+  cherry:  { tex: 'bluetengras', floor: ['#7a5233', '#69462b', '#4f3420'], top: '#a5785a', face: '#6e4a35', dark: '#3c261b', trim: '#f2b7cf', pattern: 'planks', dark01: 0.45, ambient: '#1c0e1e' },
   jungle:  { floor: ['#3e5a2c', '#324b23', '#243818'], top: '#6b7d55', face: '#455438', dark: '#232d1b', trim: '#8fd16a', pattern: 'moss', dark01: 0.55, ambient: '#06140a' },
   night:   { floor: ['#2a3b3a', '#223231', '#172423'], top: '#4f5a4a', face: '#333d31', dark: '#161c16', trim: '#9ad1ff', pattern: 'moss', dark01: 0.78, ambient: '#02060e' },
-  volcano: { floor: ['#3a3236', '#2d2629', '#1d181a'], top: '#55494e', face: '#352c30', dark: '#151012', trim: '#ff6a1a', pattern: 'stone', dark01: 0.7, ambient: '#100302' },
-  temple:  { floor: ['#9c7a4a', '#87683d', '#6a5130'], top: '#c9a066', face: '#8f6a3b', dark: '#523a1e', trim: '#ffd166', pattern: 'stone', dark01: 0.5, ambient: '#120a04' },
-  aurora:  { floor: ['#5f7c9a', '#516b86', '#3f566e'], top: '#e8f2ff', face: '#7d93ac', dark: '#4a5d73', trim: '#4fffb0', pattern: 'ice', dark01: 0.55, ambient: '#020a1e' },
-  reef:    { floor: ['#1f6f86', '#185d71', '#114a5a'], top: '#5a6d8a', face: '#3a4a66', dark: '#1d2840', trim: '#ff7a8f', pattern: 'water', dark01: 0.5, ambient: '#021428' },
-  castle:  { floor: ['#4a4650', '#3e3a44', '#2c2a32'], top: '#6a6674', face: '#45414e', dark: '#24222a', trim: '#c9963f', pattern: 'stone', dark01: 0.68, ambient: '#08060c' },
-  shadow:  { floor: ['#3a3048', '#2f273b', '#211b2a'], top: '#5c5070', face: '#3d3450', dark: '#1d1726', trim: '#b46bff', pattern: 'stone', dark01: 0.8, ambient: '#05020c' },
-  moor:    { floor: ['#4a4a32', '#3e3f2a', '#2c2e1e'], top: '#6a6a4a', face: '#4a4a34', dark: '#22241a', trim: '#c8d68a', pattern: 'moss', dark01: 0.66, ambient: '#060a06' },
+  volcano: { tex: 'glutErz', floor: ['#3a3236', '#2d2629', '#1d181a'], top: '#55494e', face: '#352c30', dark: '#151012', trim: '#ff6a1a', pattern: 'stone', dark01: 0.7, ambient: '#100302' },
+  temple:  { tex: 'sandstein', floor: ['#9c7a4a', '#87683d', '#6a5130'], top: '#c9a066', face: '#8f6a3b', dark: '#523a1e', trim: '#ffd166', pattern: 'stone', dark01: 0.5, ambient: '#120a04' },
+  aurora:  { tex: 'eis', floor: ['#5f7c9a', '#516b86', '#3f566e'], top: '#e8f2ff', face: '#7d93ac', dark: '#4a5d73', trim: '#4fffb0', pattern: 'ice', dark01: 0.55, ambient: '#020a1e' },
+  reef:    { tex: 'korallensand', floor: ['#1f6f86', '#185d71', '#114a5a'], top: '#5a6d8a', face: '#3a4a66', dark: '#1d2840', trim: '#ff7a8f', pattern: 'water', dark01: 0.5, ambient: '#021428' },
+  castle:  { tex: 'burgziegel', floor: ['#4a4650', '#3e3a44', '#2c2a32'], top: '#6a6674', face: '#45414e', dark: '#24222a', trim: '#c9963f', pattern: 'stone', dark01: 0.68, ambient: '#08060c' },
+  shadow:  { tex: 'schattenstein', floor: ['#3a3048', '#2f273b', '#211b2a'], top: '#5c5070', face: '#3d3450', dark: '#1d1726', trim: '#b46bff', pattern: 'stone', dark01: 0.8, ambient: '#05020c' },
+  moor:    { tex: 'morschholz', floor: ['#4a4a32', '#3e3f2a', '#2c2e1e'], top: '#6a6a4a', face: '#4a4a34', dark: '#22241a', trim: '#c8d68a', pattern: 'moss', dark01: 0.66, ambient: '#060a06' },
 };
 
 export class PixelRenderer {
@@ -93,6 +94,7 @@ export class PixelRenderer {
 
   floorTile(x, y, th) {
     const px = x * T, py = y * T;
+    if (th.tex) { texture(th.tex).forEach((row, j) => row.forEach((c, i) => this.r(px + i, py + j, 1, 1, c))); return; }
     const [a, b, d] = th.floor;
     this.r(px, py, T, T, a);
     if (th.pattern === 'planks') {
@@ -201,7 +203,7 @@ export class PixelRenderer {
     this.crate(X, Y);
   }
 
-  // Lichtquelle als Redstone-Fackel: Holzstiel, glühender Kopf in der Signalfarbe mit Funken;
+  // Lichtquelle als Glutfackel: Holzstiel, glühender Kopf in der Signalfarbe mit Funken;
   // ein Staubpunkt auf dem Boden zeigt, in welche Richtung die Leitung läuft.
   emitter(x, y, c, t = 0) {
     const px = x * T, py = y * T, hex = COLOR_INFO[c.color]?.hex || '#fff';
@@ -216,7 +218,7 @@ export class PixelRenderer {
     if (fl === 0) this.r(px + 9, py, 1, 1, hex);
   }
 
-  // Ziel = Redstone-Lampe: Steinrahmen mit Glaskacheln. Aus: dunkles Glas, die Wunschfarbe als
+  // Ziel = Glutlampe: Steinrahmen mit Glaskacheln. Aus: dunkles Glas, die Wunschfarbe als
   // Symbol. Richtiges Signal: die Lampe leuchtet in der Farbe. Falsches Signal: sie flackert matt.
   target(x, y, c, info, t) {
     const px = x * T, py = y * T, hex = COLOR_INFO[c.need]?.hex || '#fff';
@@ -422,8 +424,8 @@ export class PixelRenderer {
     else { this.r(cx - 2, y + 1, 1, 1, c); this.r(cx - 1, y + 2, 1, 1, c); this.r(cx, y + 1, 1, 1, c); this.r(cx + 1, y + 2, 1, 1, c); this.r(cx + 2, y + 1, 1, 1, c); }
   }
 
-  /** Beim Entkommen: eine Redstone-Welle läuft von der Tür über den Boden (Staubfunken schalten
-   *  nacheinander an) und rote Redstone-Partikel steigen von den Lampen und der Tür auf
+  /** Beim Entkommen: eine Glutstein-Welle läuft von der Tür über den Boden (Staubfunken schalten
+   *  nacheinander an) und rote Glutstein-Partikel steigen von den Lampen und der Tür auf
    *  (bloom = { t0, cx, cy, sources }). */
   bloomFx(bloom, t) {
     const { level } = this;
@@ -444,7 +446,7 @@ export class PixelRenderer {
       if (on) this.r(px, py, 1, 1, '#ffd0c0');
       this.ctx.globalAlpha = 1;
     }
-    // Redstone-Partikel steigen auf (wie über aktivem Redstone)
+    // Glutstein-Partikel steigen auf (wie über aktivem Glutstein)
     for (const s of bloom.sources) {
       for (let n = 0; n < 8; n++) {
         const ph = k * 0.8 + hash(n, s.x * 7 + s.y) * 0.5;
@@ -609,7 +611,7 @@ export class PixelRenderer {
     this.r(px + 7, py + 3, 2, 1, '#ffffff'); this.r(px + 6, py + 4, 4, 5, '#9ff6ff'); this.r(px + 7, py + 9, 2, 2, '#4fc3d8'); this.r(px + 7, py + 5, 1, 2, '#ffffff');
   }
 
-  // Licht als Redstone-Leitung: Aus jeder Fackel breitet sich Redstone-Staub den Lichtweg entlang aus –
+  // Licht als Glutleitung: Aus jeder Fackel breitet sich Glutstein-Staub den Lichtweg entlang aus –
   // dunkler Staubkern, glitzernde Körnchen links/rechts, ein Signalpuls wandert von der Quelle weg.
   // Farbe = Signalfarbe (Rot klassisch, Grün/Blau/Mischfarben getönt); alle 15 px ein Formsymbol
   // (Rot ▲, Grün ●, Blau ■) für Farbenblinde. grow = sichtbare Länge in Feldern (Ausbreiten).
@@ -641,7 +643,7 @@ export class PixelRenderer {
             comps.forEach((c, j) => this.glyph(px + nx * (j * 4 - (comps.length - 1) * 2) + nx * 4, py + ny * (j * 4 - (comps.length - 1) * 2) + ny * 4, c, hi));
           }
         }
-        // Knotenpunkt an Spiegeln/Ecken: Staubkreuz wie bei Redstone-Abzweigungen
+        // Knotenpunkt an Spiegeln/Ecken: Staubkreuz wie bei Glutstein-Abzweigungen
         if (i < beam.points.length - 1 && dist < limit) {
           const cx = Math.round(ex), cy = Math.round(ey);
           this.r(cx - 3, cy - 3, 6, 6, dark); this.r(cx - 2, cy - 2, 4, 4, mid); this.r(cx - 1, cy - 1, 2, 2, Math.sin(t / 250 + i) > 0 ? hi : mid);

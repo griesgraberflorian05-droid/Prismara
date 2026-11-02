@@ -438,7 +438,7 @@ export function mountAdventure(root, params, opts = {}) {
     { text: `Siehst du den Spiegel? Stell dich unter ihn und ${touch ? 'wisch nach oben' : 'lauf dagegen'} – so schiebst du ihn nach oben.`, done: () => mirror().y < 4, mark: () => ({ x: 6, y: 5 }) },
     { text: 'Schieb ihn bis ganz nach oben an die Wand. Schieben kostet KRAFT (unten links) – ist sie leer, verschnaufst du kurz.', done: () => mirror().y === 1, mark: () => ({ x: 6, y: 1 }) },
     { text: `${touch ? 'Tipp irgendwo aufs Spielfeld: Das dreht den Spiegel vor dir.' : 'Leertaste oder ein Klick auf den Spiegel dreht ihn, wenn du davor stehst.'} Dreh ihn, damit die Leitung nach unten läuft.`, done: () => mirror().y === 1 && mirror().orient === '\\', mark: () => mirror() },
-    { text: 'Die Leitung läuft zu dir! Tritt zur Seite, damit sie die Redstone-Lampe erreicht.', done: () => tr.solved, mark: () => ({ x: 6, y: 6 }) },
+    { text: 'Die Leitung läuft zu dir! Tritt zur Seite, damit sie die Glutlampe erreicht.', done: () => tr.solved, mark: () => ({ x: 6, y: 6 }) },
     { text: 'Die Lampe leuchtet – die Tür ist offen! Hol dir noch einen Kristall, wenn du magst, und geh dann durch die Tür.', done: () => done, mark: () => exit },
   ];
   let tutStep = 0, tutShown = -1, bumps = 0;
@@ -586,7 +586,7 @@ export function mountAdventure(root, params, opts = {}) {
       <div class="win-card pixel-card">
         <div class="win-stars" aria-label="${stars} von 3 Sternen">${[1, 2, 3].map((i) => `<span class="${i <= stars ? 'on' : ''}" style="--i:${i}">★</span>`).join('')}</div>
         <h2 id="win-title" class="pixel">${tutorial ? 'TUTORIAL GESCHAFFT!' : lastInWorld ? 'WELT GESCHAFFT!' : 'ENTKOMMEN!'}</h2>
-        ${tutorial ? '<p>Du kannst laufen, schieben, drehen und Redstone-Lampen zum Leuchten bringen. Jetzt wartet der Sommerstrand!</p>' : ''}
+        ${tutorial ? '<p>Du kannst laufen, schieben, drehen und Glutlampen zum Leuchten bringen. Jetzt wartet der Sommerstrand!</p>' : ''}
         <p class="win-coins">🪙 +${reward} Münzen · im Beutel ${getInv().coins}</p>
         ${unlockedNow.map((m) => `<p class="win-unlock">🔓 Neu freigeschaltet: ${m.icon} <b>${esc(m.name)}</b></p>`).join('')}
         <p>Rätsel in ${counted} Zügen · Ziel ≤ ${def.par}${improved && prevBest != null ? ' · neue Bestleistung' : ''} · Fragmente ${fragments.filter((f) => f.got).length}/${fragments.length}</p>

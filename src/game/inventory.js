@@ -19,8 +19,8 @@ export const SLOTS = ['bread', 'scroll', 'lens', 'pick'];
 
 /** Raumführer: Erklärung jedes Elements, das in einem Raum vorkommt (für die Hinweisschilder). */
 export const GUIDE = {
-  emitter: '🔥 Redstone-Fackel – von ihr läuft eine Redstone-Leitung in Pfeilrichtung.',
-  target: '💡 Redstone-Lampe – leuchtet, wenn eine Leitung in ihrer Farbe ankommt. Leuchten alle Lampen, geht die Tür auf.',
+  emitter: '🔥 Glutfackel – von ihr läuft eine Glutleitung in Pfeilrichtung.',
+  target: '💡 Glutlampe – leuchtet, wenn eine Leitung in ihrer Farbe ankommt. Leuchten alle Lampen, geht die Tür auf.',
   mirror: '🪞 Spiegel – dagegenlaufen schiebt ihn, Leertaste dreht ihn. Er lenkt die Leitung um 90°.',
   stone: '🪨 Steinblock – unterbricht Leitungen. Schieb ihn aus dem Weg oder nutze ihn als Schutz.',
   prism: '🔺 Prisma – teilt weißes Licht in Rot, Grün und Blau.',
@@ -32,7 +32,7 @@ export const GUIDE = {
   ice: '🧊 Eis – du und Kisten rutschen, bis etwas im Weg ist.',
   flow: '➡ Strömung – nur in Pfeilrichtung betretbar.',
   enemy: '👻 Schattenläufer – laufen bei jedem Zug mit. Berührung heißt erwischt; im Licht lösen sie sich auf.',
-  lamp: '🔦 Wanderlampe – eine schiebbare Redstone-Fackel, Leertaste dreht ihre Richtung.',
+  lamp: '🔦 Wanderlampe – eine schiebbare Glutfackel, Leertaste dreht ihre Richtung.',
   shifter: '🌈 Farbwandler – färbt die Leitung in die nächste Farbe um.',
   key: '🗝 Schlüssel – lauf drüber, um ihn einzustecken.',
   lock: '⛓ Gittertor – gesperrt. Mit einem Schlüssel lauf dagegen, dann schwingt es auf.',
