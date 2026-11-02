@@ -1390,17 +1390,26 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .sg-tile.r-common { background: #2f7a3a; }
 .sg-tile canvas { height: calc(100% - 12px); }
 .sg-r { position: absolute; left: 0; right: 0; bottom: 1px; font-size: 0.26rem; line-height: 1; color: #fff; text-align: center; text-shadow: 0 1px 0 #000; }
-/* Bekomm-Animation */
-.spin-show { position: fixed; inset: 0; z-index: 960; display: grid; place-content: center; justify-items: center; gap: 10px; color: #fff; background: rgba(6, 3, 14, 0.92); --c: #6cb455; }
-.spin-show.r-rare { --c: #4f8fe8; } .spin-show.r-epic { --c: #b06cff; } .spin-show.r-legend { --c: #ffd166; }
-.spin-box { display: grid; place-items: center; width: 120px; height: 120px; font-size: 2rem; background: #4a3a2a; border: 6px solid #120a1c; animation: spin-shake 0.14s steps(2) infinite; }
-.spin-ray { position: absolute; width: 90vmax; height: 90vmax; background: repeating-conic-gradient(var(--c) 0 10deg, transparent 10deg 30deg); opacity: 0; pointer-events: none; }
-.spin-show canvas, .spin-show b, .spin-show small, .spin-show p { display: none; position: relative; }
-.spin-show canvas { width: 168px; height: 196px; image-rendering: pixelated; animation: spin-pop 0.4s steps(6); }
-.spin-show.open .spin-box { display: none; }
-.spin-show.open canvas, .spin-show.open b, .spin-show.open small, .spin-show.open p { display: block; }
-.spin-show.open .spin-ray { opacity: 0.3; animation: spin-turn 8s linear infinite; }
-.spin-show b { font-weight: normal; font-size: 0.9rem; } .spin-show small { font-size: 0.6rem; color: var(--c); } .spin-show p { margin: 0; font-size: 0.4rem; opacity: 0.7; }
-@keyframes spin-shake { 50% { transform: translate(3px, -2px) rotate(2deg); } }
-@keyframes spin-pop { from { transform: scale(0.1); } 70% { transform: scale(1.2); } }
-@keyframes spin-turn { to { transform: rotate(360deg); } }
+/* Bekomm-Animation: Karte bebt, dreht sich um, Farbe der Seltenheit füllt den Bildschirm */
+.spin-show { position: fixed; inset: 0; z-index: 960; display: grid; place-content: center; justify-items: center; gap: 18px; overflow: hidden; color: #fff; background: #07040e; --c: #58c04a; --c2: #1f5a24; }
+.spin-show.r-rare { --c: #4f9fff; --c2: #173a7a; } .spin-show.r-epic { --c: #c07cff; --c2: #4a1a8a; } .spin-show.r-legend { --c: #ffd166; --c2: #8a5410; }
+.spin-glow { position: absolute; inset: 0; opacity: 0; background: radial-gradient(circle at 50% 46%, var(--c) 0, var(--c2) 34%, #07040e 74%); transition: opacity 0.35s; }
+.spin-show.open .spin-glow { opacity: 1; animation: spin-pulse 1.8s ease-in-out infinite; }
+.spin-card { position: relative; width: 210px; height: 290px; transform-style: preserve-3d; animation: spin-shake 0.12s steps(2) infinite; }
+.spin-show.open .spin-card { animation: spin-flip 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) forwards; }
+.spin-back, .spin-front { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 10px; backface-visibility: hidden; border: 6px solid #120a1c; box-shadow: inset 0 0 0 4px var(--c), 0 10px 0 #000; }
+.spin-back { font-size: 3.4rem; color: #fff; background: #2a1f48; }
+.spin-front { transform: rotateY(180deg); background: linear-gradient(var(--c2), #120a1c); }
+.spin-front canvas { width: 144px; height: 168px; image-rendering: pixelated; animation: spin-bob 1.1s steps(4) infinite; }
+.spin-front small { font-size: 0.6rem; color: var(--c); text-shadow: 0 2px 0 #000; }
+.spin-front b { font-weight: normal; font-size: 0.66rem; text-align: center; text-shadow: 0 2px 0 #000; }
+.spin-show p { position: relative; margin: 0; font-size: 0.45rem; opacity: 0; }
+.spin-show.open p { opacity: 0.8; transition: opacity 0.3s 0.7s; }
+.spin-show > i { position: absolute; left: 50%; top: 46%; width: var(--s); height: var(--s); background: var(--c); opacity: 0; }
+.spin-show.open > i { animation: spin-burst 0.9s var(--t) ease-out forwards; }
+@keyframes spin-shake { 50% { transform: translate(4px, -3px) rotate(1.5deg); } }
+@keyframes spin-flip { from { transform: rotateY(0) scale(0.8); } to { transform: rotateY(180deg) scale(1); } }
+@keyframes spin-pulse { 50% { filter: brightness(1.2); } }
+@keyframes spin-bob { 50% { transform: translateY(-5px); } }
+@keyframes spin-burst { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -1)); } }
+@media (prefers-reduced-motion: reduce) { .spin-card, .spin-show.open .spin-card { animation: none; } .spin-show.open .spin-card { transform: rotateY(180deg); } .spin-front canvas, .spin-show.open > i, .spin-show.open .spin-glow { animation: none; } }

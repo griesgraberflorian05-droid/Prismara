@@ -549,6 +549,7 @@ function wardrobePage(el, msg = '') {
     updateSettingsQuiet(keep); pr.ctx.restore();
   };
   el.querySelector('#spin').addEventListener('click', () => {
+    if (!isAdmin() && getInv().coins < SPIN_PRICE) { play('bump'); return; }
     const c = rollSkin();
     if (!c) { wardrobePage(el, 'Du hast schon alle Skins!'); return; }
     if (!isAdmin()) addCoins(-SPIN_PRICE);
@@ -556,7 +557,7 @@ function wardrobePage(el, msg = '') {
     // Bekomm-Animation: Kiste bebt und platzt auf, dann kommt der Skin in der Farbe seiner Seltenheit
     const r = rarityOf(c), o = document.createElement('div');
     o.className = `spin-show r-${r}`;
-    o.innerHTML = `<div class="spin-box">?</div><div class="spin-ray"></div><canvas width="24" height="28"></canvas><b>${esc(c.name)}</b><small>${RARITY[r].name}</small><p>Antippen</p>`;
+    o.innerHTML = `<div class="spin-glow"></div><div class="spin-card"><div class="spin-back">?</div><div class="spin-front"><small>${RARITY[r].name}</small><canvas width="24" height="28"></canvas><b>${esc(c.name)}</b></div></div><p>Antippen</p>${Array.from({ length: 28 }, (_, i) => `<i style="--a:${i * 49}deg;--d:${120 + (i * 37) % 240}px;--s:${i % 3 * 3 + 5}px;--t:${(i % 5) * 0.08}s"></i>`).join('')}`;
     document.body.append(o);
     paint(c.id)(o.querySelector('canvas'));
     [0, 300, 600, 900].forEach((ms, i) => setTimeout(() => play('lamp', i), ms));
