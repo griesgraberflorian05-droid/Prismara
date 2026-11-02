@@ -6,7 +6,8 @@ import { PixelRenderer, PIXEL_THEMES, T } from '../game/pixelRender.js';
 import { CHAPTERS, PUSH_LEVELS } from '../game/pushLevels.js';
 import { WORLDS } from '../game/worlds.js';
 import { addCoins, hat } from '../game/inventory.js';
-import { foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
+import { markFound } from '../game/inventory.js';
+import { hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
 import { drawMinion, drawBoss } from '../game/monsters.js';
 import { play, bossSound } from '../game/sound.js';
 import { setMusic } from '../game/music.js';
@@ -14,8 +15,8 @@ import { prefersReducedMotion } from '../settings.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 
-const ROWS = ['#############', '#...........#', '#..#.....#..#', '#...........#', '#...........#', '#...........#', '#..#.....#..#', '#...........#', '#############'];
-const W = 13, H = 9;
+const ROWS = ['###################', '#.................#', '#.................#', '#...#.........#...#', '#.................#', '#.................#', '#.................#', '#.................#', '#.................#', '#...#.........#...#', '#.................#', '#.................#', '###################'];
+const W = 19, H = 13;
 const STEP_MS = 135, SWING_MS = 450, MAGIC_MS = 8000, MODES = ['Rundumschlag', 'Stoß', 'Magie'], SAFE_MS = 950;
 const KEYS = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3, W: 0, D: 1, S: 2, A: 3 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -29,10 +30,10 @@ export function mountArena(root, params) {
   const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: {}, rows: ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)) });
   const room = createPushState(level), tr = pushTrace(room);
   const pix = new PixelRenderer(level);
-  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v, maxHp = stat('armor'), reach = stat('reach'), skin = swordSkin();
+  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), modes = MODES.filter((_, i) => i < 2 || hasMagic()), maxHp = stat('armor'), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
   const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(340, 620 - ci * 26) * (touch ? 1.3 : 1)), windMs = touch ? 700 : 430;
-  const bossHp = 30 + ci * 8;
+  const mini = params[1] === 'mini', bossHp = mini ? 10 + ci * 3 : 30 + ci * 8; // Miniboss: kurzer Kampf ohne Ultra
 
   document.body.classList.add('ingame');
   document.body.dataset.world = world;
@@ -42,7 +43,7 @@ export function mountArena(root, params) {
       <canvas id="board" class="pixel-canvas" tabindex="0" aria-label="Kampf. WASD oder Pfeiltasten laufen, Leertaste oder Klick schlägt."></canvas>
       <div class="ihud ihud-tl pixel"><div class="ihud-world">${esc(WORLDS[world]?.name || '')}</div><div class="ihud-room" id="wave">WELLE 1/2</div></div>
       <div class="ar-hearts" id="hearts" role="img"></div><div class="ar-mode pixel" id="mode"></div>
-      <div class="ar-boss" id="bossbar" hidden><span>${esc(foe.boss)}</span><i><b id="bosshp"></b></i></div>
+      <div class="ar-boss" id="bossbar" hidden><span>${mini ? `Wächter: ${esc(foe.critter)}` : esc(foe.boss)}</span><i><b id="bosshp"></b></i></div>
       <div class="ihud ihud-tr"><button class="ibtn" id="pause" title="Pause (Esc)" aria-label="Pause">${icon('pause')}</button></div>
       <div class="pause" id="panel" hidden role="dialog"><div class="pause-card pixel-card" id="panel-card"></div></div>
       ${touch ? `<div class="dpad" aria-hidden="true"><button data-d="0">▲</button><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button><i class="dpad-hub"></i></div>
@@ -55,7 +56,7 @@ export function mountArena(root, params) {
   const reduced = prefersReducedMotion();
 
   function spawnMobs(n) {
-    const spots = [[11, 1], [11, 7], [6, 1], [6, 7], [11, 4], [8, 4]];
+    const spots = [[17, 1], [17, 11], [9, 1], [9, 11], [17, 6], [12, 6]];
     for (let k = 0; k < n; k++) {
       const [x, y] = spots[k % spots.length];
       if (!(mobs.some((m) => m.x === x && m.y === y) || (hero.x === x && hero.y === y))) mobs.push({ x, y, hp: minionHp, next: performance.now() + 500 + k * 120, wind: 0, hit: 0, struck: -1e9 });
@@ -207,8 +208,8 @@ export function mountArena(root, params) {
       }
     } else if (!mobs.length) {
       phase++;
-      if (phase === 2) { spawnMobs(5); $('#wave').textContent = 'WELLE 2/2'; } else {
-        boss = { x: 9, y: 3, hp: bossHp, next: now + 1600, turn: 0, hit: 0, walk: now + 2000, ultra: now + 7000, jump: 0 };
+      if (phase === 2 && !mini) { spawnMobs(5); $('#wave').textContent = 'WELLE 2/2'; } else {
+        boss = { x: 13, y: 5, hp: bossHp, next: now + 1600, turn: 0, hit: 0, walk: now + 2000, ultra: mini ? Infinity : now + 7000, jump: 0 };
         $('#wave').textContent = 'BOSS'; $('#bossbar').hidden = false; $('#bosshp').style.width = '100%';
         setMusic('boss'); bossSound('roar'); shake = now + 500;
       }
@@ -224,6 +225,11 @@ export function mountArena(root, params) {
   }
   function win() {
     phase = 0; held = null; tele = []; shots = []; mobs = []; setMusic(world); shake = performance.now() + 400;
+    if (mini) {
+      addCoins(20 + ci * 5); markFound(params[3], 'mini'); play('exitopen');
+      panel(`<h2 class="pixel">WÄCHTER BESIEGT!</h2><p class="pause-hint">+${20 + ci * 5} Münzen.</p><a class="btn btn-primary" href="#/adv/${params[2]}" id="p-next">Weiter</a>`);
+      $('#p-next').focus(); return;
+    }
     const first = !bossBeaten(ci), reward = first ? 60 + ci * 25 : 10;
     addCoins(reward); markBoss(ci); play('exitopen');
     const nextCh = CHAPTERS[ci + 1];
@@ -257,7 +263,7 @@ export function mountArena(root, params) {
   function onKeyDown(e) {
     if (e.key === 'Escape') { setPaused(!paused); return; }
     if (paused || phase === 0) return;
-    if (e.key === 'f' || e.key === 'F') { mode = (mode + 1) % MODES.length; showMode(); play('ui'); return; }
+    if (e.key === 'f' || e.key === 'F') { mode = (mode + 1) % modes.length; showMode(); play('ui'); return; }
     if (e.key in KEYS) { if (!e.repeat) { held = KEYS[e.key]; hero.next = 0; } e.preventDefault(); } else if (e.key === ' ' || e.key === 'e' || e.key === 'E') { swing(); e.preventDefault(); }
   }
   function onKeyUp(e) { if (e.key in KEYS && KEYS[e.key] === held) held = null; }
@@ -271,7 +277,7 @@ export function mountArena(root, params) {
     });
     $('#tpad-hit').addEventListener('pointerdown', (ev) => { ev.preventDefault(); swing(); });
     let sw = null;
-    canvas.addEventListener('touchstart', (ev) => { if (ev.touches.length === 2) { mode = (mode + 1) % MODES.length; showMode(); sw = null; } }); // zwei Finger wechseln den Angriff
+    canvas.addEventListener('touchstart', (ev) => { if (ev.touches.length === 2) { mode = (mode + 1) % modes.length; showMode(); sw = null; } }); // zwei Finger wechseln den Angriff
     canvas.addEventListener('pointerdown', (ev) => { sw = { x: ev.clientX, y: ev.clientY, moved: false }; canvas.setPointerCapture?.(ev.pointerId); });
     canvas.addEventListener('pointermove', (ev) => {
       if (!sw) return;

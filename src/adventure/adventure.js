@@ -16,7 +16,7 @@ import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 import { foeOf, bossBeaten, bossPending } from '../game/combat.js';
 import { getLook, getSkin } from '../game/skins.js';
-import { FX, fxQuality, sparks, ring, mote, squash as squashFx, buzz, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
+import { FX, fxQuality, bolt, sparks, ring, mote, squash as squashFx, buzz, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
 import { codeOn } from '../game/codes.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
 import { isAdmin } from '../game/admin.js';
@@ -591,7 +591,7 @@ export function mountAdventure(root, params, opts = {}) {
         ${unlockedNow.map((m) => `<p class="win-unlock">🔓 Neu freigeschaltet: ${m.icon} <b>${esc(m.name)}</b></p>`).join('')}
         <p>Rätsel in ${counted} Zügen · Ziel ≤ ${def.par}${improved && prevBest != null ? ' · neue Bestleistung' : ''} · Fragmente ${fragments.filter((f) => f.got).length}/${fragments.length}</p>
         <div class="win-actions">
-          ${tutorial ? '<a class="btn btn-primary" href="#/adv/0" id="win-next">Los geht’s: Raum 1 →</a>' : nextIndex != null ? (lastInWorld && !bossBeaten(chIndex) ? `<a class="btn btn-primary" href="#/arena/${chIndex}" id="win-boss">⚔ Zum Bosskampf</a>` : `<a class="btn btn-primary" href="#/adv/${nextIndex}" id="win-next">${lastInWorld ? 'Nächste Welt →' : 'Nächster Raum →'}</a>`) : (custom ? `<a class="btn btn-primary" href="${esc(opts.back || '#/menu')}" id="win-next">${esc(opts.backLabel || 'Zurück zum Menü')}</a>` : '<a class="btn btn-primary" href="#/menu" id="win-next">Alle Räume geschafft!</a>')}
+          ${tutorial ? '<a class="btn btn-primary" href="#/adv/0" id="win-next">Los geht’s: Raum 1 →</a>' : nextIndex != null ? (!lastInWorld && roomNo % 4 === 0 && !isFound(def.id, 'mini') ? `<a class="btn btn-primary" href="#/arena/${chIndex}/mini/${nextIndex}/${def.id}" id="win-boss">⚔ Miniboss</a>` : lastInWorld && !bossBeaten(chIndex) ? `<a class="btn btn-primary" href="#/arena/${chIndex}" id="win-boss">⚔ Zum Bosskampf</a>` : `<a class="btn btn-primary" href="#/adv/${nextIndex}" id="win-next">${lastInWorld ? 'Nächste Welt →' : 'Nächster Raum →'}</a>`) : (custom ? `<a class="btn btn-primary" href="${esc(opts.back || '#/menu')}" id="win-next">${esc(opts.backLabel || 'Zurück zum Menü')}</a>` : '<a class="btn btn-primary" href="#/menu" id="win-next">Alle Räume geschafft!</a>')}
           ${codeOn('replay') ? '<button class="btn" id="win-replay">Replay ansehen</button>' : ''}
           <button class="btn" id="win-retry">Nochmal (R)</button>
         </div>
@@ -793,7 +793,7 @@ export function mountAdventure(root, params, opts = {}) {
     // Lampe leuchtet neu auf: Funken, Lichtring, Ton je Lampe höher
     const litNow = tr.targets.filter((o) => o.ok);
     for (const o of litNow) if (!litSeen.has(o)) {
-      if (lastLit >= 0 && litNow.length > lastLit) { sparks(o.x, o.y, theme.trim || '#ffd166', t); ring(o.x, o.y, theme.trim || '#ffd166', t); addTrauma(0.3); hitstop(FX.hitstopLamp, t); play('lamp', litNow.length - 1); }
+      if (lastLit >= 0 && litNow.length > lastLit) { sparks(o.x, o.y, theme.trim || '#ffd166', t); bolt(o.x, o.y, theme.trim || '#ffd166', t); ring(o.x, o.y, theme.trim || '#ffd166', t); addTrauma(0.3); hitstop(FX.hitstopLamp, t); play('lamp', litNow.length - 1); }
     }
     litSeen = new Set(litNow); lastLit = litNow.length;
     const glow = theme.trim || '#ffd166';

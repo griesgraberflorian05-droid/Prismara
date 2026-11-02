@@ -41,6 +41,9 @@ export function sparks(x, y, color, now = performance.now()) {
     k++;
   }
 }
+// Blitz in der Farbe der Welt schlägt von oben ins Feld
+const bolts = [];
+export function bolt(x, y, color, now = performance.now()) { if (fxQuality() > 0 && !prefersReducedMotion()) bolts.push({ x, y, color, t0: now }); }
 export function ring(x, y, color, now = performance.now(), small = false) { if (fxQuality() > 0) rings.push({ x, y, color, t0: now, small }); }
 
 /** Bildversatz in Bildschirm-Pixeln (Trauma² × Stärke). */
@@ -63,6 +66,14 @@ export function drawFx(g, T, now) {
     if (k < 0) continue; // Lichtwelle: Ring startet später
     g.globalAlpha = 1 - k; g.strokeStyle = r.color; g.lineWidth = 2;
     g.beginPath(); g.arc((r.x + 0.5) * T, (r.y + 0.5) * T, 4 + k * T * (r.small ? 0.5 : 3), 0, Math.PI * 2); g.stroke();
+  }
+  for (let i = bolts.length - 1; i >= 0; i--) {
+    const b = bolts[i];
+    if (now - b.t0 > 180) { bolts.splice(i, 1); continue; }
+    g.strokeStyle = b.color; g.lineWidth = 2; g.beginPath();
+    let px = (b.x + 0.5) * T, py = (b.y + 0.5) * T; g.moveTo(px, py);
+    for (let k = 0; k < 7; k++) { px += (k % 2 ? 5 : -5); py -= 9; g.lineTo(px, py); }
+    g.stroke();
   }
   for (const p of pool) {
     if (!p.on) continue;

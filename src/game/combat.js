@@ -13,6 +13,7 @@ const KEY = 'prismara.combat.v1';
 export const UPGRADES = {
   sword: { name: 'Klinge', info: 'Mehr Schaden je Treffer.', values: [1, 2, 3, 4, 6], costs: [120, 320, 800, 1800], unit: 'Schaden' },
   armor: { name: 'Rüstung', info: 'Mehr Herzen im Kampf.', values: [3, 4, 5, 6], costs: [200, 600, 1500], unit: 'Herzen' },
+  magic: { name: 'Magie', info: 'Stärkere Lichtnova. Erst nach dem ersten Boss nutzbar.', values: [0, 2, 4, 7], costs: [300, 900, 2200], unit: 'Bonus' },
   reach: { name: 'Reichweite', info: 'Der Rundumschlag reicht ein Feld weiter.', values: [1, 2], costs: [1000], unit: 'Felder' },
 };
 
@@ -62,7 +63,7 @@ export const FOES = {
 export const foeOf = (world) => FOES[world] || FOES.beach;
 
 function load() {
-  try { return { sword: 0, armor: 0, reach: 0, skin: 'redstone', skins: ['redstone'], beaten: [], ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { sword: 0, armor: 0, reach: 0, skin: 'redstone', skins: ['redstone'], beaten: [] }; }
+  try { return { sword: 0, armor: 0, reach: 0, magic: 0, skin: 'redstone', skins: ['redstone'], beaten: [], ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { sword: 0, armor: 0, reach: 0, magic: 0, skin: 'redstone', skins: ['redstone'], beaten: [] }; }
 }
 function save(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch { /* blockiert */ } }
 
@@ -93,6 +94,7 @@ export function pickSkin(id) {
 
 export const bossBeaten = (ci) => load().beaten.includes(CHAPTERS[ci]?.id);
 export function markBoss(ci) { const d = load(); d.beaten = [...new Set([...d.beaten, CHAPTERS[ci].id])]; save(d); }
+export const hasMagic = () => isAdmin() || load().beaten.length > 0; // Magie erspielt man sich mit dem ersten Boss
 export const worldDone = (ci) => CHAPTERS[ci].levels.every((id) => isSolved(id));
 /** Erste fertige Welt mit unbesiegtem Boss oder -1. Alle Welten dahinter bleiben gesperrt. */
 export function bossPending() {
