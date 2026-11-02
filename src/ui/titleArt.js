@@ -327,16 +327,43 @@ export function mountTitleArt(canvas, worldId = 'default') {
         if (rag.vy > 90) { rag.vy *= -0.32; rag.vx *= 0.6; rag.va *= 0.5; } else {
           // Landet er aufrecht, bleibt er stehen; sonst kippt er auf die nächste Seite
           const up = Math.atan2(Math.sin(rag.a), Math.cos(rag.a));
+          if (Math.abs(up) > 2.3) { rag.mode = 'head'; rag.a = Math.PI; rag.side = up < 0 ? -1 : 1; rag.until = tms + 750; return; } // Kopfstand: erst stehen, dann umkippen
           rag.mode = 'down'; rag.a = Math.abs(up) < 0.7 ? 0 : up < 0 ? -Math.PI / 2 : Math.PI / 2; rag.until = tms + (rag.a ? 1500 : 450);
         }
       }
+    } else if (rag.mode === 'head') {
+      if (tms > rag.until) { rag.mode = 'topple'; rag.a *= rag.side; }
+    } else if (rag.mode === 'topple') { // kippt vom Kopf auf die Seite
+      const goal = (Math.PI / 2) * rag.side; rag.a += (goal - rag.a) * Math.min(1, dt * 9);
+      if (Math.abs(goal - rag.a) < 0.05) { rag.a = goal; rag.mode = 'down'; rag.until = tms + 1000; play('bump'); }
     } else if (rag.mode === 'down') {
-      if (tms > rag.until) { rag.mode = 'walk'; rag.a = 0; }
+      if (tms > rag.until) rag.mode = rag.a ? 'rise' : 'walk';
+    } else if (rag.mode === 'rise') { // richtet sich auf
+      rag.a *= Math.max(0, 1 - dt * 8);
+      if (Math.abs(rag.a) < 0.04) { rag.a = 0; rag.mode = 'walk'; }
+    } else if (rag.mode === 'tofire') {
+      const d = FIRE.x - 17 - rag.x; rag.x += Math.sign(d) * 34 * dt; rag.y = groundY(Math.round(rag.x + 8)) - 13;
+      if (Math.abs(d) < 2) { rag.mode = 'lighting'; rag.until = tms + 1300; }
+    } else if (rag.mode === 'lighting') {
+      if (tms > rag.until) { fireOut = false; play('target', 7); rag.mode = 'walk'; }
     } else if (rag.mode === 'walk') {
+      if (fireOut) { rag.mode = 'tofire'; return; }
       const d = home.x - rag.x; rag.x += Math.sign(d) * 26 * dt; rag.y = groundY(Math.round(rag.x + 8)) - 13;
       if (Math.abs(d) < 2) { rag.mode = 'sit'; rag.x = home.x; rag.y = home.y; }
+    } else if (rag.mode === 'sit' && fireOut) { rag.mode = 'tofire';
     }
   }
+  // Feuer ausrubbeln wie ein Rubbellos; der Held holt sein Feuerzeug und zündet es wieder an
+  const FIRE = { x: 238, y: 196 };
+  let fireOut = false, rub = 0, rubAt = null;
+  const onRub = (e) => {
+    if (S.noFire || fireOut || rag.mode === 'held') return;
+    const [x, y] = toScene(e);
+    if (Math.hypot(x - FIRE.x, y - FIRE.y + 6) > 20 || !(e.buttons || e.pointerType === 'touch')) { rubAt = null; return; }
+    if (rubAt) rub += Math.hypot(x - rubAt[0], y - rubAt[1]);
+    rubAt = [x, y];
+    if (rub > 160) { fireOut = true; rub = 0; rubAt = null; play('dissolve'); if (rag.mode === 'sit') rag.mode = 'tofire'; }
+  };
   const onMove = (e) => { [rag.px, rag.py] = toScene(e); };
   const onUp = () => { if (rag.mode === 'held') { rag.mode = 'fly'; rag.va = rag.va || rag.vx * 0.03; } removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); stage.style.cursor = ''; };
   const onGrab = (e) => {
@@ -363,6 +390,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
   };
   stage.addEventListener('pointerdown', onPoint);
   stage.addEventListener('pointerdown', onGrab);
+  stage.addEventListener('pointermove', onRub);
   stage.addEventListener('pointermove', onPoint);
   function frame(tms) {
     if (!run) return;
@@ -440,7 +468,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
     glow(318, 58, 30, 'rgba(255,200,110,A)', 0.35 + 0.08 * Math.sin(t / 300));
     if (S.lavaGlow) glow(190, 165, 120, 'rgba(255,110,30,A)', 0.18 + 0.05 * Math.sin(t / 600));
     const fx = 238, fy = 196, fl = Math.sin(t / 90) * 0.5 + Math.sin(t / 37) * 0.3;
-    if (!S.noFire) {
+    if (!S.noFire && !fireOut) {
       glow(fx, fy - 4, 46, 'rgba(255,150,60,A)', 0.42 + 0.1 * fl);
       R(g, fx - 6, fy + 1, 12, 2, '#4a2a14'); R(g, fx - 4, fy, 8, 2, '#6b4426');
       const f = Math.floor(t / 100) % 3;
@@ -450,7 +478,8 @@ export function mountTitleArt(canvas, worldId = 'default') {
         const ph = ((t / 1000) * (0.5 + hash(i, 81) * 0.6) + hash(i, 82)) % 1;
         g.globalAlpha = 1 - ph; R(g, fx + Math.sin(ph * 9 + i) * 4, fy - 10 - ph * 40, 1, 1, ph < 0.5 ? '#ffcf4a' : '#ff6a1a');
       }
-    } else glow(fx, fy - 2, 30, 'rgba(120,240,255,A)', 0.3 + 0.08 * fl); // Unterwasser: leuchtende Muschel statt Feuer
+    } else if (S.noFire) glow(fx, fy - 2, 30, 'rgba(120,240,255,A)', 0.3 + 0.08 * fl); // Unterwasser: leuchtende Muschel statt Feuer
+    if (fireOut) for (let k = 0; k < 3; k++) { const q = ((tms / 900 + k / 3) % 1), sx = fx + Math.round(Math.sin(q * 6 + k) * 3); g.globalAlpha = 0.5 * (1 - q); R(g, sx, fy - 4 - q * 18, 2, 2, '#b8b4b0'); g.globalAlpha = 1; } // Rauch
     if (S.noFire) { R(g, fx - 4, fy - 1, 8, 4, '#ffd6c0'); R(g, fx - 3, fy - 2, 6, 1, '#ffe9de'); R(g, fx - 1, fy, 2, 2, '#bff8ff'); }
     g.globalAlpha = 1;
     // Held sitzt auf dem Baumstamm, Laterne neben sich, blinzelt und wärmt sich
@@ -464,9 +493,14 @@ export function mountTitleArt(canvas, worldId = 'default') {
     hg.clearRect(0, 0, 32, 32);
     painter.ctx = hg; painter.r = (x, y, w, h, c) => R(hg, x, y, w, h, c);
     ragStep(tms);
-    const going = rag.mode === 'walk';
+    const going = rag.mode === 'walk' || rag.mode === 'tofire';
+    if (rag.mode === 'lighting') { // Feuerzeug: Daumenrad schlägt Funken, dann brennt die kleine Flamme
+      const lx = Math.round(rag.x) + 15, ly = Math.round(rag.y) + 8, on = (rag.until - tms) < 700;
+      R(g, lx, ly, 3, 4, '#c0342c'); R(g, lx, ly - 1, 3, 1, '#c8c8d0');
+      if (on) { R(g, lx + 1, ly - 3, 1, 2, '#ffd166'); R(g, lx + 1, ly - 2, 1, 1, '#ff7a2a'); } else if (Math.floor(tms / 90) % 2) R(g, lx + 2, ly - 3, 1, 1, '#fff6b0');
+    }
     hg.save(); hg.translate(16, 16);
-    painter.player({ x: -0.5, y: -0.5, dir: going ? (home.x > rag.x ? 1 : 3) : 2, walk: going ? (tms / 280) % 1 : null, stamina: 1, hat: currentHat() }, t);
+    painter.player({ x: -0.5, y: -0.5, dir: rag.mode === 'lighting' ? 1 : going ? ((rag.mode === 'tofire' ? FIRE.x - 17 : home.x) > rag.x ? 1 : 3) : 2, walk: going ? (tms / 280) % 1 : null, stamina: 1, hat: currentHat() }, t);
     hg.restore();
     for (let i = hearts.length - 1; i >= 0; i--) {
       const h = hearts[i], k = (tms - h.t0) / 1100;
@@ -520,7 +554,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
   }
   requestAnimationFrame(frame);
   return {
-    stop() { run = false; stage.removeEventListener('pointerdown', onPoint); stage.removeEventListener('pointerdown', onGrab); onUp(); stage.removeEventListener('pointermove', onPoint); stage.style.cursor = ''; },
+    stop() { run = false; stage.removeEventListener('pointerdown', onPoint); stage.removeEventListener('pointerdown', onGrab); stage.removeEventListener('pointermove', onRub); onUp(); stage.removeEventListener('pointermove', onPoint); stage.style.cursor = ''; },
     setWorld(id, dir = 1, ms = 620) {
       const next = TITLE_STYLES[id] || TITLE_STYLES.default;
       if (next === S) return;
