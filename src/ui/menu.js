@@ -506,21 +506,33 @@ function galleryPage(el) {
 
 // ---------- Auswahl-Raster wie in der Garderobe: große Vorschau, Kacheln, unten Info und Aktion ----------
 function selectGrid(el, cfg) {
-  let cur = cfg.items.find((i) => i.active) || cfg.items[0], info = false;
+  let cur = cfg.items.find((i) => i.active) || cfg.items[0], info = false, edit = false, turn = 0, timer = 0;
   const render = () => {
     const can = cur.owned || cur.price;
     el.innerHTML = `
       <div class="sg">
         <h2 class="sg-title">${esc(cfg.title)}</h2>
-        <canvas class="sg-big${cur.owned ? '' : ' sil'}" width="24" height="28"></canvas>
+        <div class="sg-stage"><button class="wbtn sm" type="button" data-nav="-1" aria-label="Vorheriger">◀</button>
+          <canvas class="sg-big e-${cfg.items.indexOf(cur) % 4}${cur.owned ? '' : ' sil'}" width="24" height="28"></canvas>
+          <button class="wbtn sm" type="button" data-nav="1" aria-label="Nächster">▶</button>
+          ${cur.tint && cur.owned ? `<button class="wbtn sm sg-pen" type="button" id="sg-pen" aria-label="Anpassen">${icon('pen')}</button>` : ''}</div>
         <b class="sg-name">${esc(cur.name)}</b><small class="sg-sub">${esc(cur.owned ? cur.sub : cur.lockText || `${cur.price} Münzen`)}</small>
         ${info ? `<p class="sg-info">${esc(cur.sub)}</p>` : ''}
-        ${cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label></div>` : ''}
+        ${edit && cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label></div>` : ''}
         <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}${it.rarity && it.owned ? ` r-${it.rarity}` : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}${it.rarity && it.owned ? `<small class="sg-r">${RARITY[it.rarity].name}</small>` : ''}</button>`).join('')}</div>
         <div class="sg-bar"><button class="wbtn" type="button" id="sg-info">Info</button>
           <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? (isAdmin() ? 'Gratis kaufen' : `Kaufen ${cur.price}`) : 'Gesperrt'}</button></div>
       </div>`;
-    cur.paint(el.querySelector('.sg-big'));
+    const big = el.querySelector('.sg-big');
+    cur.paint(big, 2);
+    // Vorschau dreht sich langsam, jeder Skin hat seinen eigenen Emote (CSS e-0 bis e-3)
+    clearInterval(timer);
+    timer = setInterval(() => { if (!big.isConnected) { clearInterval(timer); return; } turn = (turn + 1) % 4; big.getContext('2d').clearRect(0, 0, 24, 28); cur.paint(big, [2, 1, 0, 3][turn]); }, 420);
+    el.querySelectorAll('[data-nav]').forEach((b) => b.addEventListener('click', () => {
+      const own = cfg.items.filter((i) => i.owned), list = own.length ? own : cfg.items;
+      cur = list[(list.indexOf(cur) + +b.dataset.nav + list.length) % list.length]; play('ui'); render();
+    }));
+    el.querySelector('#sg-pen')?.addEventListener('click', () => { edit = !edit; play('ui'); render(); });
     el.querySelectorAll('.sg-tile canvas').forEach((c, i) => cfg.items[i].paint(c));
     el.querySelectorAll('.sg-tile').forEach((b) => b.addEventListener('click', () => { cur = cfg.items[+b.dataset.i]; play('ui'); render(); }));
     el.querySelectorAll('.sg-tint input').forEach((i) => i.addEventListener('change', () => { cur.tint.set([el.querySelector('#t0').value, el.querySelector('#t1').value]); render(); }));
@@ -543,11 +555,11 @@ function wardrobePage(el, msg = '') {
     <button class="spin-fab" id="spin" type="button" aria-label="Glücksrad öffnen"><i></i><b>${getSpins()}x</b></button>
     ${msg ? `<p class="code-msg sg-won">${esc(msg)}</p>` : ''}
     <div id="sel"></div><a class="wbtn sm" href="#/menu/kit">Mehr anpassen</a>`;
-  const paint = (id) => (cv) => {
+  const paint = (id) => (cv, dir = 2) => {
     const pr = Object.create(PixelRenderer.prototype), keep = getSettings().skin;
     pr.ctx = cv.getContext('2d'); pr.ctx.save(); pr.ctx.translate(4, 8);
     updateSettingsQuiet({ color: id });
-    pr.player({ x: 0, y: 0, dir: 2, walk: null, stamina: 1, hat: '' }, 0);
+    pr.player({ x: 0, y: 0, dir, walk: null, stamina: 1, hat: '' }, 0);
     updateSettingsQuiet(keep); pr.ctx.restore();
   };
   el.querySelector('#spin').addEventListener('click', () => {

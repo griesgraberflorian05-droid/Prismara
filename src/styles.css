@@ -1448,3 +1448,23 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .pay-card h2 { margin: 0; font-size: 18px; } .pay-row { display: flex; justify-content: space-between; } .pay-card small { color: #666; }
 .pay-go { padding: 12px; font: 600 15px system-ui, sans-serif; color: #fff; background: #1f6feb; border: 0; border-radius: 8px; cursor: pointer; }
 .pay-no { padding: 8px; font: 14px system-ui, sans-serif; background: none; border: 0; color: #555; cursor: pointer; }
+
+/* Garderobe: Pfeile, Stift, Emotes */
+.sg-stage { position: relative; display: grid; grid-template-columns: auto auto auto; align-items: center; justify-content: center; gap: 14px; }
+.sg-pen { position: absolute; right: -44px; top: 4px; }
+.sg-pen .pxi { width: 14px; height: 14px; }
+.sg-big.e-0 { animation: em-hop 0.8s steps(4) infinite; }
+.sg-big.e-1 { animation: em-sway 1s steps(6) infinite; }
+.sg-big.e-2 { animation: em-squat 0.7s steps(3) infinite; transform-origin: 50% 100%; }
+.sg-big.e-3 { animation: em-spin 1.4s steps(12) infinite; }
+@keyframes em-hop { 50% { transform: translateY(-14px); } }
+@keyframes em-sway { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+@keyframes em-squat { 50% { transform: scale(1.12, 0.84); } }
+@keyframes em-spin { to { transform: scaleX(-1) rotate(0.01deg); } }
+@media (prefers-reduced-motion: reduce) { .sg-big { animation: none !important; } }
+/* Mehr anpassen: dunkel wie die Garderobe, klar gegliedert */
+body.wood .kit.parch { color: var(--parch) !important; background: rgba(18, 12, 34, 0.92) !important; box-shadow: 0 6px 0 #000 !important; border-color: var(--wood-0) !important; }
+.kit h3 { margin: 14px 0 6px; padding-bottom: 4px; font-size: 0.6rem; color: var(--gold); border-bottom: 2px solid rgba(255, 209, 102, 0.3); }
+body.wood .kit-swatch { color: var(--parch); background: #2a1f48; border-color: #120a1c; }
+body.wood .kit-swatch.active { color: var(--ink); background: var(--gold); }
+.kit .small { color: var(--muted); }
