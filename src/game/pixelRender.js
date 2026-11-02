@@ -834,7 +834,9 @@ export class PixelRenderer {
       if (n < 2 || Math.hypot(end[0] - hx, end[1] - hy) > 1.6) return b;
       // Richtung aus dem letzten echten Abschnitt, damit die Spitze immer bis in die Figur reicht
       let k = n - 2; while (k > 0 && b.points[k][0] === end[0] && b.points[k][1] === end[1]) k--;
-      const prev = b.points[k], tip = prev[0] === end[0] ? [end[0], hy] : [hx, end[1]];
+      const prev = b.points[k], vertical = prev[0] === end[0];
+      if (Math.abs(vertical ? end[0] - hx : end[1] - hy) > 0.6) return b; // Held steht nicht im Strahl: Strahl nicht verändern
+      const tip = vertical ? [end[0], hy] : [hx, end[1]];
       return { ...b, points: [...b.points.slice(0, k + 1), tip] };
     });
     this.beams(shown, t, (opts.grow ?? Infinity) + 2); // Spitze nie vom Wachsen abschneiden
