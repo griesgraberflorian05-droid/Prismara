@@ -710,7 +710,11 @@ export class PixelRenderer {
 
   lighting(lights, th, opaque) {
     const { w, h } = this.level;
-    const { R, G, B } = this.computeLight(lights, opaque);
+    const fresh = this.computeLight(lights, opaque);
+    // Licht springt feldweise: je Bild nur ein Stück zum neuen Wert gleiten, das macht es weich
+    if (!this.lit) this.lit = fresh;
+    else for (const k of ['R', 'G', 'B']) { const a = this.lit[k], b = fresh[k]; for (let i = 0; i < a.length; i++) a[i] += (b[i] - a[i]) * 0.14; }
+    const { R, G, B } = this.lit;
     const amb = hexRgb(th.ambient);
     const ambLevel = (1 - th.dark01) * 0.7; // dunkler Grundton → Lichtquellen setzen sich ab
     // Lichtkarte: 1 Pixel pro Feld (+1 Rand), Werte = Umgebung + Lichtfarbe

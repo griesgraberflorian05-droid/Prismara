@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.44', items: ['Licht gleitet weich statt zu springen'] },
   { v: '3.23.43', items: ['Endlos-Modus mit eigenem Trupp', 'Kein seitliches Scrollen mehr'] },
   { v: '3.23.42', items: ['Neue Garderobe', 'Schmiede im selben Layout', 'Magie in verschiedenen Farben'] },
   { v: '3.23.41', items: ['Bosse mit Intro, drei Phasen und Finisher', 'Neustart an der erreichten Phase'] },
