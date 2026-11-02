@@ -36,6 +36,23 @@ export function pickPart(slot, id) {
   return true;
 }
 
+// Farben der Magie
+export const MAGIC_COLORS = [
+  { id: 'licht', name: 'Lichtgold', color: '#ffd166', price: 0 }, { id: 'glut', name: 'Glutrot', color: '#ff4a3a', price: 400 }, { id: 'frost', name: 'Frostblau', color: '#7fe0ff', price: 700 },
+  { id: 'gift', name: 'Giftgrün', color: '#7dff6a', price: 1000 }, { id: 'nacht', name: 'Nachtviolett', color: '#b48cff', price: 1500 }, { id: 'prisma', name: 'Prisma', color: '#ffffff', price: 3000 },
+];
+export const magicColor = () => MAGIC_COLORS.find((m) => m.id === load().magicColor) || MAGIC_COLORS[0];
+export const ownsMagic = (id) => isAdmin() || !MAGIC_COLORS.find((m) => m.id === id)?.price || (load().magics || []).includes(id);
+export function pickMagic(id) {
+  const m = MAGIC_COLORS.find((x) => x.id === id), d = load();
+  if (!ownsMagic(id)) {
+    if (getInv().coins < m.price) return false;
+    addCoins(-m.price); d.magics = [...(d.magics || []), id];
+  }
+  d.magicColor = id; save(d);
+  return true;
+}
+
 export const SWORD_SKINS = [
   { id: 'redstone', name: 'Glutstein', blade: '#e0342c', edge: '#ff8a70', grip: '#5a2a1a', price: 0 },
   { id: 'gold', name: 'Gold', blade: '#e8b04a', edge: '#fff0a8', grip: '#6b4426', price: 500 },

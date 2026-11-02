@@ -9,7 +9,7 @@ import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
 import * as fx from '../game/fx.js';
 import { TEXTURES, texture } from '../game/textures.js';
-import { PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
+import { MAGIC_COLORS, magicColor, ownsMagic, pickMagic, PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
@@ -87,11 +87,12 @@ export function mountMenu(root, params = []) {
   let cleanup = () => {};
 
   // Gesperrte Modi: Hinweis statt Inhalt (Welten-Seiten zählen als Modus „worlds“)
-  const lockId = { chapters: 'worlds', chapter: 'worlds', kit: 'kit', shop: 'shop' }[page];
+  const lockId = { chapters: 'worlds', chapter: 'worlds', kit: 'kit', garderobe: 'kit', shop: 'shop' }[page];
   if (lockId && !isUnlocked(lockId)) ui.innerHTML = lockedHtml(lockId);
   else if (page === 'chapters') cleanup = chaptersPage(ui, parseInt(params[1] ?? '-1', 10), scene);
   else if (page === 'chapter') chapterPage(ui, parseInt(params[1] || '0', 10));
   else if (page === 'kit') cleanup = kitPage(ui, scene);
+  else if (page === 'garderobe') wardrobePage(ui);
   else if (page === 'shop') shopPage(ui);
   else if (page === 'forge') forgePage(ui);
   else if (page === 'radio') radioPage(ui);
@@ -145,7 +146,7 @@ function mainPage(el) {
         <span class="tj-body"><span class="tj-kicker">WELT ${ci + 1} VON ${CHAPTERS.length}</span><span class="tj-name">${esc(world?.name || info.ch.name)}</span>
           <span class="tj-bar" aria-label="${info.solved} von ${info.idx.length} Räumen"><i style="width:${pct}%"></i></span></span></a>`}
       <nav class="mm-tiles" aria-label="Hauptmenü">${MODES.map((m) => {
-        const href = { worlds: `#/menu/chapters/${currentChapter()}`, kit: '#/menu/kit', daily: '#/daily', shop: '#/menu/shop' }[m.id];
+        const href = { worlds: `#/menu/chapters/${currentChapter()}`, kit: '#/menu/garderobe', daily: '#/daily', shop: '#/menu/shop' }[m.id];
         if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn mm-tile locked" aria-disabled="true" title="${esc(m.info)}">${icon('lock')}<span>${m.name}</span><small>ab ${m.need} Räumen</small></span>`;
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
         return `<a class="wbtn mm-tile${glow ? ' glow' : ''}" href="${href}">${icon(MODE_ICON[m.id])}<span>${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</span></a>`;
@@ -418,12 +419,19 @@ function forgePage(el) {
             <span class="si-text"><b>${esc(u.name)} ${lvl + 1}/${u.values.length}</b><small>${esc(u.info)}</small><em>${u.values[lvl]} ${u.unit}</em></span>
             <button class="wbtn sm" data-up="${id}" ${cost == null || inv.coins < cost ? 'disabled' : ''}>${cost == null ? 'MAX' : cost ? `${icon('coin')} ${cost}` : 'GRATIS'}</button></li>`;
         }).join('')}</ul>
-        ${Object.entries(PARTS).map(([slot, s]) => `<h3 class="tm-plank">${esc(s.name)}</h3><div class="kit-row">${s.list.map((p) => `<button class="kit-swatch${partOf(slot).id === p.id ? ' active' : ''}" data-part="${slot}:${p.id}" aria-pressed="${partOf(slot).id === p.id}"><small>${esc(p.name)}${ownsPart(p.id) ? '' : ` ${p.price}`}</small></button>`).join('')}</div>`).join('')}
-        <div class="kit-row sword-skins">${shownSkins().map((s) => `<button class="kit-swatch${swordSkin().id === s.id ? ' active' : ''}" data-sword="${s.id}" aria-pressed="${swordSkin().id === s.id}"><span class="ks-dot" style="background:${s.blade};box-shadow:0 0 0 3px ${s.edge}"></span><small>${esc(s.name)}${ownsSkin(s.id) ? '' : ` ${s.price}`}</small></button>`).join('')}</div>
+        <div id="sel"></div>
       </div>`;
-    el.querySelectorAll('[data-part]').forEach((b) => b.addEventListener('click', () => { const [slot, id] = b.dataset.part.split(':'); const ok = pickPart(slot, id); play(ok ? 'ui' : 'bump'); render(ok ? 'Eingebaut!' : 'Dafür fehlen dir Münzen.'); }));
     el.querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { if (upgrade(b.dataset.up)) play('target', 7); render('Die Klinge glüht – Verbesserung geschafft!'); }));
-    el.querySelectorAll('[data-sword]').forEach((b) => b.addEventListener('click', () => { const ok = pickSkin(b.dataset.sword); play(ok ? 'ui' : 'bump'); render(ok ? 'Schöne Waffe!' : 'Dafür fehlen dir Münzen.'); }));
+    const swatch = (color) => (cv) => { const g = cv.getContext('2d'); for (let i = 0; i < 14; i++) { g.fillStyle = color; g.fillRect(18 - i, 4 + i, 3, 3); } g.fillStyle = '#6b4426'; g.fillRect(4, 19, 5, 5); g.fillRect(2, 16, 9, 2); };
+    selectGrid(el.querySelector('#sel'), {
+      title: 'Ausrüstung', action: 'Ausrüsten',
+      items: [
+        ...Object.entries(PARTS).flatMap(([slot, g]) => g.list.map((p) => ({ id: p.id, name: p.name, sub: `${g.name}: ${p.v} ${g.unit}`, owned: ownsPart(p.id), price: p.price, active: partOf(slot).id === p.id, paint: swatch(['#8a8794', '#c9963f', '#e0342c', '#ffd166'][g.list.indexOf(p)]), pick: () => pickPart(slot, p.id) }))),
+        ...shownSkins().map((c) => ({ id: c.id, name: `Skin ${c.name}`, sub: 'Waffen-Skin', owned: ownsSkin(c.id), price: c.price, active: swordSkin().id === c.id, paint: swatch(c.blade), pick: () => pickSkin(c.id) })),
+        ...MAGIC_COLORS.map((c) => ({ id: c.id, name: `Magie ${c.name}`, sub: 'Farbe der Lichtnova', owned: ownsMagic(c.id), price: c.price, active: magicColor().id === c.id, paint: swatch(c.color), pick: () => pickMagic(c.id) })),
+      ],
+      after: () => render(),
+    });
   };
   render();
 }
@@ -489,6 +497,59 @@ function galleryPage(el) {
     g.save(); g.translate(x, y); g.fillStyle = '#e8701a'; g.fillRect(64 - 8 * q[0], 56 - 16 * q[1], 16 * q[0], 16 * q[1]); fx.drawFx(g, 16, t); g.restore();
   };
   requestAnimationFrame(loop);
+}
+
+// ---------- Auswahl-Raster wie in der Garderobe: große Vorschau, Kacheln, unten Info und Aktion ----------
+function selectGrid(el, cfg) {
+  let cur = cfg.items.find((i) => i.active) || cfg.items[0], info = false;
+  const render = () => {
+    const can = cur.owned || cur.price;
+    el.innerHTML = `
+      <div class="sg">
+        <h2 class="sg-title">${esc(cfg.title)}</h2>
+        <canvas class="sg-big${cur.owned ? '' : ' sil'}" width="24" height="28"></canvas>
+        <b class="sg-name">${esc(cur.name)}</b><small class="sg-sub">${esc(cur.owned ? cur.sub : cur.lockText || `${cur.price} Münzen`)}</small>
+        ${info ? `<p class="sg-info">${esc(cur.sub)}</p>` : ''}
+        <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}</button>`).join('')}</div>
+        <div class="sg-bar"><button class="wbtn" type="button" id="sg-info">Info</button>
+          <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? `Kaufen ${cur.price}` : 'Gesperrt'}</button></div>
+      </div>`;
+    cur.paint(el.querySelector('.sg-big'));
+    el.querySelectorAll('.sg-tile canvas').forEach((c, i) => cfg.items[i].paint(c));
+    el.querySelectorAll('.sg-tile').forEach((b) => b.addEventListener('click', () => { cur = cfg.items[+b.dataset.i]; play('ui'); render(); }));
+    el.querySelector('#sg-info').addEventListener('click', () => { info = !info; render(); });
+    el.querySelector('#sg-go').addEventListener('click', () => {
+      if (!cur.pick()) { play('bump'); return; }
+      play('chapter');
+      if (cfg.after) cfg.after(); else { cfg.items.forEach((i) => { i.active = i === cur; }); cur.owned = true; render(); }
+    });
+  };
+  render();
+}
+
+function wardrobePage(el) {
+  const { stars } = totals();
+  el.innerHTML = `
+    <ul class="mm-stats"><li>${icon('coin')}<b>${getInv().coins}</b></li><li>${icon('star')}<b>${stars}</b></li><li>${icon('gem')}<b>${fragmentCount()}</b></li></ul>
+    ${head('#/menu', 'Garderobe', '')}<div id="sel"></div><a class="wbtn sm" href="#/menu/kit">Mehr anpassen</a>`;
+  const paint = (id) => (cv) => {
+    const pr = Object.create(PixelRenderer.prototype), keep = getSettings().skin;
+    pr.ctx = cv.getContext('2d'); pr.ctx.save(); pr.ctx.translate(4, 8);
+    updateSettingsQuiet({ color: id });
+    pr.player({ x: 0, y: 0, dir: 2, walk: null, stamina: 1, hat: '' }, 0);
+    updateSettingsQuiet(keep); pr.ctx.restore();
+  };
+  const active = getSkin().color.id;
+  selectGrid(el.querySelector('#sel'), {
+    title: 'Dein Skin', action: 'Anziehen',
+    items: SKIN_COLORS.filter((c) => c.hero).map((c) => {
+      const u = heroState(c);
+      return { id: c.id, name: c.name, sub: 'Skin', owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), pick: () => {
+        if (!heroState(c).free) { if (getInv().coins < u.price) return false; addCoins(-u.price); buyHero(c.id); }
+        setSkin({ color: c.id }); return true;
+      } };
+    }),
+  });
 }
 
 // ---------- Update-Log ----------

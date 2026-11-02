@@ -7,10 +7,10 @@ import { CHAPTERS, PUSH_LEVELS } from '../game/pushLevels.js';
 import { WORLDS } from '../game/worlds.js';
 import { addCoins, hat } from '../game/inventory.js';
 import { markFound } from '../game/inventory.js';
-import { hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
+import { magicColor, hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
 import { drawMinion, drawBoss } from '../game/monsters.js';
 import { play, bossSound } from '../game/sound.js';
-import { FX, hitstop, stopped, flash as fxFlash, sparks as sparksFx, drawFx } from '../game/fx.js';
+import { FX, hitstop, stopped, flash as fxFlash, sparks as sparksFx, ring as ringFx, drawFx } from '../game/fx.js';
 import { setMusic } from '../game/music.js';
 import { prefersReducedMotion } from '../settings.js';
 import { transitionTo } from '../ui/transition.js';
@@ -104,6 +104,7 @@ export function mountArena(root, params) {
     if (mode === 2) { // Magie: Lichtnova trifft alles im Raum
       if (now < magicAt) return;
       magicAt = now + MAGIC_MS; shake = now + 300; bossSound('slam');
+      { const c = magicColor().color; sparksFx(hero.x, hero.y, c); sparksFx(hero.x, hero.y, c); ringFx(hero.x, hero.y, c); for (let k = 0; k < 3; k++) ringFx(hero.x, hero.y, c, now + k * 120); }
       for (const m of [...mobs]) { m.hp -= damage + 1 + magicBonus; m.hit = now; if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } }
       if (boss) { boss.hp = Math.max(0, boss.hp - (damage + magicBonus) * 2); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) finisher(); else nextStage(now); }
       showMode(); return;
