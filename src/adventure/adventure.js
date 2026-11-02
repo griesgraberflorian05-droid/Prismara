@@ -527,7 +527,7 @@ export function mountAdventure(root, params, opts = {}) {
       { const [dx, dy] = DIRS[d]; if (interact(state.player.x + dx, state.player.y + dy)) { if (n) { state = n; anim = snap(n, 0); } return; } }
       if (level.cells[(state.player.y + DIRS[d][1]) * level.w + state.player.x + DIRS[d][0]]?.type === 'lock' && !(state.keys > 0)) toast('⛓ Gesperrt – du brauchst einen Schlüssel 🗝');
       held = null; // gegen die Wand: Held bleibt stehen, auch wenn die Taste gehalten wird
-      play('bump'); bumpT0 = now;
+      play('bump'); // kein Rückprall: der Held bleibt an der Wand einfach stehen
       const [dx, dy] = DIRS[d];
       dust.push({ x: state.player.x + 0.5 + dx * 0.45, y: state.player.y + 0.8 + dy * 0.3, a: Math.atan2(-dy, -dx), t0: now });
       if (n) { state = n; anim = snap(n, 0); }

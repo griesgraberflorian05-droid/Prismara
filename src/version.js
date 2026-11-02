@@ -1,2 +1,2 @@
-export const VERSION = '20261102194020';
-export const LABEL = '3.23.67';
+export const VERSION = '20261102194030';
+export const LABEL = '3.23.68';
