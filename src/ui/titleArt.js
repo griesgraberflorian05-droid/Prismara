@@ -324,12 +324,16 @@ export function mountTitleArt(canvas, worldId = 'default') {
       const floor = groundY(Math.round(rag.x + 8)) - 12;
       if (rag.y >= floor && rag.vy > 0) {
         rag.y = floor; play('bump');
-        if (rag.vy > 90) { rag.vy *= -0.32; rag.vx *= 0.6; rag.va *= 0.5; } else { rag.mode = 'down'; rag.a = rag.vx < 0 ? -Math.PI / 2 : Math.PI / 2; rag.until = tms + 1500; }
+        if (rag.vy > 90) { rag.vy *= -0.32; rag.vx *= 0.6; rag.va *= 0.5; } else {
+          // Landet er aufrecht, bleibt er stehen; sonst kippt er auf die nächste Seite
+          const up = Math.atan2(Math.sin(rag.a), Math.cos(rag.a));
+          rag.mode = 'down'; rag.a = Math.abs(up) < 0.7 ? 0 : up < 0 ? -Math.PI / 2 : Math.PI / 2; rag.until = tms + (rag.a ? 1500 : 450);
+        }
       }
     } else if (rag.mode === 'down') {
       if (tms > rag.until) { rag.mode = 'walk'; rag.a = 0; }
     } else if (rag.mode === 'walk') {
-      const d = home.x - rag.x; rag.x += Math.sign(d) * 42 * dt; rag.y = groundY(Math.round(rag.x + 8)) - 13;
+      const d = home.x - rag.x; rag.x += Math.sign(d) * 26 * dt; rag.y = groundY(Math.round(rag.x + 8)) - 13;
       if (Math.abs(d) < 2) { rag.mode = 'sit'; rag.x = home.x; rag.y = home.y; }
     }
   }
