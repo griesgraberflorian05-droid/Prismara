@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.78', items: ['Startbild nach mehr als einer Minute Pause'] },
   { v: '3.23.77', items: ['Licht strahlt rund und läuft weich aus'] },
   { v: '3.23.76', items: ['Tasten merken die Reihenfolge', 'Neue Steine', 'Schönerer Teppich im Nebelmoor und Nachtwald'] },
   { v: '3.23.74', items: ['Spielstart repariert'] },
