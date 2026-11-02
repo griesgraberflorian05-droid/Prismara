@@ -679,12 +679,21 @@ export function mountAdventure(root, params, opts = {}) {
     if (!paused && e.key >= '1' && e.key <= '4') { use(SLOTS[+e.key - 1]); e.preventDefault(); return; }
     if (paused) return;
     if (e.target.closest('a, button') && (e.key === 'Enter' || e.key === ' ')) return;
-    if (e.key in KEYS) { if (!e.repeat) { held = KEYS[e.key]; stepDir(held); lastStep = performance.now(); } e.preventDefault(); }
+    if (e.key in KEYS) { if (!e.repeat) { pressed = [...pressed.filter((d) => d !== KEYS[e.key]), KEYS[e.key]]; held = KEYS[e.key]; stepDir(held); lastStep = performance.now(); } e.preventDefault(); }
     else if (e.key === ' ' || e.key === 'e' || e.key === 'E') { rotate(); e.preventDefault(); }
     else if (e.key === 'z' || e.key === 'Z') undo();
     else if (e.key === 'r' || e.key === 'R') reset();
   }
-  function onKeyUp(e) { if (e.key in KEYS && KEYS[e.key] === held) held = null; }
+  // Gedrückte Richtungen in Reihenfolge: lässt man die neueste los, gilt wieder die davor
+  let pressed = [];
+  function onKeyUp(e) {
+    if (!(e.key in KEYS)) return;
+    pressed = pressed.filter((d) => d !== KEYS[e.key]);
+    const top = pressed.length ? pressed[pressed.length - 1] : null;
+    if (top !== held) { held = top; if (top != null) { stepDir(top); lastStep = performance.now(); } }
+  }
+  const clearKeys = () => { pressed = []; held = null; };
+  addEventListener('blur', clearKeys);
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
   $('#reset').addEventListener('click', () => { reset(); canvas.focus(); });
@@ -864,6 +873,7 @@ export function mountAdventure(root, params, opts = {}) {
     stopCelebration();
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);
+    removeEventListener('blur', clearKeys);
     delete window.__adv;
   };
 }

@@ -338,9 +338,10 @@ export function mountArena(root, params) {
     if (e.key === 'Escape') { setPaused(!paused); return; }
     if (paused || phase === 0) return;
     if (e.key === 'f' || e.key === 'F') { mode = (mode + 1) % modes.length; showMode(); play('ui'); return; }
-    if (e.key in KEYS) { if (!e.repeat) { held = KEYS[e.key]; hero.next = 0; } e.preventDefault(); } else if (e.key === ' ' || e.key === 'e' || e.key === 'E') { swing(); e.preventDefault(); }
+    if (e.key in KEYS) { if (!e.repeat) { pressed = [...pressed.filter((d) => d !== KEYS[e.key]), KEYS[e.key]]; held = KEYS[e.key]; hero.next = 0; } e.preventDefault(); } else if (e.key === ' ' || e.key === 'e' || e.key === 'E') { swing(); e.preventDefault(); }
   }
-  function onKeyUp(e) { if (e.key in KEYS && KEYS[e.key] === held) held = null; }
+  let pressed = [];
+  function onKeyUp(e) { if (e.key in KEYS) { pressed = pressed.filter((d) => d !== KEYS[e.key]); held = pressed.length ? pressed[pressed.length - 1] : null; } }
   addEventListener('keydown', onKeyDown); addEventListener('keyup', onKeyUp);
   $('#pause').addEventListener('click', () => setPaused(true));
   if (touch) {
