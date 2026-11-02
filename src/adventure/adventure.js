@@ -480,7 +480,7 @@ export function mountAdventure(root, params, opts = {}) {
     history.push(state);
     state = next;
     if (!exitOpen) tr = pushTrace(state); // Lampen brennen weiter: nach dem Lösen unterbricht der Held die Leitung nicht mehr
-    if (JSON.stringify(tr.beams.map((b) => b.points)) !== JSON.stringify(before.beams.map((b) => b.points))) growStart = now;
+    if (JSON.stringify(tr.beams.map((b) => b.points)) !== JSON.stringify(before.beams.map((b) => b.points))) growStart = now - (before.visited.size / 16) * 1000; // vorhandener Strahl bleibt stehen, nur Neues wächst nach
     // Klänge
     if (next.rotated != null) play('rotate');
     else if (next.pushed != null) play('push');

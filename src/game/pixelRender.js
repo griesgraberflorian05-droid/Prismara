@@ -28,8 +28,8 @@ export const PIXEL_THEMES = {
   default: { floor: ['#6b4a32', '#5a3d29', '#43301f'], top: '#8a6a4f', face: '#5b4030', dark: '#2e1f15', trim: '#a8835f', pattern: 'planks', dark01: 0.62, ambient: '#0c0814' },
   beach:   { floor: ['#d9b37a', '#c79f64', '#a9824c'], top: '#e8c999', face: '#b98a52', dark: '#7a5531', trim: '#f6e3bd', pattern: 'sand', dark01: 0.25, ambient: '#1a1430' },
   cherry:  { floor: ['#7a5233', '#69462b', '#4f3420'], top: '#a5785a', face: '#6e4a35', dark: '#3c261b', trim: '#f2b7cf', pattern: 'planks', dark01: 0.45, ambient: '#1c0e1e' },
-  jungle:  { floor: ['#3e5a2c', '#324b23', '#243818'], top: '#6b7d55', face: '#455438', dark: '#232d1b', trim: '#8fd16a', pattern: 'moss', dark01: 0.55, ambient: '#06140a' },
-  night:   { floor: ['#2a3b3a', '#223231', '#172423'], top: '#4f5a4a', face: '#333d31', dark: '#161c16', trim: '#9ad1ff', pattern: 'moss', dark01: 0.78, ambient: '#02060e' },
+  jungle:  { floor: ['#3e5a2c', '#324b23', '#243818'], top: '#6b7d55', face: '#455438', dark: '#232d1b', trim: '#8fd16a', pattern: 'stone', dark01: 0.55, ambient: '#06140a' },
+  night:   { floor: ['#2a3b3a', '#223231', '#172423'], top: '#4f5a4a', face: '#333d31', dark: '#161c16', trim: '#9ad1ff', pattern: 'stone', dark01: 0.78, ambient: '#02060e' },
   volcano: { tex: 'glutErz', floor: ['#3a3236', '#2d2629', '#1d181a'], top: '#55494e', face: '#352c30', dark: '#151012', trim: '#ff6a1a', pattern: 'stone', dark01: 0.7, ambient: '#100302' },
   temple:  { tex: 'sandstein', floor: ['#9c7a4a', '#87683d', '#6a5130'], top: '#c9a066', face: '#8f6a3b', dark: '#523a1e', trim: '#ffd166', pattern: 'stone', dark01: 0.5, ambient: '#120a04' },
   aurora:  { tex: 'eis', floor: ['#5f7c9a', '#516b86', '#3f566e'], top: '#e8f2ff', face: '#7d93ac', dark: '#4a5d73', trim: '#4fffb0', pattern: 'ice', dark01: 0.55, ambient: '#020a1e' },
@@ -858,7 +858,7 @@ export class PixelRenderer {
       for (let i = 1; i < beam.points.length; i++) {
         const [x0, y0] = beam.points[i - 1], [x1, y1] = beam.points[i];
         const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0)));
-        for (let k = 0; k <= n; k++) lights.push({ x: x0 + ((x1 - x0) * k) / n, y: y0 + ((y1 - y0) * k) / n, level: 8, falloff: 4, color: hex, i: 0.4 });
+        for (let k = 0; k <= n; k++) lights.push({ x: x0 + ((x1 - x0) * k) / n, y: y0 + ((y1 - y0) * k) / n, level: 9, falloff: 4, color: hex, i: 0.85 }); // Strahl leuchtet in seiner Farbe
       }
     }
     if (opts.player) lights.push({ x: opts.player.x + 0.5, y: opts.player.y + 0.5, level: opts.bigLantern ? 12 : 9, color: getLook().lantern.glow, reflect: 0.5 });
