@@ -64,13 +64,18 @@ export function rarityOf(c) {
 }
 /** Zufälliger noch fehlender Skin, seltene seltener. */
 export function rollSkin() {
-  const pool = SKIN_COLORS.filter((c) => c.hero && !/^(start|endless|real)/.test(c.how) && !ownedHeroes().includes(c.id));
-  let n = Math.random() * pool.reduce((s, c) => s + RARITY[rarityOf(c)].weight, 0);
-  return pool.find((c) => (n -= RARITY[rarityOf(c)].weight) < 0) || pool[0] || null;
+  const pool = SKIN_COLORS.filter((c) => c.hero && !/^(start|endless|real)/.test(c.how));
+  const weight = (c) => RARITY[rarityOf(c)].weight * (ownedHeroes().includes(c.id) ? 0.25 : 1); // schon Besessenes kommt seltener, aber es kommt
+  let n = Math.random() * pool.reduce((s, c) => s + weight(c), 0);
+  return pool.find((c) => (n -= weight(c)) < 0) || pool[0] || null;
 }
 // Gewonnene Drehungen fürs Glücksrad
 export const getSpins = () => getSettings().spins || 0;
 export const addSpins = (n) => updateSettings({ spins: getSpins() + n });
+// Doppelte Skins: zählen hoch und lassen sich je nach Seltenheit zu Münzen machen
+export const SELL_PRICE = { common: 50, rare: 150, epic: 500, legend: 2000 };
+export const dupes = (id) => (getSettings().dupes || {})[id] || 0;
+export const addDupe = (id, n = 1) => updateSettings({ dupes: { ...(getSettings().dupes || {}), [id]: dupes(id) + n } });
 export const ownedHeroes = () => getSettings().heroSkins || [];
 export const buyHero = (id) => updateSettings({ heroSkins: [...ownedHeroes(), id] });
 export const hasHalloween = () => !!getSettings().halloween;

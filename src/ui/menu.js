@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
@@ -506,7 +506,7 @@ function galleryPage(el) {
 
 // ---------- Auswahl-Raster wie in der Garderobe: große Vorschau, Kacheln, unten Info und Aktion ----------
 function selectGrid(el, cfg) {
-  let cur = cfg.items.find((i) => i.active) || cfg.items[0], info = false, edit = false, turn = 0, timer = 0;
+  let cur = cfg.items.find((i) => i.active) || cfg.items[0], info = false, edit = false, turn = 0, timer = 0, lastTap = {};
   const render = () => {
     const can = cur.owned || cur.price;
     el.innerHTML = `
@@ -519,7 +519,7 @@ function selectGrid(el, cfg) {
         <b class="sg-name">${esc(cur.name)}</b><small class="sg-sub">${esc(cur.owned ? cur.sub : cur.lockText || `${cur.price} Münzen`)}</small>
         ${info ? `<p class="sg-info">${esc(cur.sub)}</p>` : ''}
         ${edit && cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label></div>` : ''}
-        <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}${it.rarity && it.owned ? ` r-${it.rarity}` : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}${it.rarity && it.owned ? `<small class="sg-r">${RARITY[it.rarity].name}</small>` : ''}</button>`).join('')}</div>
+        <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}${it.rarity && it.owned ? ` r-${it.rarity}` : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}${it.dupes ? `<span class="sg-dup">×${it.dupes}</span>` : ''}${it.rarity && it.owned ? `<small class="sg-r">${RARITY[it.rarity].name}</small>` : ''}</button>`).join('')}</div>
         <div class="sg-bar"><button class="wbtn" type="button" id="sg-info">Info</button>
           <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? (isAdmin() ? 'Gratis kaufen' : `Kaufen ${cur.price}`) : 'Gesperrt'}</button></div>
       </div>`;
@@ -534,7 +534,11 @@ function selectGrid(el, cfg) {
     }));
     el.querySelector('#sg-pen')?.addEventListener('click', () => { edit = !edit; play('ui'); render(); });
     el.querySelectorAll('.sg-tile canvas').forEach((c, i) => cfg.items[i].paint(c));
-    el.querySelectorAll('.sg-tile').forEach((b) => b.addEventListener('click', () => { cur = cfg.items[+b.dataset.i]; play('ui'); render(); }));
+    el.querySelectorAll('.sg-tile').forEach((b) => b.addEventListener('click', () => {
+      const it = cfg.items[+b.dataset.i], now = performance.now();
+      if (it.dupes && lastTap.it === it && now - lastTap.at < 400) { it.sell(); return; } // Doppeltipp verkauft ein Duplikat
+      lastTap = { it, at: now }; cur = it; play('ui'); render();
+    }));
     el.querySelectorAll('.sg-tint input').forEach((i) => i.addEventListener('change', () => { cur.tint.set([el.querySelector('#t0').value, el.querySelector('#t1').value]); render(); }));
     el.querySelector('#sg-info').addEventListener('click', () => { info = !info; render(); });
     el.querySelector('#sg-go').addEventListener('click', () => {
@@ -568,11 +572,12 @@ function wardrobePage(el, msg = '') {
     const c = rollSkin();
     if (!c) { wardrobePage(el, 'Du hast schon alle Skins!'); return; }
     if (have) addSpins(-1); else if (!isAdmin()) addCoins(-SPIN_PRICE);
-    buyHero(c.id);
+    const twice = ownedHeroes().includes(c.id);
+    if (twice) addDupe(c.id); else buyHero(c.id);
     // Bekomm-Animation: Kiste bebt und platzt auf, dann kommt der Skin in der Farbe seiner Seltenheit
     const r = rarityOf(c), o = document.createElement('div');
     o.className = `spin-show r-${r}`;
-    o.innerHTML = `<div class="spin-glow"></div><div class="spin-wheel-box"><span class="spin-pin"></span><div class="spin-wheel" id="wheel"></div><em>?</em></div><div class="spin-card"><div class="spin-back">?</div><div class="spin-front"><small>${RARITY[r].name}</small><canvas width="24" height="28"></canvas><b>${esc(c.name)}</b></div></div><p>Antippen</p>${Array.from({ length: 28 }, (_, i) => `<i style="--a:${i * 49}deg;--d:${120 + (i * 37) % 240}px;--s:${i % 3 * 3 + 5}px;--t:${(i % 5) * 0.08}s"></i>`).join('')}`;
+    o.innerHTML = `<div class="spin-glow"></div><div class="spin-wheel-box"><span class="spin-pin"></span><div class="spin-wheel" id="wheel"></div><em>?</em></div><div class="spin-card"><div class="spin-back">?</div><div class="spin-front"><small>${twice ? 'Doppelt · ' : ''}${RARITY[r].name}</small><canvas width="24" height="28"></canvas><b>${esc(c.name)}</b></div></div><p>Antippen</p>${Array.from({ length: 28 }, (_, i) => `<i style="--a:${i * 49}deg;--d:${120 + (i * 37) % 240}px;--s:${i % 3 * 3 + 5}px;--t:${(i % 5) * 0.08}s"></i>`).join('')}`;
     document.body.append(o);
     paint(c.id)(o.querySelector('canvas'));
     // Rad dreht und bremst aus, bis der Zeiger im Feld der gezogenen Seltenheit steht
@@ -589,7 +594,7 @@ function wardrobePage(el, msg = '') {
     title: 'Dein Skin', action: 'Anziehen',
     items: SKIN_COLORS.filter((c) => c.hero).map((c) => {
       const u = heroState(c);
-      return { id: c.id, name: c.name, rarity: rarityOf(c), sub: RARITY[rarityOf(c)].name, owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), tint: { labels: ['Akzent', 'Körper'], get: () => skinTint(c.id) || [c.stops[0], c.stops[1]], set: (t) => setSkinTint(c.id, t) }, pick: () => {
+      return { id: c.id, name: c.name, dupes: dupes(c.id), sell: () => { addDupe(c.id, -1); const n = SELL_PRICE[rarityOf(c)]; addCoins(n); play('target', 7); wardrobePage(el, `Verkauft: +${n} Münzen`); }, rarity: rarityOf(c), sub: RARITY[rarityOf(c)].name, owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), tint: { labels: ['Akzent', 'Körper'], get: () => skinTint(c.id) || [c.stops[0], c.stops[1]], set: (t) => setSkinTint(c.id, t) }, pick: () => {
         if (!heroState(c).free) { if (!isAdmin()) { if (getInv().coins < u.price) return false; addCoins(-u.price); } buyHero(c.id); }
         setSkin({ color: c.id }); return true;
       } };
