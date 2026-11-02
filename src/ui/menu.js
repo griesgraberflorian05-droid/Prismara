@@ -3,13 +3,13 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
 import * as fx from '../game/fx.js';
 import { TEXTURES, texture } from '../game/textures.js';
-import { MAGIC_COLORS, magicColor, ownsMagic, pickMagic, PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
+import { swordTint, setSwordTint, MAGIC_COLORS, magicColor, ownsMagic, pickMagic, PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
@@ -427,7 +427,7 @@ function forgePage(el) {
       title: 'Ausrüstung', action: 'Ausrüsten',
       items: [
         ...Object.entries(PARTS).flatMap(([slot, g]) => g.list.map((p) => ({ id: p.id, name: p.name, sub: `${g.name}: ${p.v} ${g.unit}`, owned: ownsPart(p.id), price: p.price, active: partOf(slot).id === p.id, paint: swatch(['#8a8794', '#c9963f', '#e0342c', '#ffd166'][g.list.indexOf(p)]), pick: () => pickPart(slot, p.id) }))),
-        ...shownSkins().map((c) => ({ id: c.id, name: `Skin ${c.name}`, sub: 'Waffen-Skin', owned: ownsSkin(c.id), price: c.price, active: swordSkin().id === c.id, paint: swatch(c.blade), pick: () => pickSkin(c.id) })),
+        ...shownSkins().map((c) => ({ id: c.id, name: `Skin ${c.name}`, sub: 'Waffen-Skin', owned: ownsSkin(c.id), price: c.price, active: swordSkin().id === c.id, paint: swatch((swordTint(c.id) || [c.blade])[0]), tint: { labels: ['Klinge', 'Schneide'], get: () => swordTint(c.id) || [c.blade, c.edge], set: (t) => setSwordTint(c.id, t) }, pick: () => pickSkin(c.id) })),
         ...MAGIC_COLORS.map((c) => ({ id: c.id, name: `Magie ${c.name}`, sub: 'Farbe der Lichtnova', owned: ownsMagic(c.id), price: c.price, active: magicColor().id === c.id, paint: swatch(c.color), pick: () => pickMagic(c.id) })),
       ],
       after: () => render(),
@@ -510,6 +510,7 @@ function selectGrid(el, cfg) {
         <canvas class="sg-big${cur.owned ? '' : ' sil'}" width="24" height="28"></canvas>
         <b class="sg-name">${esc(cur.name)}</b><small class="sg-sub">${esc(cur.owned ? cur.sub : cur.lockText || `${cur.price} Münzen`)}</small>
         ${info ? `<p class="sg-info">${esc(cur.sub)}</p>` : ''}
+        ${cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label></div>` : ''}
         <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}</button>`).join('')}</div>
         <div class="sg-bar"><button class="wbtn" type="button" id="sg-info">Info</button>
           <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? `Kaufen ${cur.price}` : 'Gesperrt'}</button></div>
@@ -517,6 +518,7 @@ function selectGrid(el, cfg) {
     cur.paint(el.querySelector('.sg-big'));
     el.querySelectorAll('.sg-tile canvas').forEach((c, i) => cfg.items[i].paint(c));
     el.querySelectorAll('.sg-tile').forEach((b) => b.addEventListener('click', () => { cur = cfg.items[+b.dataset.i]; play('ui'); render(); }));
+    el.querySelectorAll('.sg-tint input').forEach((i) => i.addEventListener('change', () => { cur.tint.set([el.querySelector('#t0').value, el.querySelector('#t1').value]); render(); }));
     el.querySelector('#sg-info').addEventListener('click', () => { info = !info; render(); });
     el.querySelector('#sg-go').addEventListener('click', () => {
       if (!cur.pick()) { play('bump'); return; }
@@ -544,7 +546,7 @@ function wardrobePage(el) {
     title: 'Dein Skin', action: 'Anziehen',
     items: SKIN_COLORS.filter((c) => c.hero).map((c) => {
       const u = heroState(c);
-      return { id: c.id, name: c.name, sub: 'Skin', owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), pick: () => {
+      return { id: c.id, name: c.name, sub: 'Skin', owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), tint: { labels: ['Akzent', 'Körper'], get: () => skinTint(c.id) || [c.stops[0], c.stops[1]], set: (t) => setSkinTint(c.id, t) }, pick: () => {
         if (!heroState(c).free) { if (getInv().coins < u.price) return false; addCoins(-u.price); buyHero(c.id); }
         setSkin({ color: c.id }); return true;
       } };

@@ -94,7 +94,13 @@ export function upgrade(id) {
   return true;
 }
 
-export const swordSkin = () => SWORD_SKINS.find((s) => s.id === load().skin) || SWORD_SKINS[0];
+export function swordSkin() {
+  const d = load(), s = SWORD_SKINS.find((x) => x.id === d.skin) || SWORD_SKINS[0], t = d.tints?.[s.id];
+  return t ? { ...s, blade: t[0], edge: t[1] } : s;
+}
+// Eigene Farben je Schwert-Skin: [Klinge, Schneide]
+export const swordTint = (id) => load().tints?.[id] || null;
+export function setSwordTint(id, tint) { const d = load(); d.tints = { ...(d.tints || {}), [id]: tint }; save(d); }
 export const shownSkins = () => SWORD_SKINS.filter((s) => !s.secret || isAdmin() || hasHalloween());
 export const ownsSkin = (id) => isAdmin() || load().skins.includes(id) || (id === 'pumpkin' && hasHalloween());
 /** Kauft einen Skin, falls nötig, und legt ihn an. */

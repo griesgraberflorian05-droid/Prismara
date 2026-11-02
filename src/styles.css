@@ -1365,3 +1365,13 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .kit-row { flex-wrap: wrap; }
 .wbtn, .tm-plank, .set-row span, .rname, .rd-text b { overflow-wrap: anywhere; }
 .set-row { flex-wrap: wrap; }
+
+/* Garderobe breiter, Farben je Skin und Schwert */
+.sg { width: min(860px, 100%); }
+.sg-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+.sg-bar { max-width: 420px; }
+.sg-tint { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.sg-tint label { display: flex; align-items: center; gap: 6px; font-size: 0.45rem; color: var(--parch); }
+.sg-tint input { width: 44px; height: 30px; padding: 0; background: none; border: 3px solid var(--wood-0); cursor: pointer; }
+#sel { display: grid; justify-items: center; width: min(860px, 100%); }
+.sg { width: 100%; }

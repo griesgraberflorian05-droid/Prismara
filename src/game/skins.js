@@ -50,6 +50,9 @@ export const SKIN_COLORS = [
   // Nur über den Code „halloween“, bis dahin in der Auswahl unsichtbar
   { id: 'halloween', name: 'Halloween', stops: ['#2a1a30', '#e8701a', '#7a2f0a'], glow: '#ff8a2a', stars: 0, secret: true },
 ];
+// Eigene Farben je Skin: [Akzent, Körper]
+export const skinTint = (id) => (getSettings().skinTint || {})[id] || null;
+export const setSkinTint = (id, tint) => updateSettings({ skinTint: { ...(getSettings().skinTint || {}), [id]: tint } });
 export const ownedHeroes = () => getSettings().heroSkins || [];
 export const buyHero = (id) => updateSettings({ heroSkins: [...ownedHeroes(), id] });
 export const hasHalloween = () => !!getSettings().halloween;
@@ -94,8 +97,9 @@ export function setLook(patch) { updateSettings({ look: { ...(getSettings().look
 
 export function getSkin() {
   const s = getSettings().skin || {};
+  const base = SKIN_COLORS.find((c) => c.id === s.color) || SKIN_COLORS[0], t = (getSettings().skinTint || {})[base.id];
   return {
-    color: SKIN_COLORS.find((c) => c.id === s.color) || SKIN_COLORS[0],
+    color: t ? { ...base, stops: [t[0], t[1], t[1]], glow: t[0] } : base,
     symbol: SKIN_SYMBOLS.find((c) => c.id === s.symbol) || SKIN_SYMBOLS[0],
   };
 }
