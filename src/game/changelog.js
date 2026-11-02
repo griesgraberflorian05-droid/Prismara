@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.41', items: ['Bosse mit Intro, drei Phasen und Finisher', 'Neustart an der erreichten Phase'] },
   { v: '3.23.40', items: ['Größere Arena', 'Minibosse alle 4 Räume', 'Magie erspielen und leveln', 'Blitz beim Aufleuchten der Lampen', 'Kirschblüte wieder mit altem Boden'] },
   { v: '3.23.39', items: ['Mobs mit Angriffs-Animation und magischem Leuchten', 'Schwerter aus Einzelteilen in der Schmiede'] },
   { v: '3.23.34', items: ['Update-Log im Spiel', 'Effekte beim Aufleuchten der Lampen', 'Schönerer Bild-Look'] },

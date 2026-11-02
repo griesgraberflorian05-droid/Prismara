@@ -1332,3 +1332,8 @@ a.tm-version { display: block; text-decoration: underline; }
 .ks-hero { width: 48px; height: 56px; image-rendering: pixelated; }
 .ks-hero.sil { filter: brightness(0); opacity: 0.55; }
 .ar-mode { position: absolute; z-index: 5; right: 12px; bottom: 12px; padding: 6px 8px; font-size: 0.5rem; color: var(--parch); background: rgba(20, 10, 4, 0.72); border: 3px solid var(--wood-0); }
+
+.ar-banner { position: absolute; z-index: 6; left: 0; right: 0; top: 38%; display: grid; gap: 8px; padding: 14px 8px; text-align: center; color: #fff; background: rgba(40, 0, 6, 0.8); border-block: 3px solid var(--gold); animation: ar-banner 0.3s steps(5); }
+.ar-banner small { font-size: 0.5rem; color: var(--gold); }
+.ar-banner b { font-weight: normal; font-size: clamp(0.7rem, 4vw, 1.2rem); text-shadow: 0 3px 0 #000; }
+@keyframes ar-banner { from { transform: scaleY(0); } }
