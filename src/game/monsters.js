@@ -4,8 +4,15 @@
 const EYE = '#fff4d0', PUPIL = '#120a1c';
 
 /** Kleines Wesen auf Feld-Pixel (px, py). flash = weiß aufblitzen, warn = holt zum Schlag aus. */
-export function drawMinion(r, kind, [body, dark], px, py, t, { flash = false, warn = false } = {}) {
+export function drawMinion(r, kind, [body, dark], px0, py0, t, { flash = false, warn = false, lunge = [0, 0], bite = false } = {}) {
+  const px = px0 + lunge[0], py = py0 + lunge[1];
   const b = flash ? '#ffffff' : warn ? '#ff4a3a' : body, d = flash ? '#ffffff' : dark;
+  // Magische Aura: weicher Schein und kreisende Funken in der Farbe des Wesens
+  r(px - 1, py + 1, 18, 14, `${body}26`); r(px + 1, py - 1, 14, 18, `${body}26`); r(px + 3, py + 2, 10, 12, `${body}33`);
+  for (let k = 0; k < 3; k++) {
+    const a = t / 420 + k * 2.09, sx = Math.round(px + 7 + Math.cos(a) * 9), sy = Math.round(py + 8 + Math.sin(a) * 7);
+    r(sx, sy, 2, 2, k % 2 ? '#ffffff' : body); if (Math.floor(t / 200 + k) % 2) r(sx - 1, sy, 4, 1, `${body}aa`);
+  }
   const bob = Math.floor(t / 260 + px) % 2;
   const y = py + bob;
   r(px + 2, py + 13, 12, 2, 'rgba(0,0,0,0.3)');
@@ -30,7 +37,13 @@ export function drawMinion(r, kind, [body, dark], px, py, t, { flash = false, wa
     r(px + 2, y + 7, 12, 6, b); r(px + 4, y + 5, 8, 2, b); r(px + 3, y + 12, 10, 1, d); r(px + 4, y + 7, 2, 1, flash ? b : '#ffffff55');
   }
   const ey = kind === 'crab' ? y + 7 : kind === 'wisp' || kind === 'bat' ? y + 6 : y + 8;
-  r(px + 5, ey, 2, 2, EYE); r(px + 9, ey, 2, 2, EYE); r(px + 6, ey + 1, 1, 1, PUPIL); r(px + 9, ey + 1, 1, 1, PUPIL);
+  // Böser Blick: schräge Brauen, glühende Augen beim Ausholen, Maul mit Zähnen
+  const glow = warn || bite ? '#ffe45a' : EYE;
+  r(px + 5, ey, 2, 2, glow); r(px + 9, ey, 2, 2, glow); r(px + 6, ey + 1, 1, 1, PUPIL); r(px + 9, ey + 1, 1, 1, PUPIL);
+  r(px + 4, ey - 1, 2, 1, PUPIL); r(px + 6, ey, 1, 1, PUPIL); r(px + 10, ey - 1, 2, 1, PUPIL); r(px + 9, ey, 1, 1, PUPIL);
+  const my = ey + 3, open = bite ? 3 : warn ? 2 : 1;
+  r(px + 5, my, 6, open, '#2a0208'); r(px + 5, my, 1, 1, '#fff4d0'); r(px + 7, my, 1, 1, '#fff4d0'); r(px + 10, my, 1, 1, '#fff4d0');
+  if (bite) { const c = '#ffffff'; r(px - 1, py + 2, 2, 8, c); r(px + 15, py + 2, 2, 8, c); r(px + 1, py, 14, 1, c); } // Hieb-Bogen
 }
 
 const shadeHex = (hex, k) => {

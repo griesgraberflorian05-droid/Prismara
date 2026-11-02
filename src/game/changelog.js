@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.39', items: ['Mobs mit Angriffs-Animation und magischem Leuchten', 'Schwerter aus Einzelteilen in der Schmiede'] },
   { v: '3.23.34', items: ['Update-Log im Spiel', 'Effekte beim Aufleuchten der Lampen', 'Schönerer Bild-Look'] },
   { v: '3.23.33', items: ['Codeliste mit Anwenden-Knopf je Code'] },
   { v: '3.23.32', items: ['Zurück-Knopf der Codeliste repariert', 'Codes replay und turbo'] },

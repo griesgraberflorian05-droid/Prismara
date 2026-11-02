@@ -9,7 +9,7 @@ import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
 import * as fx from '../game/fx.js';
 import { TEXTURES, texture } from '../game/textures.js';
-import { UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
+import { PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
@@ -418,8 +418,10 @@ function forgePage(el) {
             <span class="si-text"><b>${esc(u.name)} ${lvl + 1}/${u.values.length}</b><small>${esc(u.info)}</small><em>${u.values[lvl]} ${u.unit}</em></span>
             <button class="wbtn sm" data-up="${id}" ${cost == null || inv.coins < cost ? 'disabled' : ''}>${cost == null ? 'MAX' : cost ? `${icon('coin')} ${cost}` : 'GRATIS'}</button></li>`;
         }).join('')}</ul>
+        ${Object.entries(PARTS).map(([slot, s]) => `<h3 class="tm-plank">${esc(s.name)}</h3><div class="kit-row">${s.list.map((p) => `<button class="kit-swatch${partOf(slot).id === p.id ? ' active' : ''}" data-part="${slot}:${p.id}" aria-pressed="${partOf(slot).id === p.id}"><small>${esc(p.name)}${ownsPart(p.id) ? '' : ` ${p.price}`}</small></button>`).join('')}</div>`).join('')}
         <div class="kit-row sword-skins">${shownSkins().map((s) => `<button class="kit-swatch${swordSkin().id === s.id ? ' active' : ''}" data-sword="${s.id}" aria-pressed="${swordSkin().id === s.id}"><span class="ks-dot" style="background:${s.blade};box-shadow:0 0 0 3px ${s.edge}"></span><small>${esc(s.name)}${ownsSkin(s.id) ? '' : ` ${s.price}`}</small></button>`).join('')}</div>
       </div>`;
+    el.querySelectorAll('[data-part]').forEach((b) => b.addEventListener('click', () => { const [slot, id] = b.dataset.part.split(':'); const ok = pickPart(slot, id); play(ok ? 'ui' : 'bump'); render(ok ? 'Eingebaut!' : 'Dafür fehlen dir Münzen.'); }));
     el.querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { if (upgrade(b.dataset.up)) play('target', 7); render('Die Klinge glüht – Verbesserung geschafft!'); }));
     el.querySelectorAll('[data-sword]').forEach((b) => b.addEventListener('click', () => { const ok = pickSkin(b.dataset.sword); play(ok ? 'ui' : 'bump'); render(ok ? 'Schöne Waffe!' : 'Dafür fehlen dir Münzen.'); }));
   };

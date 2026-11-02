@@ -16,6 +16,25 @@ export const UPGRADES = {
   reach: { name: 'Reichweite', info: 'Der Rundumschlag reicht ein Feld weiter.', values: [1, 2], costs: [1000], unit: 'Felder' },
 };
 
+// Schwerter aus Einzelteilen: Klinge = Schaden, Parier = Abklingzeit, Griff = Magie-Stärke
+export const PARTS = {
+  blade: { name: 'Klinge', list: [{ id: 'rost', name: 'Rostklinge', price: 0, v: 0 }, { id: 'stahl', name: 'Stahlklinge', price: 250, v: 1 }, { id: 'glut', name: 'Glutklinge', price: 900, v: 2 }, { id: 'stern', name: 'Sternenklinge', price: 2500, v: 3 }], unit: 'Schaden' },
+  guard: { name: 'Parier', list: [{ id: 'holz', name: 'Holzparier', price: 0, v: 1 }, { id: 'eisen', name: 'Eisenparier', price: 300, v: 0.85 }, { id: 'gold', name: 'Goldparier', price: 1000, v: 0.7 }], unit: 'Tempo' },
+  grip: { name: 'Griff', list: [{ id: 'leder', name: 'Ledergriff', price: 0, v: 0 }, { id: 'rune', name: 'Runengriff', price: 700, v: 1 }, { id: 'kristall', name: 'Kristallgriff', price: 2000, v: 2 }], unit: 'Magie' },
+};
+export const partOf = (slot) => { const d = load().parts?.[slot]; return PARTS[slot].list.find((p) => p.id === d) || PARTS[slot].list[0]; };
+export const ownsPart = (id) => isAdmin() || !PARTS.blade.list.concat(PARTS.guard.list, PARTS.grip.list).find((p) => p.id === id)?.price || (load().ownedParts || []).includes(id);
+/** Kauft ein Teil, falls nötig, und baut es ins Schwert ein. */
+export function pickPart(slot, id) {
+  const p = PARTS[slot].list.find((x) => x.id === id), d = load();
+  if (!ownsPart(id)) {
+    if (getInv().coins < p.price) return false;
+    addCoins(-p.price); d.ownedParts = [...(d.ownedParts || []), id];
+  }
+  d.parts = { ...(d.parts || {}), [slot]: id }; save(d);
+  return true;
+}
+
 export const SWORD_SKINS = [
   { id: 'redstone', name: 'Glutstein', blade: '#e0342c', edge: '#ff8a70', grip: '#5a2a1a', price: 0 },
   { id: 'gold', name: 'Gold', blade: '#e8b04a', edge: '#fff0a8', grip: '#6b4426', price: 500 },

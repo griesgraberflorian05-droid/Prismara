@@ -6,7 +6,7 @@ import { PixelRenderer, PIXEL_THEMES, T } from '../game/pixelRender.js';
 import { CHAPTERS, PUSH_LEVELS } from '../game/pushLevels.js';
 import { WORLDS } from '../game/worlds.js';
 import { addCoins, hat } from '../game/inventory.js';
-import { foeOf, worldOf, stat, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
+import { foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
 import { drawMinion, drawBoss } from '../game/monsters.js';
 import { play, bossSound } from '../game/sound.js';
 import { setMusic } from '../game/music.js';
@@ -29,9 +29,9 @@ export function mountArena(root, params) {
   const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: {}, rows: ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)) });
   const room = createPushState(level), tr = pushTrace(room);
   const pix = new PixelRenderer(level);
-  const damage = stat('sword'), maxHp = stat('armor'), reach = stat('reach'), skin = swordSkin();
+  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v, maxHp = stat('armor'), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
-  const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(420, 760 - ci * 28) * (touch ? 1.4 : 1)), windMs = touch ? 700 : 430;
+  const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(340, 620 - ci * 26) * (touch ? 1.3 : 1)), windMs = touch ? 700 : 430;
   const bossHp = 30 + ci * 8;
 
   document.body.classList.add('ingame');
@@ -58,7 +58,7 @@ export function mountArena(root, params) {
     const spots = [[11, 1], [11, 7], [6, 1], [6, 7], [11, 4], [8, 4]];
     for (let k = 0; k < n; k++) {
       const [x, y] = spots[k % spots.length];
-      if (!(mobs.some((m) => m.x === x && m.y === y) || (hero.x === x && hero.y === y))) mobs.push({ x, y, hp: minionHp, next: performance.now() + 500 + k * 120, wind: 0, hit: 0 });
+      if (!(mobs.some((m) => m.x === x && m.y === y) || (hero.x === x && hero.y === y))) mobs.push({ x, y, hp: minionHp, next: performance.now() + 500 + k * 120, wind: 0, hit: 0, struck: -1e9 });
     }
   }
   function start() {
@@ -101,11 +101,11 @@ export function mountArena(root, params) {
     if (mode === 2) { // Magie: Lichtnova trifft alles im Raum
       if (now < magicAt) return;
       magicAt = now + MAGIC_MS; shake = now + 300; bossSound('slam');
-      for (const m of [...mobs]) { m.hp -= damage + 1; m.hit = now; if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } }
-      if (boss) { boss.hp = Math.max(0, boss.hp - damage * 2); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) win(); }
+      for (const m of [...mobs]) { m.hp -= damage + 1 + magicBonus; m.hit = now; if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } }
+      if (boss) { boss.hp = Math.max(0, boss.hp - (damage + magicBonus) * 2); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) win(); }
       showMode(); return;
     }
-    if (now < hero.swing + SWING_MS) return;
+    if (now < hero.swing + swingMs) return;
     hero.swing = now; play('swipe');
     // Rundumschlag: trifft alles im Kreis um den Helden
     let hitBoss = false;
@@ -165,7 +165,7 @@ export function mountArena(root, params) {
     for (const m of mobs) {
       const near = Math.abs(m.x - hero.x) + Math.abs(m.y - hero.y) === 1;
       if (m.wind) {
-        if (now >= m.wind) { m.wind = 0; m.next = now + minionMs; if (near) hurt(now); }
+        if (now >= m.wind) { m.wind = 0; m.struck = now; m.next = now + minionMs; if (near) hurt(now); }
       } else if (now >= m.next) {
         m.next = now + minionMs;
         if (near) { m.wind = now + windMs; continue; }
@@ -303,6 +303,14 @@ export function mountArena(root, params) {
     }
   }
   // Figuren bleiben im dunklen Bosskampf hell: nach dem Abdunkeln noch einmal obenauf zeichnen
+  // Angriff als Animation: zurückziehen, zittern, dann auf den Helden zuschnellen
+  function mobLook(m, now) {
+    const dx = Math.sign(hero.x - m.x), dy = Math.sign(hero.y - m.y), sx = m.y === hero.y ? dx : 0, sy = m.y === hero.y ? 0 : dy;
+    const flash = now - m.hit < 110, strike = now - m.struck;
+    if (strike < 180) { const k = 1 - strike / 180; return { flash, bite: true, lunge: [sx * Math.round(9 * k), sy * Math.round(9 * k)] }; }
+    if (m.wind) { const j = reduced ? 0 : Math.floor(now / 40) % 2; return { flash, warn: true, lunge: [-sx * 3 + j, -sy * 3] }; }
+    return { flash };
+  }
   const mirror = (g) => (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x + pix.ox, y + pix.oy, w, h); };
   function drawHero(g, now) {
     const r = mirror(g), x = hero.x * T, y = hero.y * T;
@@ -327,7 +335,7 @@ export function mountArena(root, params) {
       const left = (z.at - now) / 900, on = left < 0.4 ? Math.floor(now / 70) % 2 : 1;
       for (const [x, y] of z.cells) { r(x * T + 1, y * T + 1, T - 2, T - 2, on ? 'rgba(255,50,30,0.55)' : 'rgba(255,190,60,0.5)'); r(x * T + 1, y * T + 1, T - 2, 1, '#ffd166'); }
     }
-    for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, { flash: now - m.hit < 110, warn: !!m.wind });
+    for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
     if (boss) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
     if (!blink && phase !== 0) drawSword(g, now);
@@ -338,7 +346,7 @@ export function mountArena(root, params) {
       const p = img.width, q = img.height, beat = reduced ? 0.5 : (Math.sin(now / 420) + 1) / 2;
       g.fillStyle = 'rgba(6,0,10,0.45)'; g.fillRect(0, 0, p, q);
       g.fillStyle = `rgba(120,0,10,${0.14 + beat * 0.14})`; g.fillRect(0, 0, p, q);
-      for (const m of mobs) drawMinion(mirror(g), foe.minion, foe.colors, m.x * T, m.y * T, t, { flash: now - m.hit < 110, warn: !!m.wind });
+      for (const m of mobs) drawMinion(mirror(g), foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
       drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
       if (!blink) pix.ctx && drawHero(g, now);
     }
