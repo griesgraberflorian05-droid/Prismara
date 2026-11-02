@@ -304,6 +304,7 @@ function settingsPage(el) {
 }
 
 // ---------- Weltenauswahl: Leiste mit dem Panorama jeder Welt; Hintergrund, Farben und Musik wechseln mit ----------
+let fadeMs = 620;
 function chaptersPage(el, start, scene) {
   const t = totals();
   let cur = start >= 0 && start < CHAPTERS.length ? start : currentChapter();
@@ -326,7 +327,7 @@ function chaptersPage(el, start, scene) {
   function select(i, smooth = true, dir = 0) {
     cur = i;
     const info = chapterInfo(i), w = worldForChapter(info.ch.id), id = themeOf(i);
-    scene.setWorld(id, dir || 1);
+    scene.setWorld(id, dir || 1, fadeMs);
     document.body.dataset.world = id;
     clearTimeout(musicTimer); musicTimer = setTimeout(() => setMusic(id), 350); // beim schnellen Durchblättern nicht jedes Lied anspielen
     const next = info.idx.find((n) => !isSolved(PUSH_LEVELS[n].id));
@@ -343,15 +344,23 @@ function chaptersPage(el, start, scene) {
     history.replaceState(null, '', `#/menu/chapters/${i}`);
     tiles[i].scrollIntoView({ behavior: smooth && !prefersReducedMotion() ? 'smooth' : 'auto', inline: 'center', block: 'nearest' });
   }
-  const go = (d) => { play('swipe'); select((cur + d + CHAPTERS.length) % CHAPTERS.length, true, d); tiles[cur].focus({ preventScroll: true }); };
+  // Schnell blättern: Animation verkürzt sich mit dem Abstand der Schritte, das Bild wird unscharf
+  let lastGo = 0, blurOff = 0;
+  const go = (d) => {
+    const now = performance.now(), gap = now - lastGo, fast = gap < 300, sc = document.querySelector('.tm-scene');
+    lastGo = now; fadeMs = fast ? Math.max(110, gap * 1.4) : 620;
+    if (fast && sc && !prefersReducedMotion()) { sc.style.filter = `blur(${Math.min(6, 180 / Math.max(30, gap))}px)`; clearTimeout(blurOff); blurOff = setTimeout(() => { sc.style.filter = ''; }, 220); }
+    if (!fast) play('swipe');
+    select((cur + d + CHAPTERS.length) % CHAPTERS.length, !fast, d);
+    tiles[cur].focus({ preventScroll: true });
+  };
   // Mausrad blättert durch die Welten (Hochkant-Handy wischt die Leiste direkt)
-  let wheelSum = 0, wheelAt = 0;
+  let wheelSum = 0;
   el.closest('.tm').addEventListener('wheel', (e) => {
     e.preventDefault();
     wheelSum += Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-    const now = performance.now();
-    if (Math.abs(wheelSum) < 30 || now - wheelAt < 240) return;
-    wheelAt = now; go(wheelSum > 0 ? 1 : -1); wheelSum = 0;
+    // Jede Rastung ist genau eine Welt, auch bei schnellem Drehen
+    if (Math.abs(wheelSum) >= 50) { go(wheelSum > 0 ? 1 : -1); wheelSum = 0; }
   }, { passive: false });
   strip.addEventListener('click', (e) => {
     const b = e.target.closest('.wtile'); if (!b) return;

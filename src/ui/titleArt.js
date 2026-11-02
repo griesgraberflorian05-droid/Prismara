@@ -456,7 +456,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
     particles(g, S, t);
     // Weltwechsel: das alte Bild löst sich Pixelblock für Pixelblock in Wechselrichtung auf
     if (fade) {
-      const k = (tms - fade.t0) / 620;
+      const k = (tms - fade.t0) / fade.ms;
       if (k >= 1 || t === 0) fade = null;
       else for (let y = 0; y < H; y += 8) for (let x = 0; x < W; x += 8) {
         if (k < (fade.dir > 0 ? 1 - x / W : x / W) * 0.72 + hash(x, y, 300) * 0.28) g.drawImage(fade.img, x, y, 8, 8, x, y, 8, 8);
@@ -475,11 +475,11 @@ export function mountTitleArt(canvas, worldId = 'default') {
   requestAnimationFrame(frame);
   return {
     stop() { run = false; stage.removeEventListener('pointerdown', onPoint); stage.removeEventListener('pointermove', onPoint); stage.style.cursor = ''; },
-    setWorld(id, dir = 1) {
+    setWorld(id, dir = 1, ms = 620) {
       const next = TITLE_STYLES[id] || TITLE_STYLES.default;
       if (next === S) return;
       const [img, ig] = layer(); ig.drawImage(buf, 0, 0); // aktuelles Bild festhalten
-      fade = { img, dir, t0: performance.now() };
+      fade = { img, dir, ms, t0: performance.now() };
       S = next; ({ back, front } = layers(id));
     },
   };
