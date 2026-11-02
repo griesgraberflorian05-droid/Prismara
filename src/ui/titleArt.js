@@ -315,11 +315,14 @@ export function mountTitleArt(canvas, worldId = 'default') {
       rag.va += (-Math.sin(rag.a) * 26 - ax * 0.012) * dt * 4; rag.va *= 0.97; rag.a += rag.va * dt; // Pendel um den Griffpunkt
     } else if (rag.mode === 'fly') {
       rag.vy += 430 * dt; rag.x += rag.vx * dt; rag.y += rag.vy * dt; rag.a += rag.va * dt;
-      if (rag.x < 0 || rag.x > W - 16) { rag.x = Math.max(0, Math.min(W - 16, rag.x)); rag.vx *= -0.6; }
+      // Am sichtbaren Bildschirmrand abprallen, auch oben
+      const sc = Math.max(1, Math.ceil(Math.max(canvas.width / W, canvas.height / H))), left = -Math.round((canvas.width - W * sc) * 0.65) / sc, right = left + canvas.width / sc - 16, top = (H * sc - canvas.height) / sc;
+      if (rag.x < left || rag.x > right) { rag.x = Math.max(left, Math.min(right, rag.x)); rag.vx *= -0.7; rag.va *= -0.8; play('bump'); }
+      if (rag.y < top) { rag.y = top; rag.vy = Math.abs(rag.vy) * 0.6; play('bump'); }
       const floor = groundY(Math.round(rag.x + 8)) - 12;
       if (rag.y >= floor && rag.vy > 0) {
         rag.y = floor; play('bump');
-        if (rag.vy > 90) { rag.vy *= -0.32; rag.vx *= 0.6; rag.va *= 0.5; } else { rag.mode = 'down'; rag.a = rag.vx < 0 ? -Math.PI / 2 : Math.PI / 2; rag.until = tms + 1000; }
+        if (rag.vy > 90) { rag.vy *= -0.32; rag.vx *= 0.6; rag.va *= 0.5; } else { rag.mode = 'down'; rag.a = rag.vx < 0 ? -Math.PI / 2 : Math.PI / 2; rag.until = tms + 1500; }
       }
     } else if (rag.mode === 'down') {
       if (tms > rag.until) { rag.mode = 'walk'; rag.a = 0; }
