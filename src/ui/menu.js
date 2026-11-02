@@ -7,6 +7,7 @@ import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, 
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
+import * as fx from '../game/fx.js';
 import { UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
@@ -94,6 +95,7 @@ export function mountMenu(root, params = []) {
   else if (page === 'forge') forgePage(ui);
   else if (page === 'radio') radioPage(ui);
   else if (page === 'updates') updatesPage(ui);
+  else if (page === 'galerie') galleryPage(ui);
   else if (page === 'settings') settingsPage(ui);
   else if (page === 'code') codePage(ui);
   else if (page === 'codes') myCodesPage(ui);
@@ -153,7 +155,7 @@ function mainPage(el) {
         <button class="wbtn sm" id="upd" type="button">${icon('reset')}<span>Update</span></button>
         <a class="wbtn sm" href="#/lab">${icon('brain')}<span>Lab</span></a>
       </div>
-      <a class="tm-version" href="#/menu/updates">Version ${VERSION === 'dev' ? 'lokal' : LABEL} · Updates</a>
+      <a class="tm-version" href="#/menu/updates">Version ${VERSION === 'dev' ? 'lokal' : LABEL} · Updates</a><a class="tm-version" href="#/menu/galerie">Galerie</a>
     </div>`;
   const logo = logoCanvas(); logo.className = isAdmin() ? 'logo admin' : 'logo'; // Admin-Modus: rotes Logo logo.setAttribute('aria-hidden', 'true');
   el.querySelector('.logo-h1').prepend(logo);
@@ -277,11 +279,15 @@ function settingsPage(el) {
         <div class="set-row"><span>🔇 Alles stumm</span><button class="wbtn sm" id="snd" aria-pressed="${isMuted()}">${isMuted() ? 'AN' : 'AUS'}</button></div>
         <div class="set-row vol-box">${volumeHtml()}</div>
         <div class="set-row"><span>🌀 Bewegung reduzieren</span><button class="wbtn sm" id="motion" aria-pressed="${!!rm}">${rm === null ? 'SYSTEM' : rm ? 'AN' : 'AUS'}</button></div>
+        <div class="set-row"><span>✨ Grafik: <b id="gfx-v">${getSettings().gfx ?? 100} %</b></span><input id="gfx" type="range" min="0" max="100" step="10" value="${getSettings().gfx ?? 100}" aria-label="Menge an Effekten und Partikeln"></div>
+        <div class="set-row"><span>📳 Vibration</span><button class="wbtn sm" id="vib" aria-pressed="${getSettings().vibrate !== false}">${getSettings().vibrate !== false ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📖 Tutorial (Lehrzimmer)</span><a class="wbtn sm" href="#/adv/tutorial">NOCHMAL SPIELEN</a></div>
         <div class="set-row"><span>◈ Prismara Lab</span><a class="wbtn sm" href="#/lab">ÖFFNEN</a></div>
       </div>`;
     el.querySelector('#snd').addEventListener('click', () => { toggleMute(); play('ui'); render(); el.querySelector('#snd').focus(); });
     bindVolume(el);
+    el.querySelector('#gfx').addEventListener('input', (e) => { updateSettings({ gfx: +e.target.value }); el.querySelector('#gfx-v').textContent = `${e.target.value} %`; });
+    el.querySelector('#vib').addEventListener('click', () => { updateSettings({ vibrate: getSettings().vibrate === false }); play('ui'); render(); });
     el.querySelector('#motion').addEventListener('click', () => {
       updateSettings({ reducedMotion: rm === null ? true : rm ? false : null }); play('ui'); render(); el.querySelector('#motion').focus();
     });
@@ -448,6 +454,36 @@ function radioPage(el) {
     }));
   };
   render();
+}
+
+// ---------- Galerie: jedes neue Element einzeln ansehen ----------
+function galleryPage(el) {
+  const BTN = { Funken: () => fx.sparks(3.5, 2, '#ffd166'), Lichtring: () => fx.ring(3.5, 2, '#ff8a3a'), Beben: () => fx.addTrauma(0.7), Weißblitz: () => fx.flash(), Hitstop: () => fx.hitstop(fx.FX.hitstopBoss), Federn: () => fx.squash(), Vibration: () => fx.buzz(40),
+    Tonleiter: () => [0, 1, 2, 3, 4].forEach((i) => setTimeout(() => play('lamp', i), i * 160)),
+    Iris: () => { const d = document.createElement('div'); d.className = 'iris'; d.addEventListener('animationend', () => d.remove()); document.body.append(d); } };
+  el.innerHTML = `
+    ${head('#/menu', 'Galerie')}
+    <div class="rd"><p class="gal-name parch" id="gal-name">Tippe auf „Alle vorführen“</p><canvas class="gal-canvas" width="128" height="80"></canvas>
+      <button class="wbtn big" type="button" id="gal-all">Alle vorführen</button>
+      <div class="parch settings"><div class="dbg-grid">${Object.keys(BTN).map((k) => `<button class="wbtn sm" type="button" data-fx="${k}">${k}</button>`).join('')}</div></div></div>`;
+  el.querySelectorAll('[data-fx]').forEach((b) => b.addEventListener('click', () => BTN[b.dataset.fx]()));
+  el.querySelector('#gal-all').addEventListener('click', () => {
+    Object.keys(BTN).forEach((k, i) => setTimeout(() => {
+      if (!el.isConnected) return;
+      el.querySelector('#gal-name').textContent = `${i + 1}/${Object.keys(BTN).length}: ${k}`;
+      BTN[k]();
+    }, i * 1800));
+  });
+  const c = el.querySelector('canvas'), g = c.getContext('2d');
+  const loop = (t) => {
+    if (!c.isConnected) return;
+    requestAnimationFrame(loop);
+    if (fx.stopped(t)) return;
+    const [x, y] = fx.shake(1, t), q = fx.squashScale(t) || [1, 1];
+    g.fillStyle = '#1a1420'; g.fillRect(0, 0, 128, 80);
+    g.save(); g.translate(x, y); g.fillStyle = '#e8701a'; g.fillRect(64 - 8 * q[0], 56 - 16 * q[1], 16 * q[0], 16 * q[1]); fx.drawFx(g, 16, t); g.restore();
+  };
+  requestAnimationFrame(loop);
 }
 
 // ---------- Update-Log ----------

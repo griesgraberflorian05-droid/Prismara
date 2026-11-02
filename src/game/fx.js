@@ -1,20 +1,38 @@
 // Zentrales Effekt-System: Hitstop, Screenshake über Trauma, Funken aus einem Pool, Lichtringe, Weißblitz.
 // Rein darstellend: ändert nie Spielregeln. Koordinaten in Feldern, „Weniger Bewegung“ schaltet Wackeln und Blitze ab.
-import { prefersReducedMotion } from '../settings.js';
+import { prefersReducedMotion, getSettings } from '../settings.js';
 
 export const FX = { hitstopLamp: 40, hitstopBoss: 70, shakePx: 4, shakeDecay: 1.8, sparksMin: 12, sparksMax: 20, sparkMs: [300, 600], maxSparks: 600 };
 
 const pool = Array.from({ length: FX.maxSparks }, () => ({ on: false })), rings = [];
 let trauma = 0, stopUntil = 0, flashUntil = 0, last = 0, quality = 1, slow = 0;
 
-export const fxQuality = () => quality;
+// Grafik-Regler der Einstellungen (0–100 %) mal Leistungs-Automatik
+export const fxQuality = () => quality * ((getSettings().gfx ?? 100) / 100);
+/** Vibration am Handy, in den Einstellungen abschaltbar. */
+export function buzz(ms = 15) { if (getSettings().vibrate !== false) navigator.vibrate?.(ms); }
+// Squash & Stretch: 1,2 × 0,8 für 90 ms, dann mit easeOutBack zurück
+let squashAt = -1e9;
+export function squash(now = performance.now()) { if (!prefersReducedMotion()) squashAt = now; }
+export function squashScale(now = performance.now()) {
+  const d = now - squashAt;
+  if (d > 260) return null;
+  if (d < 90) return [1.2, 0.8];
+  const k = (d - 90) / 170 - 1, e = 1 + 2.7 * k * k * k + 1.7 * k * k; // easeOutBack
+  return [1.2 - 0.2 * e, 0.8 + 0.2 * e];
+}
+/** Staub im Strahl: ein langsam treibendes Teilchen. */
+export function mote(x, y, color, now = performance.now()) {
+  const p = pool.find((o) => !o.on);
+  if (p && Math.random() < fxQuality()) Object.assign(p, { on: true, x: x + Math.random() - 0.5, y: y + Math.random() - 0.5, vx: (Math.random() - 0.5) * 0.4, vy: -0.3, t0: now, life: 900, color });
+}
 export function hitstop(ms, now = performance.now()) { if (!prefersReducedMotion()) stopUntil = Math.max(stopUntil, now + ms); }
 export const stopped = (now) => now < stopUntil;
 export function addTrauma(v) { trauma = Math.min(1, trauma + v); }
 export function flash(now = performance.now()) { if (!prefersReducedMotion()) flashUntil = now + 34; }
 
 export function sparks(x, y, color, now = performance.now()) {
-  const n = Math.round((FX.sparksMin + Math.random() * (FX.sparksMax - FX.sparksMin)) * quality);
+  const n = Math.round((FX.sparksMin + Math.random() * (FX.sparksMax - FX.sparksMin)) * fxQuality());
   for (let k = 0, i = 0; k < n && i < pool.length; i++) {
     const p = pool[i];
     if (p.on) continue;
@@ -23,7 +41,7 @@ export function sparks(x, y, color, now = performance.now()) {
     k++;
   }
 }
-export function ring(x, y, color, now = performance.now()) { rings.push({ x, y, color, t0: now }); }
+export function ring(x, y, color, now = performance.now(), small = false) { if (fxQuality() > 0) rings.push({ x, y, color, t0: now, small }); }
 
 /** Bildversatz in Bildschirm-Pixeln (Trauma² × Stärke). */
 export function shake(scale, now) {
@@ -42,8 +60,9 @@ export function drawFx(g, T, now) {
   for (let i = rings.length - 1; i >= 0; i--) {
     const r = rings[i], k = (now - r.t0) / 500;
     if (k >= 1) { rings.splice(i, 1); continue; }
+    if (k < 0) continue; // Lichtwelle: Ring startet später
     g.globalAlpha = 1 - k; g.strokeStyle = r.color; g.lineWidth = 2;
-    g.beginPath(); g.arc((r.x + 0.5) * T, (r.y + 0.5) * T, 4 + k * T * 3, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.arc((r.x + 0.5) * T, (r.y + 0.5) * T, 4 + k * T * (r.small ? 0.5 : 3), 0, Math.PI * 2); g.stroke();
   }
   for (const p of pool) {
     if (!p.on) continue;

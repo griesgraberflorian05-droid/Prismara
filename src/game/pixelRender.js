@@ -6,6 +6,7 @@
 import { COLOR_INFO, DIRS } from './engine.js';
 import { getSkin, getLook, isDinnerbone } from './skins.js';
 import { drawMinion } from './monsters.js';
+import { squashScale } from './fx.js';
 import { hat as currentHat } from './inventory.js';
 import { MARGIN, makeDecor, DecorSteps, drawFlames, drawGlows, drawShafts, drawMotes, shadeMargin } from './roomDecor.js';
 
@@ -300,10 +301,11 @@ export class PixelRenderer {
   part(x, y, w, h, c) { this.r(x - 1, y - 1, w + 2, h + 2, '#120a1c'); this.r(x, y, w, h, c); }
 
   player(p, t) {
-    if (!isDinnerbone()) { this.hero(p, t); return; }
-    // Code „dinnerbone“: Held steht auf dem Kopf (gespiegelt um die Feldmitte)
-    const { ctx } = this, mid = Math.round(p.y * T) + T / 2;
-    ctx.save(); ctx.translate(0, mid * 2); ctx.scale(1, -1);
+    // Squash & Stretch um die Füße, Code „dinnerbone“: gespiegelt um die Feldmitte
+    const { ctx } = this, sq = squashScale(), fx = Math.round(p.x * T) + T / 2, fy = Math.round(p.y * T) + T;
+    ctx.save();
+    if (sq) { ctx.translate(fx, fy); ctx.scale(sq[0], sq[1]); ctx.translate(-fx, -fy); }
+    if (isDinnerbone()) { ctx.translate(0, fy * 2 - T); ctx.scale(1, -1); }
     this.hero(p, t);
     ctx.restore();
   }

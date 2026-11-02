@@ -128,6 +128,11 @@ export function play(name, arg) {
     case 'slide': noise({ dur: 0.35, vol: 0.12, freq: 2200, q: 0.7 }); break;
     case 'rotate': tone(880, { type: 'square', dur: 0.05, vol: 0.06 }); tone(1320, { type: 'sine', dur: 0.08, vol: 0.08, delay: 0.04 }); break;
     case 'undo': tone(600, { type: 'sine', dur: 0.1, vol: 0.08, to: 300 }); break;
+    case 'lamp': { // tiefer warmer Ton, jede Lampe eine Stufe höher
+      const f = 130.8 * [1, 1.125, 1.26, 1.5, 1.68, 2, 2.25][Math.min(6, arg || 0)];
+      tone(f, { type: 'triangle', dur: 0.55, vol: 0.2 }); tone(f / 2, { type: 'sine', dur: 0.6, vol: 0.12 });
+      break;
+    }
     case 'target': {
       const notes = [1, 2, 4].filter((c) => arg & c).map((c) => COLOR_NOTES[c]);
       notes.forEach((f, i) => { tone(f, { type: 'sine', dur: 0.5, vol: 0.14, delay: i * 0.03 }); tone(f * 2, { type: 'sine', dur: 0.3, vol: 0.05, delay: i * 0.03 }); });

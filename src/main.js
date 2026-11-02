@@ -10,10 +10,26 @@ import { setFavicon } from './ui/logo.js';
 import { stopMusic } from './game/music.js';
 import { startUpdateCheck } from './ui/updater.js';
 import { applyFx } from './game/codes.js';
+import { FX } from './game/fx.js';
 
 setFavicon();
 startUpdateCheck();
 applyFx();
+// F9: Regler für alle Effektwerte
+addEventListener('keydown', (e) => {
+  if (e.key !== 'F9') return;
+  e.preventDefault();
+  const old = document.getElementById('fx-panel');
+  if (old) { old.remove(); return; }
+  const box = document.createElement('div'); box.id = 'fx-panel';
+  for (const k of ['hitstopLamp', 'hitstopBoss', 'shakePx', 'shakeDecay', 'sparksMin', 'sparksMax']) {
+    const l = document.createElement('label'); l.textContent = k;
+    const i = document.createElement('input'); i.type = 'number'; i.step = '0.1'; i.value = FX[k];
+    i.addEventListener('input', () => { FX[k] = +i.value; });
+    l.append(i); box.append(l);
+  }
+  document.body.append(box);
+});
 // Rechtsklick gesperrt (in Eingabefeldern bleibt er für Einfügen & Co.)
 addEventListener('contextmenu', (e) => { if (!e.target.closest?.('input, textarea')) e.preventDefault(); });
 

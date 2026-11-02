@@ -16,7 +16,7 @@ import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 import { foeOf, bossBeaten, bossPending } from '../game/combat.js';
 import { getLook } from '../game/skins.js';
-import { sparks, ring, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
+import { FX, fxQuality, sparks, ring, mote, squash as squashFx, buzz, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
 import { codeOn } from '../game/codes.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
 import { isAdmin } from '../game/admin.js';
@@ -224,6 +224,7 @@ export function mountAdventure(root, params, opts = {}) {
   document.body.dataset.world = themeId; // Oberflächenfarben der Welt
   setMusic(themeId);
   const worldName = tutorial ? '📖 Tutorial' : { beach: '🏖️ Sommerstrand', cherry: '🌸 Kirschblüte', jungle: '🌴 Dschungel', night: '🌙 Nachtwald', volcano: '🌋 Vulkanschmiede', temple: '🏜️ Wüstentempel', shadow: '🌑 Schattenreich', aurora: '❄️ Polarlicht', reef: '🐠 Korallenriff', castle: '🏰 Burgverlies', moor: '🌫️ Nebelmoor' }[themeId] || '';
+  if (!prefersReducedMotion()) { const iris = document.createElement('div'); iris.className = 'iris'; iris.addEventListener('animationend', () => iris.remove()); document.body.append(iris); }
   root.innerHTML = `
     <section class="adv-full pixel-ui${touch ? ' touch' : ''}${tutorial ? ' has-coach' : ''}" style="--w1:${theme.ambient};--w2:${theme.dark};--w3:${theme.face}">
       <canvas id="board" class="pixel-canvas" tabindex="0" aria-label="Raum. WASD oder Pfeiltasten: ein Feld laufen und Kisten schieben, Leertaste: drehen. Sind alle Ziele beleuchtet, öffnet sich die Tür."></canvas>
@@ -478,7 +479,7 @@ export function mountAdventure(root, params, opts = {}) {
     next.enemies.forEach((e, i) => { if (!e.alive && state.enemies[i]?.alive) { dissolving.push({ x: e.x, y: e.y, t0: now + 80 }); later(() => play('dissolve'), 120); } });
     history.push(state);
     state = next;
-    tr = pushTrace(state);
+    if (!exitOpen) tr = pushTrace(state); // Lampen brennen weiter: nach dem Lösen unterbricht der Held die Leitung nicht mehr
     if (JSON.stringify(tr.beams.map((b) => b.points)) !== JSON.stringify(before.beams.map((b) => b.points))) growStart = now;
     // Klänge
     if (next.rotated != null) play('rotate');
@@ -573,6 +574,7 @@ export function mountAdventure(root, params, opts = {}) {
     const reward = tutorial ? 10 : firstTime ? 10 + 3 * starsFor(solveMoves ?? state.moves, def.par) : improved ? 5 : 1;
     addCoins(reward);
     const stars = starsFor(counted, def.par);
+    for (let i = 0; i < stars; i++) later(() => play('lamp', i * 2), 1550 + i * 150); // Sterne fliegen mit steigendem Ton ein
     const lastInWorld = !tutorial && (!chapter || roomNo === chapter.levels.length);
     const nextIndex = custom ? null : index + 1 < PUSH_LEVELS.length ? index + 1 : null;
     coach();
@@ -736,7 +738,7 @@ export function mountAdventure(root, params, opts = {}) {
   }
 
   // ---------- Zeichnen ----------
-  let running = true, shownStamina = '', view = null, chipTop = null, litSeen = new Set(), lastLit = -1, trail = [], trailAt = { x: -1, y: -1 };
+  let running = true, shownStamina = '', view = null, chipTop = null, litSeen = new Set(), lastLit = -1, fxState = null, nextMote = 0, waveDone = false, trail = [], trailAt = { x: -1, y: -1 };
   const trailColor = getLook().trail.color;
   const staminaEl = $('#stamina');
   const lerp = (a, b, k) => a + (b - a) * k;
@@ -791,16 +793,36 @@ export function mountAdventure(root, params, opts = {}) {
     // Lampe leuchtet neu auf: Funken, Lichtring, Ton je Lampe höher
     const litNow = tr.targets.filter((o) => o.ok);
     for (const o of litNow) if (!litSeen.has(o)) {
-      if (lastLit >= 0 && litNow.length > lastLit) { sparks(o.x, o.y, theme.trim || '#ffd166', t); ring(o.x, o.y, theme.trim || '#ffd166', t); addTrauma(0.3); hitstop(40, t); play('target', 2 + litNow.length); }
+      if (lastLit >= 0 && litNow.length > lastLit) { sparks(o.x, o.y, theme.trim || '#ffd166', t); ring(o.x, o.y, theme.trim || '#ffd166', t); addTrauma(0.3); hitstop(FX.hitstopLamp, t); play('lamp', litNow.length - 1); }
     }
     litSeen = new Set(litNow); lastLit = litNow.length;
+    const glow = theme.trim || '#ffd166';
+    if (state !== fxState) { // neuer Zug: Schieben und Drehen federn, Funken wo der Strahl umgelenkt wird
+      fxState = state;
+      // Monster stehen nie unter einer Leitung: weicht zum nächsten freien Feld aus
+      for (const m of loot) if (m.kind === 'critter' && !m.got && tr.visited.has(m.y * level.w + m.x)) {
+        const spot = level.cells.map((c, i) => ({ c, x: i % level.w, y: Math.floor(i / level.w), i })).filter((o) => o.c.type === 'empty' && !tr.visited.has(o.i) && !state.blocks.some((b) => b.x === o.x && b.y === o.y) && !(o.x === state.player.x && o.y === state.player.y)).sort((p, q) => Math.hypot(p.x - m.x, p.y - m.y) - Math.hypot(q.x - m.x, q.y - m.y))[0];
+        if (spot) { m.x = spot.x; m.y = spot.y; }
+      }
+      if (state.pushed != null || state.rotated != null) { squashFx(t); buzz(12); }
+      for (const b of state.blocks) if (b.orient && tr.visited.has(b.y * level.w + b.x) && (state.rotated != null || state.pushed != null)) ring(b.x, b.y, glow, t, true);
+    }
+    if (tr.visited.size && t > nextMote) { nextMote = t + 180; const c = [...tr.visited][Math.floor(Math.random() * tr.visited.size)]; mote(c % level.w, Math.floor(c / level.w), glow, t); }
+    if (exitOpen && !waveDone) { // Lichtwelle läuft durch die Leitung zur Tür
+      waveDone = true;
+      const cells = [...tr.visited].map((c) => ({ x: c % level.w, y: Math.floor(c / level.w) })).sort((p, q) => Math.hypot(q.x - exit.x, q.y - exit.y) - Math.hypot(p.x - exit.x, p.y - exit.y));
+      cells.forEach((c, i) => ring(c.x, c.y, glow, t + i * 35, true));
+      ring(exit.x, exit.y, glow, t + cells.length * 35); buzz(40);
+    } else if (!exitOpen) waveDone = false;
     const img = pix.draw(reduced ? 0 : t, { marker, markers, loot, chest, sign, got: state.got, fill: state.fill, broken: state.broken, sinking, bigLantern: owns('lantern'), tr, blocks, player, enemies, dissolving, dock, exit, exitOpen, fragments, theme, dust, bloom, grow: reduced ? Infinity : ((t - growStart) / 1000) * 16 });
     // Hochskalieren ohne Glättung → Pixel-Art
     const dpr = devicePixelRatio || 1;
     const cw = Math.max(1, Math.round(canvas.clientWidth * dpr)), chh = Math.max(1, Math.round(canvas.clientHeight * dpr));
     if (canvas.width !== cw || canvas.height !== chh) { canvas.width = cw; canvas.height = chh; }
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, cw, chh);
+    // Leichte Bewegungsunschärfe: das vorige Bild scheint kurz durch (ab 50 % Grafik, nicht bei „Weniger Bewegung“)
+    const blur = !reduced && fxQuality() >= 0.5;
+    if (!blur) ctx.clearRect(0, 0, cw, chh);
     // Raum samt Rückwand einpassen; die Außenwelt drumherum füllt den Rest des Bildschirms
     const v = pix.view;
     const scale = Math.max(1, Math.floor(Math.min(cw / v.w, chh / v.h)));
@@ -820,7 +842,9 @@ export function mountAdventure(root, params, opts = {}) {
     }
     { const g = img.getContext('2d'); g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy); drawFx(g, T, t); g.restore(); }
     const [qx, qy] = shake(scale, t);
+    ctx.globalAlpha = blur ? 0.72 : 1;
     ctx.drawImage(img, dx + qx, dy + qy, img.width * scale, img.height * scale);
+    ctx.globalAlpha = 1;
     requestAnimationFrame(frame);
   }
 
