@@ -344,12 +344,11 @@ function chaptersPage(el, start, scene) {
     history.replaceState(null, '', `#/menu/chapters/${i}`);
     tiles[i].scrollIntoView({ behavior: smooth && !prefersReducedMotion() ? 'smooth' : 'auto', inline: 'center', block: 'nearest' });
   }
-  // Schnell blättern: Animation verkürzt sich mit dem Abstand der Schritte, das Bild wird unscharf
-  let lastGo = 0, blurOff = 0;
+  // Schnell blättern: Animation verkürzt sich mit dem Abstand der Schritte
+  let lastGo = 0;
   const go = (d) => {
-    const now = performance.now(), gap = now - lastGo, fast = gap < 300, sc = document.querySelector('.tm-scene');
+    const now = performance.now(), gap = now - lastGo, fast = gap < 180;
     lastGo = now; fadeMs = fast ? Math.max(110, gap * 1.4) : 620;
-    if (fast && sc && !prefersReducedMotion()) { sc.style.filter = `blur(${Math.min(6, 180 / Math.max(30, gap))}px)`; clearTimeout(blurOff); blurOff = setTimeout(() => { sc.style.filter = ''; }, 220); }
     if (!fast) play('swipe');
     select((cur + d + CHAPTERS.length) % CHAPTERS.length, !fast, d);
     tiles[cur].focus({ preventScroll: true });
