@@ -296,6 +296,8 @@ export function mountTitleArt(canvas, worldId = 'default') {
   let { back, front } = layers(worldId);
   const [buf, g] = layer();
   const ctx = canvas.getContext('2d');
+  const heroLayer = document.createElement('canvas'); heroLayer.width = heroLayer.height = 32;
+  const hg = heroLayer.getContext('2d');
   let run = true, fade = null;
   // Streicheln: Held am Lagerfeuer antippen oder überstreichen, dann freut er sich und Herzen steigen auf
   const HERO = { x: 217, y: 186 }, hearts = [];
@@ -454,12 +456,14 @@ export function mountTitleArt(canvas, worldId = 'default') {
     // Derselbe Held wie im Spiel: Skin, Accessoires, Umhang und Hut kommen aus dem echten Sprite
     const look = getLook(), n = parseInt(look.lantern.glow.slice(1), 16);
     glow(hx + 12, hy + 9, 14, `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},A)`, 0.3);
-    painter.ctx = g; painter.r = (x, y, w, h, c) => R(g, x, y, w, h, c);
+    // Held auf eigene Ebene: erst nach dem Hochskalieren gedreht, so bleiben seine Pixel ganz
+    hg.clearRect(0, 0, 32, 32);
+    painter.ctx = hg; painter.r = (x, y, w, h, c) => R(hg, x, y, w, h, c);
     ragStep(tms);
     const going = rag.mode === 'walk';
-    g.save(); g.translate(Math.round(rag.x) + 8, Math.round(rag.y) + 8); g.rotate(rag.a);
+    hg.save(); hg.translate(16, 16);
     painter.player({ x: -0.5, y: -0.5, dir: going ? (home.x > rag.x ? 1 : 3) : 2, walk: going ? (tms / 280) % 1 : null, stamina: 1, hat: currentHat() }, t);
-    g.restore();
+    hg.restore();
     for (let i = hearts.length - 1; i >= 0; i--) {
       const h = hearts[i], k = (tms - h.t0) / 1100;
       if (k >= 1) { hearts.splice(i, 1); continue; }
@@ -503,7 +507,11 @@ export function mountTitleArt(canvas, worldId = 'default') {
     if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
     const s = Math.max(1, Math.ceil(Math.max(cw / W, ch / H)));
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(buf, Math.round((cw - W * s) * 0.65), ch - H * s, W * s, H * s);
+    const ox = Math.round((cw - W * s) * 0.65), oy = ch - H * s;
+    ctx.drawImage(buf, ox, oy, W * s, H * s);
+    ctx.save(); ctx.translate(ox + (rag.x + 8) * s, oy + (rag.y + 8) * s); ctx.rotate(rag.a);
+    ctx.drawImage(heroLayer, -16 * s, -16 * s, 32 * s, 32 * s);
+    ctx.restore();
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
