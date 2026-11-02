@@ -45,7 +45,7 @@ export function mountArena(root, params) {
   const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: {}, rows: ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)) });
   const room = createPushState(level), tr = pushTrace(room);
   const pix = new PixelRenderer(level);
-  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), modes = MODES.filter((_, i) => i < 2 || hasMagic()), maxHp = stat('armor'), reach = stat('reach'), skin = swordSkin();
+  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), modes = MODES.filter((_, i) => i < 2 || hasMagic()), help = !!getSettings().bossHelp, maxHp = stat('armor') + (help ? 2 : 0), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
   const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(340, 620 - ci * 26) * (touch ? 1.3 : 1)), windMs = touch ? 700 : 430;
   const mini = endless ? depth % 5 === 0 : params[1] === 'mini', bossHp = mini ? 10 + ci * 3 : 30 + ci * 8; // Miniboss: kurzer Kampf ohne Ultra
@@ -83,7 +83,8 @@ export function mountArena(root, params) {
     hero = { x: 1, y: 4, dir: 1, hp: endless && RUN.hp ? RUN.hp : maxHp, safe: 0, next: 0, swing: 0, moved: 0 };
     mobs = []; tele = []; shots = []; sparks = []; boss = null; phase = 1;
     setMusic(world); held = null; paused = false;
-    spawnMobs(endless ? Math.min(6, 2 + Math.ceil(depth / 2)) : touch ? 2 : 3);
+    if (checkpoint) phase = 2; // Neustart direkt beim Boss an der erreichten Phase
+    else spawnMobs(endless ? Math.min(6, 2 + Math.ceil(depth / 2)) : touch ? 2 : 3);
     $('#wave').textContent = 'WELLE 1/2'; $('#bossbar').hidden = true; $('#panel').hidden = true;
     showHearts(); showMode();
     canvas.focus();
@@ -155,7 +156,7 @@ export function mountArena(root, params) {
       tele.push({ cells: inner((a, b) => Math.abs(a - x - 0.5) <= 2 && Math.abs(b - y - 0.5) <= 2), at: now + 1500, dmg: 2, then: () => { boss.x = x; boss.y = y; boss.jump = 0; } });
       return;
     }
-    const angry = boss.hp <= bossHp / 2, wind = (angry ? 700 : 900) - ci * 12 - (boss.stage - 1) * 90;
+    const angry = boss.hp <= bossHp / 2, wind = ((angry ? 700 : 900) - ci * 12 - (boss.stage - 1) * 90) * (help ? 1.3 : 1);
     const name = foe.moves[boss.turn++ % foe.moves.length];
     if (name !== 'shots') bossSound(name === 'summon' ? 'roar' : 'charge');
     const cx = boss.x + 0.5, cy = boss.y + 0.5;

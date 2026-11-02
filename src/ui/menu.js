@@ -283,6 +283,7 @@ function settingsPage(el) {
         <div class="set-row vol-box">${volumeHtml()}</div>
         <div class="set-row"><span>🌀 Bewegung reduzieren</span><button class="wbtn sm" id="motion" aria-pressed="${!!rm}">${rm === null ? 'SYSTEM' : rm ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>✨ Grafik: <b id="gfx-v">${getSettings().gfx ?? 100} %</b></span><input id="gfx" type="range" min="0" max="100" step="10" value="${getSettings().gfx ?? 100}" aria-label="Menge an Effekten und Partikeln"></div>
+        <div class="set-row"><span>🛡 Boss-Hilfe</span><button class="wbtn sm" id="bh" aria-pressed="${!!getSettings().bossHelp}">${getSettings().bossHelp ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📳 Vibration</span><button class="wbtn sm" id="vib" aria-pressed="${getSettings().vibrate !== false}">${getSettings().vibrate !== false ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📖 Tutorial (Lehrzimmer)</span><a class="wbtn sm" href="#/adv/tutorial">NOCHMAL SPIELEN</a></div>
         <div class="set-row"><span>◈ Prismara Lab</span><a class="wbtn sm" href="#/lab">ÖFFNEN</a></div>
@@ -290,6 +291,7 @@ function settingsPage(el) {
     el.querySelector('#snd').addEventListener('click', () => { toggleMute(); play('ui'); render(); el.querySelector('#snd').focus(); });
     bindVolume(el);
     el.querySelector('#gfx').addEventListener('input', (e) => { updateSettings({ gfx: +e.target.value }); el.querySelector('#gfx-v').textContent = `${e.target.value} %`; });
+    el.querySelector('#bh').addEventListener('click', () => { updateSettings({ bossHelp: !getSettings().bossHelp }); play('ui'); render(); });
     el.querySelector('#vib').addEventListener('click', () => { updateSettings({ vibrate: getSettings().vibrate === false }); play('ui'); render(); });
     el.querySelector('#motion').addEventListener('click', () => {
       updateSettings({ reducedMotion: rm === null ? true : rm ? false : null }); play('ui'); render(); el.querySelector('#motion').focus();

@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.51', items: ['Boss-Hilfe in den Einstellungen', 'Nach einer Niederlage direkt zurück zur Boss-Phase'] },
   { v: '3.23.50', items: ['Bekomm-Animation beim Spin', 'Grüne gewöhnliche Skins, nicht besessene bleiben grau'] },
   { v: '3.23.49', items: ['Skin-Spins für Münzen', 'Seltenheiten mit Farbe und Schimmer'] },
   { v: '3.23.48', items: ['Code debug', 'Radio, Strahl-Spitze hinter dem Helden'] },
