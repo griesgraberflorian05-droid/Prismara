@@ -704,11 +704,13 @@ export class PixelRenderer {
       const queue = [[sx, sy, lvl0]];
       while (queue.length) {
         const [x, y, lvl] = queue.shift();
-        const f = Math.pow(lvl / 15, 1.6) * (l.i ?? 1);
+        // Rund statt Raute: Helligkeit nach echtem Abstand, außen weich auslaufend
+        const reach = lvl0 / (l.falloff ?? 2), k = Math.max(0, 1 - Math.hypot(x + 0.5 - l.x, y + 0.5 - l.y) / reach);
+        const f = k * k * (3 - 2 * k) * Math.pow(lvl0 / 15, 1.6) * (l.i ?? 1);
         const i = y * w + x;
         R[i] += rgb[0] * f; G[i] += rgb[1] * f; B[i] += rgb[2] * f;
         if (opaque[i] && !(x === sx && y === sy)) continue; // Licht trifft die Wand, geht aber nicht hindurch
-        const next = lvl - (l.falloff ?? 2);
+        const next = lvl - (l.falloff ?? 2) / 1.45; // etwas weiter suchen, damit die Ecken des Kreises erreicht werden
         if (next <= 0) continue;
         for (const [dx, dy] of DIRS) {
           const nx = x + dx, ny = y + dy;
