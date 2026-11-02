@@ -33,6 +33,25 @@ export const TEXTURES = {
   lava: { name: 'Lava', draw: (x, y) => ramp(['#3a0a05', '#8a1a0a', '#d4410f', '#ff8a1c', '#ffd25a'], blob(x, y, 4, 9)) },
 };
 
+// Stein: runde Kanten, Licht oben links, Schatten unten rechts, ein paar Kiesel und Risse
+export function stoneTile() {
+  if (stoneTile.c) return stoneTile.c;
+  const c = document.createElement('canvas'); c.width = c.height = 16; const g = c.getContext('2d');
+  const ramp = ['#3a3644', '#524e5c', '#6e6a78', '#8c8896', '#b0acb8'];
+  for (let y = 1; y < 15; y++) for (let x = 1; x < 15; x++) {
+    const corner = (x === 1 || x === 14) && (y === 1 || y === 14);
+    if (corner) continue;
+    const edge = x === 1 || y === 1 || x === 14 || y === 14;
+    const lit = (14 - x + 14 - y) / 26, k = blob(x, y, 4, 12) * 0.5 + lit * 0.5;
+    g.fillStyle = edge ? '#1f1c26' : ramp[Math.min(4, Math.floor(k * 5))];
+    g.fillRect(x, y, 1, 1);
+  }
+  g.fillStyle = '#d4d0dc'; g.fillRect(3, 3, 3, 1); g.fillRect(3, 4, 1, 1);
+  g.fillStyle = '#2e2a36'; [[9, 5], [10, 6], [10, 7], [11, 8], [5, 10], [6, 11], [7, 11]].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
+  g.fillStyle = '#4f6b4a'; [[3, 12], [4, 13], [5, 13], [12, 12]].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
+  return (stoneTile.c = c);
+}
+
 const cache = {};
 /** Liefert die Textur als Liste aus Zeilen mit Farben. */
 export function texture(id) {

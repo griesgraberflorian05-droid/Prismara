@@ -295,6 +295,7 @@ export function mountAdventure(root, params, opts = {}) {
   let state, tr, history, anim, exitOpen, done, caught, dissolving, dock, squash, held, lastStep, timers = [];
   let solveMoves = null; // Züge bis zum Öffnen der Tür – nur sie zählen für die Sterne
   let growStart = 0, bloom = null; // Ranken wachsen neu nach jeder Änderung; Blüte beim Entkommen
+  let doorT0 = -1e9, escapeT0 = 0;
   let stamina = 1, restUntil = 0, bumpT0 = 0, pushT0 = 0, lastInput = 0, celebrateT0 = 0, dust = [], sinking = [];
   const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   let toastTimer = 0;
@@ -312,6 +313,7 @@ export function mountAdventure(root, params, opts = {}) {
     history = [];
     anim = snap(state, 0);
     inputs = [];
+    escapeT0 = 0;
     exitOpen = false; done = false; caught = false; dissolving = []; dock = null; squash = null; solveMoves = null;
     growStart = performance.now(); bloom = null;
     stamina = 1; restUntil = 0; bumpT0 = 0; pushT0 = 0; celebrateT0 = 0; dust = []; lastInput = performance.now();
@@ -560,7 +562,7 @@ export function mountAdventure(root, params, opts = {}) {
 
   function escapeRoom(d) {
     done = true;
-    celebrateT0 = performance.now();
+    celebrateT0 = 0; escapeT0 = performance.now(); // Held geht durch die Tür, kein Freudensprung auf der Schwelle
     anim = snap(state, performance.now());
     state = { ...state, player: { ...state.player, x: exit.x, y: exit.y, dir: d } };
     const prevBest = tutorial ? null : bestMoves(def.id);
@@ -820,12 +822,13 @@ export function mountAdventure(root, params, opts = {}) {
     if (tr.visited.size && t > nextMote) { nextMote = t + 180; const c = [...tr.visited][Math.floor(Math.random() * tr.visited.size)]; mote(c % level.w, Math.floor(c / level.w), glow, t); }
     if (exitOpen && !waveDone) { // Lichtwelle läuft durch die Leitung zur Tür
       waveDone = true;
+      doorT0 = t;
       { const g = getLook().goal; goalBurst(g.id, exit.x, exit.y, g.color || glow, t); celebrateT0 = t; }
       const cells = [...tr.visited].map((c) => ({ x: c % level.w, y: Math.floor(c / level.w) })).sort((p, q) => Math.hypot(q.x - exit.x, q.y - exit.y) - Math.hypot(p.x - exit.x, p.y - exit.y));
       cells.forEach((c, i) => ring(c.x, c.y, glow, t + i * 35, true));
       ring(exit.x, exit.y, glow, t + cells.length * 35); buzz(40);
     } else if (!exitOpen) waveDone = false;
-    const img = pix.draw(reduced ? 0 : t, { marker, markers, loot, chest, sign, got: state.got, fill: state.fill, broken: state.broken, sinking, bigLantern: owns('lantern'), tr, blocks, player, enemies, dissolving, dock, exit, exitOpen, fragments, theme, dust, bloom, grow: reduced ? Infinity : ((t - growStart) / 1000) * 16 });
+    const img = pix.draw(reduced ? 0 : t, { marker, markers, loot, chest, sign, got: state.got, fill: state.fill, broken: state.broken, sinking, doorAge: t - doorT0, heroShrink: escapeT0 ? Math.min(1, (t - escapeT0) / 420) : 0, bigLantern: owns('lantern'), tr, blocks, player, enemies, dissolving, dock, exit, exitOpen, fragments, theme, dust, bloom, grow: reduced ? Infinity : ((t - growStart) / 1000) * 16 });
     // Hochskalieren ohne Glättung → Pixel-Art
     const dpr = devicePixelRatio || 1;
     const cw = Math.max(1, Math.round(canvas.clientWidth * dpr)), chh = Math.max(1, Math.round(canvas.clientHeight * dpr));

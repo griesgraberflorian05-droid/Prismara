@@ -13,7 +13,7 @@ function show() {
   const o = document.createElement('div');
   o.className = 'splash'; o.setAttribute('aria-hidden', 'true');
   o.innerHTML = '<div class="sp-logo"></div><div class="sp-bar"><i></i></div><p></p>';
-  o.querySelector('.sp-logo').append(logoCanvas());
+  const logo = logoCanvas(); logo.className = 'logo'; o.querySelector('.sp-logo').append(logo);
   document.body.append(o);
   const text = o.querySelector('p'), ms = prefersReducedMotion() ? 700 : 2200;
   o.querySelector('.sp-bar i').style.animationDuration = `${ms}ms`;

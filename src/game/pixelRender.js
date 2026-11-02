@@ -6,7 +6,7 @@
 import { COLOR_INFO, DIRS } from './engine.js';
 import { getSkin, getLook, isDinnerbone } from './skins.js';
 import { drawMinion } from './monsters.js';
-import { texture } from './textures.js';
+import { texture, stoneTile } from './textures.js';
 import { squashScale } from './fx.js';
 import { hat as currentHat } from './inventory.js';
 import { MARGIN, makeDecor, DecorSteps, drawFlames, drawGlows, drawShafts, drawMotes, shadeMargin } from './roomDecor.js';
@@ -159,10 +159,8 @@ export class PixelRenderer {
   // Stein: behauener Block mit Rissen und einem Glanz, der ab und zu darüberläuft
   stone(px, py, t) {
     this.r(px + 1, py + 13, 14, 2, 'rgba(0,0,0,0.3)');
-    this.r(px + 1, py + 2, 14, 12, '#23202a'); this.r(px + 2, py + 3, 12, 10, '#6e6a76'); this.r(px + 2, py + 3, 12, 2, '#a09ca8'); this.r(px + 2, py + 11, 12, 2, '#4a4652');
-    this.r(px + 4, py + 6, 3, 1, '#4a4652'); this.r(px + 6, py + 7, 1, 2, '#4a4652'); this.r(px + 10, py + 8, 2, 1, '#4a4652'); this.r(px + 11, py + 5, 1, 2, '#8a8692');
-    this.r(px + 3, py + 4, 2, 1, '#c8c4d0');
-    const g = Math.floor(t / 60) % 110; if (g < 12) { this.r(px + 2 + g, py + 3, 1, 10, 'rgba(255,255,255,0.35)'); }
+    this.ctx.drawImage(stoneTile(), px, py);
+    const g = Math.floor(t / 60) % 110; if (g < 11) this.r(px + 3 + g, py + 3, 1, 10, 'rgba(255,255,255,0.3)');
   }
 
   crate(px, py, inner) {
@@ -313,8 +311,10 @@ export class PixelRenderer {
 
   player(p, t) {
     // Squash & Stretch um die Füße, Code „dinnerbone“: gespiegelt um die Feldmitte
-    const { ctx } = this, sq = squashScale(), fx = Math.round(p.x * T) + T / 2, fy = Math.round(p.y * T) + T;
+    const { ctx } = this, sq = squashScale(), fx = Math.round(p.x * T) + T / 2, fy = Math.round(p.y * T) + T, gone = this.heroShrink || 0;
+    if (gone >= 1) return; // durch die Tür verschwunden
     ctx.save();
+    if (gone) { const k = 1 - gone * 0.7; ctx.translate(fx, fy); ctx.scale(k, k); ctx.translate(-fx, -fy); ctx.globalAlpha = 1 - gone * gone; }
     if (sq) { ctx.translate(fx, fy); ctx.scale(sq[0], sq[1]); ctx.translate(-fx, -fy); }
     if (isDinnerbone()) { ctx.translate(0, fy * 2 - T); ctx.scale(1, -1); }
     this.hero(p, t);
@@ -849,8 +849,16 @@ export class PixelRenderer {
     });
     for (const b of opts.blocks || []) items.push({ y: b.y, draw: () => this.block(b, t) });
     for (const e of opts.enemies || []) if (e.alive) items.push({ y: e.y, draw: () => this.enemy(e, t) });
-    if (opts.player) items.push({ y: opts.player.y + 0.01, draw: () => this.player(opts.player, t) });
-    if (opts.exit) items.push({ y: opts.exit.y, draw: () => this.exitDoor(opts.exit, opts.exitOpen, t) });
+    if (opts.player) items.push({ y: opts.player.y + 0.01, draw: () => { this.heroShrink = opts.heroShrink || 0; this.player(opts.player, t); } });
+    if (opts.exit) items.push({ y: opts.exit.y, draw: () => {
+      this.exitDoor(opts.exit, opts.exitOpen, t);
+      // Türblatt klappt in 0,35 s zur Seite
+      const k = (opts.doorAge ?? 1e9) / 350;
+      if (opts.exitOpen && k < 1) {
+        const w = Math.max(1, Math.round(12 * (1 - k * k))), px = opts.exit.x * T + 2, top = opts.exit.y === 0;
+        this.r(px, opts.exit.y * T + (top ? -10 : 1), w, top ? 26 : 15, '#7a4f2c'); this.r(px, opts.exit.y * T + (top ? -10 : 1), Math.max(1, w >> 2), top ? 26 : 15, '#5a3a22'); this.r(px + w - 1, opts.exit.y * T + 8, 1, 2, '#ffd166');
+      }
+    } });
     if (opts.chest) items.push({ y: opts.chest.y, draw: () => this.chest(opts.chest, t) });
     if (opts.sign) items.push({ y: opts.sign.y, draw: () => this.signBoard(opts.sign, t) });
     items.sort((a, b) => a.y - b.y).forEach((it) => it.draw());
