@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.49', items: ['Skin-Spins für Münzen', 'Seltenheiten mit Farbe und Schimmer'] },
   { v: '3.23.48', items: ['Code debug', 'Radio, Strahl-Spitze hinter dem Helden'] },
   { v: '3.23.46', items: ['Garderobe breiter', 'Eigene Farben für jeden Skin und jedes Schwert'] },
   { v: '3.23.45', items: ['Kein Gras mehr in Räumen', 'Lichtstrahl fängt nicht mehr neu an, wenn du hineinläufst', 'Strahl leuchtet stärker in seiner Farbe'] },

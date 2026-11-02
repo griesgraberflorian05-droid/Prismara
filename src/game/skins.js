@@ -53,6 +53,21 @@ export const SKIN_COLORS = [
 // Eigene Farben je Skin: [Akzent, Körper]
 export const skinTint = (id) => (getSettings().skinTint || {})[id] || null;
 export const setSkinTint = (id, tint) => updateSettings({ skinTint: { ...(getSettings().skinTint || {}), [id]: tint } });
+// Seltenheit je Skin: Grundlage ist die Freischaltung, Gewicht gilt für den Spin
+export const RARITY = { common: { name: 'Gewöhnlich', weight: 60 }, rare: { name: 'Selten', weight: 28 }, epic: { name: 'Episch', weight: 10 }, legend: { name: 'Legendär', weight: 2 } };
+export function rarityOf(c) {
+  const [kind, arg] = c.how.split(':');
+  if (kind === 'allboss' || /Prisma|100 %|Sternen/.test(arg || '')) return 'legend';
+  if (kind === 'boss' || kind === 'season' || +arg >= 2500) return 'epic';
+  if (kind === 'never' || +arg >= 1200) return 'rare';
+  return 'common';
+}
+/** Zufälliger noch fehlender Skin, seltene seltener. */
+export function rollSkin() {
+  const pool = SKIN_COLORS.filter((c) => c.hero && c.how !== 'start' && !ownedHeroes().includes(c.id));
+  let n = Math.random() * pool.reduce((s, c) => s + RARITY[rarityOf(c)].weight, 0);
+  return pool.find((c) => (n -= RARITY[rarityOf(c)].weight) < 0) || pool[0] || null;
+}
 export const ownedHeroes = () => getSettings().heroSkins || [];
 export const buyHero = (id) => updateSettings({ heroSkins: [...ownedHeroes(), id] });
 export const hasHalloween = () => !!getSettings().halloween;

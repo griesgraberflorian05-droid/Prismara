@@ -1375,3 +1375,12 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .sg-tint input { width: 44px; height: 30px; padding: 0; background: none; border: 3px solid var(--wood-0); cursor: pointer; }
 #sel { display: grid; justify-items: center; width: min(860px, 100%); }
 .sg { width: 100%; }
+
+/* Seltenheit: Kachel-Hintergrund, Episch und Legendär schimmern */
+.sg-tile.r-common { background: #3a3a44; } .sg-tile.r-rare { background: #1e4a8a; } .sg-tile.r-epic { background: #5a2a9a; } .sg-tile.r-legend { background: #a87410; }
+.sg-tile.r-epic, .sg-tile.r-legend { overflow: hidden; }
+.sg-tile.r-epic::after, .sg-tile.r-legend::after { content: ''; position: absolute; inset: 0 auto 0 -40%; width: 30%; background: rgba(255, 255, 255, 0.35); transform: skewX(-20deg); animation: sg-shine 2.4s steps(14) infinite; pointer-events: none; }
+.sg-tile.r-legend::after { animation-duration: 1.6s; background: rgba(255, 240, 170, 0.5); }
+@keyframes sg-shine { 0%, 40% { left: -40%; } 100% { left: 120%; } }
+@media (prefers-reduced-motion: reduce) { .sg-tile::after { animation: none !important; } }
+.sg-spin { width: min(420px, 100%); } .sg-won { color: var(--gold); text-shadow: 0 2px 0 #000; text-align: center; }

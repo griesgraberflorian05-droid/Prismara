@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, skinTint, setSkinTint } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
@@ -511,7 +511,7 @@ function selectGrid(el, cfg) {
         <b class="sg-name">${esc(cur.name)}</b><small class="sg-sub">${esc(cur.owned ? cur.sub : cur.lockText || `${cur.price} Münzen`)}</small>
         ${info ? `<p class="sg-info">${esc(cur.sub)}</p>` : ''}
         ${cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label></div>` : ''}
-        <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}</button>`).join('')}</div>
+        <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}${it.rarity ? ` r-${it.rarity}` : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}</button>`).join('')}</div>
         <div class="sg-bar"><button class="wbtn" type="button" id="sg-info">Info</button>
           <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? (isAdmin() ? 'Gratis kaufen' : `Kaufen ${cur.price}`) : 'Gesperrt'}</button></div>
       </div>`;
@@ -529,11 +529,15 @@ function selectGrid(el, cfg) {
   render();
 }
 
-function wardrobePage(el) {
+const SPIN_PRICE = 300;
+function wardrobePage(el, msg = '') {
   const { stars } = totals();
   el.innerHTML = `
     <ul class="mm-stats"><li>${icon('coin')}<b>${getInv().coins}</b></li><li>${icon('star')}<b>${stars}</b></li><li>${icon('gem')}<b>${fragmentCount()}</b></li></ul>
-    ${head('#/menu', 'Garderobe', '')}<div id="sel"></div><a class="wbtn sm" href="#/menu/kit">Mehr anpassen</a>`;
+    ${head('#/menu', 'Garderobe', '')}
+    <button class="wbtn big sg-spin" id="spin" type="button" ${getInv().coins < SPIN_PRICE && !isAdmin() ? 'disabled' : ''}>Spin: ${isAdmin() ? 'gratis' : `${SPIN_PRICE} Münzen`}</button>
+    ${msg ? `<p class="code-msg sg-won">${esc(msg)}</p>` : ''}
+    <div id="sel"></div><a class="wbtn sm" href="#/menu/kit">Mehr anpassen</a>`;
   const paint = (id) => (cv) => {
     const pr = Object.create(PixelRenderer.prototype), keep = getSettings().skin;
     pr.ctx = cv.getContext('2d'); pr.ctx.save(); pr.ctx.translate(4, 8);
@@ -541,12 +545,19 @@ function wardrobePage(el) {
     pr.player({ x: 0, y: 0, dir: 2, walk: null, stamina: 1, hat: '' }, 0);
     updateSettingsQuiet(keep); pr.ctx.restore();
   };
+  el.querySelector('#spin').addEventListener('click', () => {
+    const c = rollSkin();
+    if (!c) { wardrobePage(el, 'Du hast schon alle Skins!'); return; }
+    if (!isAdmin()) addCoins(-SPIN_PRICE);
+    buyHero(c.id); play('chapter');
+    wardrobePage(el, `${RARITY[rarityOf(c)].name}: ${c.name}`);
+  });
   const active = getSkin().color.id;
   selectGrid(el.querySelector('#sel'), {
     title: 'Dein Skin', action: 'Anziehen',
     items: SKIN_COLORS.filter((c) => c.hero).map((c) => {
       const u = heroState(c);
-      return { id: c.id, name: c.name, sub: 'Skin', owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), tint: { labels: ['Akzent', 'Körper'], get: () => skinTint(c.id) || [c.stops[0], c.stops[1]], set: (t) => setSkinTint(c.id, t) }, pick: () => {
+      return { id: c.id, name: c.name, rarity: rarityOf(c), sub: RARITY[rarityOf(c)].name, owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), tint: { labels: ['Akzent', 'Körper'], get: () => skinTint(c.id) || [c.stops[0], c.stops[1]], set: (t) => setSkinTint(c.id, t) }, pick: () => {
         if (!heroState(c).free) { if (!isAdmin()) { if (getInv().coins < u.price) return false; addCoins(-u.price); } buyHero(c.id); }
         setSkin({ color: c.id }); return true;
       } };
