@@ -377,7 +377,7 @@ export class PixelRenderer {
       if (p.yawn) this.r(fx + 1, fy + 3, 2, 1, '#5a2030');
     }
     this.hat(p.hat ?? currentHat(), hx, hy, t);
-    this.acc(skin.color, hx, hy, t);
+    this.acc(skin.color, hx, hy, t, p.dir, walking);
     // Laterne (Lichtquelle der Figur) – auf der Seite der Blickrichtung
     const lanX = px + (side ? (dx > 0 ? 13 : 1) : 12) + (strain && side ? dx * 2 : 0), lanY = by + 2;
     this.part(lanX, lanY, 2, 3, getLook().lantern.color); this.r(lanX, lanY + 1, 1, 1, '#ffffff');
@@ -406,10 +406,14 @@ export class PixelRenderer {
 
   /** Hüte vom Hutmacher, auf den Kopf (hx, hy = linke obere Ecke der Kapuze, 8 px breit). */
   /** Accessoires der Skins, gezeichnet relativ zum Kopf (8 Pixel breit). */
-  acc(skin, hx, hy, t) {
+  acc(skin, hx, hy, t, dir = 2, moving = false) {
     const R = (x, y, w, h, c) => this.r(hx + x, hy + y, w, h, c), a = skin.stops[0], b = skin.stops[1];
     const cape = getLook().cape;
-    if (cape.color) { const f = Math.floor(t / 300) % 2; R(-2, 7, 2, 8 + f, cape.color); R(8, 7, 2, 9 - f, cape.color); R(-1, 6, 10, 2, cape.color); R(-1, 6, 10, 1, cape.edge); R(3, 7, 2, 1, cape.edge); }
+    if (cape.color) { // wie ein Minecraft-Cape: flach am Rücken, von vorn unsichtbar, von der Seite ein flatternder Streifen
+      const f = Math.floor(t / (moving ? 120 : 420)) % 2;
+      if (dir === 0) { R(0, 7, 8, 9 + f, cape.color); R(0, 7, 8, 1, cape.edge); R(0, 15 + f, 8, 1, cape.edge); R(0, 7, 1, 9, cape.edge); R(7, 7, 1, 9, cape.edge); }
+      else if (dir === 1 || dir === 3) { const back = dir === 1 ? -1 : 8, out = dir === 1 ? -1 : 1, lift = moving ? 2 : 0; R(back, 7, 1, 5, cape.color); R(back + out, 10 - lift + f, 1, 5, cape.color); R(back + out * 2, 12 - lift, 1, 3 + f, moving ? cape.color : cape.edge); }
+    }
     for (const id of skin.acc || []) {
       if (id === 'stirnband') { R(0, 1, 8, 1, a); R(8, 2, 2, 1, a); } else if (id === 'maske') R(0, 4, 8, 2, a);
       else if (id === 'muetze') { R(0, -1, 8, 2, a); R(1, -3, 6, 2, a); } else if (id === 'visier') R(0, 2, 8, 1, a);

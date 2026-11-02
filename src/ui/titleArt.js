@@ -300,11 +300,46 @@ export function mountTitleArt(canvas, worldId = 'default') {
   // Streicheln: Held am Lagerfeuer antippen oder überstreichen, dann freut er sich und Herzen steigen auf
   const HERO = { x: 217, y: 186 }, hearts = [];
   let happyUntil = 0, lastHeart = 0, lastPurr = 0;
+  // Held zum Herumwerfen: hängt am Zeiger und pendelt, fliegt, landet auf dem Gesicht, läuft zurück
+  const home = { x: HERO.x - 4, y: HERO.y - 3 };
+  const rag = { ...home, vx: 0, vy: 0, a: 0, va: 0, mode: 'sit', until: 0, px: 0, py: 0, last: 0 };
+  const toScene = (e) => {
+    const r = canvas.getBoundingClientRect(), dpr = devicePixelRatio || 1, cw = canvas.width, ch = canvas.height, s = Math.max(1, Math.ceil(Math.max(cw / W, ch / H)));
+    return [((e.clientX - r.left) * dpr - Math.round((cw - W * s) * 0.65)) / s, ((e.clientY - r.top) * dpr - (ch - H * s)) / s];
+  };
+  function ragStep(tms) {
+    const dt = Math.min(0.033, (tms - rag.last) / 1000 || 0); rag.last = tms;
+    if (rag.mode === 'held') {
+      const ax = (rag.px - 8 - rag.x) * 90 - rag.vx * 12, ay = (rag.py - 2 - rag.y) * 90 - rag.vy * 12;
+      rag.vx += ax * dt; rag.vy += ay * dt; rag.x += rag.vx * dt; rag.y += rag.vy * dt;
+      rag.va += (-Math.sin(rag.a) * 26 - ax * 0.012) * dt * 4; rag.va *= 0.97; rag.a += rag.va * dt; // Pendel um den Griffpunkt
+    } else if (rag.mode === 'fly') {
+      rag.vy += 430 * dt; rag.x += rag.vx * dt; rag.y += rag.vy * dt; rag.a += rag.va * dt;
+      if (rag.x < 0 || rag.x > W - 16) { rag.x = Math.max(0, Math.min(W - 16, rag.x)); rag.vx *= -0.6; }
+      const floor = groundY(Math.round(rag.x + 8)) - 12;
+      if (rag.y >= floor && rag.vy > 0) {
+        rag.y = floor; play('bump');
+        if (rag.vy > 90) { rag.vy *= -0.32; rag.vx *= 0.6; rag.va *= 0.5; } else { rag.mode = 'down'; rag.a = rag.vx < 0 ? -Math.PI / 2 : Math.PI / 2; rag.until = tms + 1000; }
+      }
+    } else if (rag.mode === 'down') {
+      if (tms > rag.until) { rag.mode = 'walk'; rag.a = 0; }
+    } else if (rag.mode === 'walk') {
+      const d = home.x - rag.x; rag.x += Math.sign(d) * 42 * dt; rag.y = groundY(Math.round(rag.x + 8)) - 13;
+      if (Math.abs(d) < 2) { rag.mode = 'sit'; rag.x = home.x; rag.y = home.y; }
+    }
+  }
+  const onMove = (e) => { [rag.px, rag.py] = toScene(e); };
+  const onUp = () => { if (rag.mode === 'held') { rag.mode = 'fly'; rag.va = rag.va || rag.vx * 0.03; } removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); stage.style.cursor = ''; };
+  const onGrab = (e) => {
+    if (e.target.closest('a, button, input, .parch') || !overHero(e)) return;
+    rag.mode = 'held'; rag.vx = rag.vy = 0; onMove(e); stage.style.cursor = 'grabbing';
+    addEventListener('pointermove', onMove); addEventListener('pointerup', onUp);
+  };
   const overHero = (e) => {
     const r = canvas.getBoundingClientRect(), dpr = devicePixelRatio || 1;
     const cw = canvas.width, ch = canvas.height, s = Math.max(1, Math.ceil(Math.max(cw / W, ch / H)));
     const x = ((e.clientX - r.left) * dpr - Math.round((cw - W * s) * 0.65)) / s, y = ((e.clientY - r.top) * dpr - (ch - H * s)) / s;
-    return x > HERO.x - 8 && x < HERO.x + 16 && y > HERO.y - 10 && y < HERO.y + 18;
+    return x > rag.x - 4 && x < rag.x + 20 && y > rag.y - 8 && y < rag.y + 22;
   };
   const stage = canvas.parentElement;
   const onPoint = (e) => {
@@ -318,6 +353,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
     if (now - lastPurr > 420) { lastPurr = now; play('target', 2 + Math.floor(now / 7) % 5); }
   };
   stage.addEventListener('pointerdown', onPoint);
+  stage.addEventListener('pointerdown', onGrab);
   stage.addEventListener('pointermove', onPoint);
   function frame(tms) {
     if (!run) return;
@@ -416,7 +452,11 @@ export function mountTitleArt(canvas, worldId = 'default') {
     const look = getLook(), n = parseInt(look.lantern.glow.slice(1), 16);
     glow(hx + 12, hy + 9, 14, `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},A)`, 0.3);
     painter.ctx = g; painter.r = (x, y, w, h, c) => R(g, x, y, w, h, c);
-    painter.player({ x: (hx - 4) / 16, y: (hy - 3) / 16, dir: 2, walk: null, stamina: 1, hat: currentHat() }, t);
+    ragStep(tms);
+    const going = rag.mode === 'walk';
+    g.save(); g.translate(Math.round(rag.x) + 8, Math.round(rag.y) + 8); g.rotate(rag.a);
+    painter.player({ x: -0.5, y: -0.5, dir: going ? (home.x > rag.x ? 1 : 3) : 2, walk: going ? (tms / 280) % 1 : null, stamina: 1, hat: currentHat() }, t);
+    g.restore();
     for (let i = hearts.length - 1; i >= 0; i--) {
       const h = hearts[i], k = (tms - h.t0) / 1100;
       if (k >= 1) { hearts.splice(i, 1); continue; }
@@ -465,7 +505,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
   }
   requestAnimationFrame(frame);
   return {
-    stop() { run = false; stage.removeEventListener('pointerdown', onPoint); stage.removeEventListener('pointermove', onPoint); stage.style.cursor = ''; },
+    stop() { run = false; stage.removeEventListener('pointerdown', onPoint); stage.removeEventListener('pointerdown', onGrab); onUp(); stage.removeEventListener('pointermove', onPoint); stage.style.cursor = ''; },
     setWorld(id, dir = 1, ms = 620) {
       const next = TITLE_STYLES[id] || TITLE_STYLES.default;
       if (next === S) return;
