@@ -76,6 +76,10 @@ export const addSpins = (n) => updateSettings({ spins: getSpins() + n });
 export const SELL_PRICE = { common: 50, rare: 150, epic: 500, legend: 2000 };
 export const dupes = (id) => (getSettings().dupes || {})[id] || 0;
 export const addDupe = (id, n = 1) => updateSettings({ dupes: { ...(getSettings().dupes || {}), [id]: dupes(id) + n } });
+// Vorschau: Skin nur anzeigen, ohne ihn anzuziehen (Garderobe, Held am Lagerfeuer)
+let preview = null;
+export const getPreview = () => preview;
+export const setPreview = (id) => { preview = id; };
 export const ownedHeroes = () => getSettings().heroSkins || [];
 export const buyHero = (id) => updateSettings({ heroSkins: [...ownedHeroes(), id] });
 export const hasHalloween = () => !!getSettings().halloween;
@@ -120,7 +124,7 @@ export function setLook(patch) { updateSettings({ look: { ...(getSettings().look
 
 export function getSkin() {
   const s = getSettings().skin || {};
-  const base = SKIN_COLORS.find((c) => c.id === s.color) || SKIN_COLORS[0], t = (getSettings().skinTint || {})[base.id];
+  const base = SKIN_COLORS.find((c) => c.id === (preview || s.color)) || SKIN_COLORS[0], t = (getSettings().skinTint || {})[base.id];
   return {
     color: t ? { ...base, stops: [t[0], t[1], t[1]], glow: t[0] } : base,
     symbol: SKIN_SYMBOLS.find((c) => c.id === s.symbol) || SKIN_SYMBOLS[0],

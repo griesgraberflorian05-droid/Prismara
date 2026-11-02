@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
@@ -75,6 +75,7 @@ const menuBackground = () => { const { menuBg, lastWorld } = getSettings(); retu
 
 export function mountMenu(root, params = []) {
   const page = params[0] || 'main';
+  setPreview(null);
   root.innerHTML = `<section class="tm${page === 'main' ? '' : ' sub'}"><canvas class="tm-scene" aria-hidden="true"></canvas><div class="tm-shade"></div><div class="tm-ui"></div></section>`;
   const ui = root.querySelector('.tm-ui');
   const startCh = page === 'chapter' || page === 'chapters' ? Math.max(0, parseInt(params[1] ?? currentChapter(), 10) || 0) : currentChapter();
@@ -515,19 +516,20 @@ function selectGrid(el, cfg) {
         <div class="sg-stage"><button class="wbtn sm" type="button" data-nav="-1" aria-label="Vorheriger">◀</button>
           <canvas class="sg-big e-${cfg.items.indexOf(cur) % 4}${cur.owned ? '' : ' sil'}" width="24" height="28"></canvas>
           <button class="wbtn sm" type="button" data-nav="1" aria-label="Nächster">▶</button>
-          ${cur.tint && cur.owned ? `<button class="wbtn sm sg-pen" type="button" id="sg-pen" aria-label="Anpassen">${icon('pen')}</button>` : ''}</div>
+          ${cur.tint && cur.owned ? `<button class="sg-pen" type="button" id="sg-pen" aria-label="Anpassen">${icon('pen')}</button>` : ''}</div>
         <b class="sg-name">${esc(cur.name)}</b><small class="sg-sub">${esc(cur.owned ? cur.sub : cur.lockText || `${cur.price} Münzen`)}</small>
         ${info ? `<p class="sg-info">${esc(cur.sub)}</p>` : ''}
-        ${edit && cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label></div>` : ''}
+        ${edit && cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label>${cfg.more ? `<a class="wbtn sm" href="${cfg.more}">Hut, Laterne, Spur</a>` : ''}</div>` : ''}
         <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}${it.rarity && it.owned ? ` r-${it.rarity}` : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}${it.dupes ? `<span class="sg-dup">×${it.dupes}</span>` : ''}${it.rarity && it.owned ? `<small class="sg-r">${RARITY[it.rarity].name}</small>` : ''}</button>`).join('')}</div>
         <div class="sg-bar"><button class="wbtn" type="button" id="sg-info">Info</button>
           <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? (isAdmin() ? 'Gratis kaufen' : `Kaufen ${cur.price}`) : 'Gesperrt'}</button></div>
       </div>`;
+    cfg.onShow?.(cur);
     const big = el.querySelector('.sg-big');
-    cur.paint(big, 2);
+    cur.paint(big, 0);
     // Vorschau dreht sich langsam, jeder Skin hat seinen eigenen Emote (CSS e-0 bis e-3)
     clearInterval(timer);
-    timer = setInterval(() => { if (!big.isConnected) { clearInterval(timer); return; } turn = (turn + 1) % 4; big.getContext('2d').clearRect(0, 0, 24, 28); cur.paint(big, [2, 1, 0, 3][turn]); }, 420);
+    timer = setInterval(() => { if (!big.isConnected) { clearInterval(timer); return; } turn = (turn + 1) % 36; big.getContext('2d').clearRect(0, 0, 24, 28); cur.paint(big, turn); }, 120);
     el.querySelectorAll('[data-nav]').forEach((b) => b.addEventListener('click', () => {
       const own = cfg.items.filter((i) => i.owned), list = own.length ? own : cfg.items;
       cur = list[(list.indexOf(cur) + +b.dataset.nav + list.length) % list.length]; play('ui'); render();
@@ -558,13 +560,16 @@ function wardrobePage(el, msg = '') {
     ${head('#/menu', 'Garderobe', '')}
     <button class="spin-fab" id="spin" type="button" aria-label="Glücksrad öffnen"><i></i><b>${getSpins()}x</b></button>
     ${msg ? `<p class="code-msg sg-won">${esc(msg)}</p>` : ''}
-    <div id="sel"></div><a class="wbtn sm" href="#/menu/kit">Mehr anpassen</a>`;
-  const paint = (id) => (cv, dir = 2) => {
+    <div id="sel"></div>`;
+  // Emote in 36 Bildern: winken, zweimal hüpfen, einmal umdrehen
+  const paint = (id) => (cv, s = -1) => {
+    const hop = s >= 16 && s < 24 ? [0, -2, -4, -5, -4, -2, 0, 0][s - 16] : 0, dir = s >= 24 ? [2, 1, 0, 3][Math.floor((s - 24) / 3)] : 2, wave = s >= 0 && s < 16;
     const pr = Object.create(PixelRenderer.prototype), keep = getSettings().skin;
-    pr.ctx = cv.getContext('2d'); pr.ctx.save(); pr.ctx.translate(4, 8);
-    updateSettingsQuiet({ color: id });
+    pr.ctx = cv.getContext('2d'); pr.ctx.save(); pr.ctx.translate(4, 8 + hop);
+    const shown = getPreview(); setPreview(id);
     pr.player({ x: 0, y: 0, dir, walk: null, stamina: 1, hat: '' }, 0);
-    updateSettingsQuiet(keep); pr.ctx.restore();
+    if (wave) { const up = Math.floor(s / 3) % 2, body = getSkin().color.stops[1]; pr.r(13, 7, 2, 4, body); pr.r(13 + up, 4, 2, 3, getLook().tone.color); }
+    setPreview(shown); pr.ctx.restore();
   };
   el.querySelector('#spin').addEventListener('click', () => {
     const have = getSpins();
@@ -591,7 +596,7 @@ function wardrobePage(el, msg = '') {
   });
   const active = getSkin().color.id;
   selectGrid(el.querySelector('#sel'), {
-    title: 'Dein Skin', action: 'Anziehen',
+    title: 'Dein Skin', action: 'Anziehen', more: '#/menu/kit', onShow: (it) => setPreview(it.owned ? it.id : null),
     items: SKIN_COLORS.filter((c) => c.hero).map((c) => {
       const u = heroState(c);
       return { id: c.id, name: c.name, dupes: dupes(c.id), sell: () => { addDupe(c.id, -1); const n = SELL_PRICE[rarityOf(c)]; addCoins(n); play('target', 7); wardrobePage(el, `Verkauft: +${n} Münzen`); }, rarity: rarityOf(c), sub: RARITY[rarityOf(c)].name, owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), tint: { labels: ['Akzent', 'Körper'], get: () => skinTint(c.id) || [c.stops[0], c.stops[1]], set: (t) => setSkinTint(c.id, t) }, pick: () => {
@@ -694,6 +699,7 @@ const updateSettingsQuiet = (skin) => updateSettings({ skin });
 
 // ---------- Held: Umhangfarbe und Hut – Vorschau ist der echte Pixel-Held aus dem Spiel ----------
 function kitPage(el, scene) {
+  let kitTab = 0;
   const { stars } = totals();
   const render = () => {
     const skin = getSkin(), worn = hat(), look = getLook(), bg = getSettings().menuBg || '';
@@ -701,21 +707,15 @@ function kitPage(el, scene) {
     const bgWorlds = CHAPTERS.map((c) => CHAPTER_WORLD[c.id]).filter((id) => WORLDS[id]);
     const owned = Object.entries(HATS).filter(([id]) => ownsHat(id));
     el.innerHTML = `
-      ${head('#/menu', '🎨 Held', `★ ${stars}`)}
+      ${head('#/menu/garderobe', 'Anpassen', `${icon('star')} ${stars}`)}
       <div class="kit parch">
         <div class="kit-stage"><canvas class="kit-big" width="48" height="48" aria-label="Vorschau deines Helden: Umhang ${esc(skin.color.name)}${worn ? `, ${esc(HATS[worn].name)}` : ''}"></canvas></div>
         <div>
           <h3>Umhang</h3>
-          <div class="kit-row">${SKIN_COLORS.filter((c) => !c.secret || isAdmin() || hasHalloween()).map((c) => {
+          <div class="kit-row">${SKIN_COLORS.filter((c) => !c.hero && (!c.secret || isAdmin() || hasHalloween())).map((c) => {
             const locked = !isAdmin() && stars < c.stars, active = skin.color.id === c.id;
             return `<button class="kit-swatch${active ? ' active' : ''}" ${locked ? 'disabled' : `data-pick="color" data-id="${c.id}"`} aria-pressed="${active}" title="${esc(c.name)}${locked ? ` – ab ★ ${c.stars}` : ''}">
               <canvas class="ks-cloak" data-color="${c.id}" width="12" height="12"></canvas><small>${locked ? `🔒 ★${c.stars}` : esc(c.name)}</small></button>`;
-          }).join('')}</div>
-          <h3>Skins</h3>
-          <div class="kit-row">${SKIN_COLORS.filter((c) => c.hero).map((c) => {
-            const u = heroState(c), active = skin.color.id === c.id;
-            return `<button class="kit-swatch${active ? ' active' : ''}" ${u.free || u.price ? `data-hero="${c.id}"` : 'disabled'} aria-pressed="${active}" title="${esc(c.name)}">
-              <canvas class="ks-hero${u.free ? '' : ' sil'}" data-color="${c.id}" width="24" height="28"></canvas><small>${u.free ? esc(c.name) : esc(u.text)}</small></button>`;
           }).join('')}</div>
           <h3>Hut</h3>
           <div class="kit-row">
@@ -738,6 +738,15 @@ function kitPage(el, scene) {
       </div>`;
     el.querySelectorAll('.ks-cloak').forEach((c) => drawCloak(c, SKIN_COLORS.find((s) => s.id === c.dataset.color)));
     el.querySelectorAll('.ks-hat').forEach((c) => drawHatPreview(c, c.dataset.hat)); // '' = ohne Hut
+    // Reiter: immer nur ein Bereich sichtbar statt einer langen Liste
+    const heads = [...el.querySelectorAll('.kit h3')];
+    const bar = document.createElement('div'); bar.className = 'kit-tabs';
+    heads.forEach((h, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = `wbtn sm${i === kitTab ? ' on' : ''}`; b.textContent = h.textContent.replace('Anpassung: ', '');
+      b.addEventListener('click', () => { kitTab = i; play('ui'); render(); });
+      bar.append(b); h.hidden = true; if (h.nextElementSibling) h.nextElementSibling.hidden = i !== kitTab;
+    });
+    heads[0]?.before(bar);
     el.querySelectorAll('.ks-hero').forEach((cv) => {
       const pr = Object.create(PixelRenderer.prototype), keep = getSettings().skin;
       pr.ctx = cv.getContext('2d'); pr.ctx.save(); pr.ctx.translate(4, 8);

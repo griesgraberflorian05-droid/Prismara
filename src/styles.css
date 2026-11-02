@@ -1469,3 +1469,29 @@ body.wood .kit-swatch { color: var(--parch); background: #2a1f48; border-color: 
 body.wood .kit-swatch.active { color: var(--ink); background: var(--gold); }
 .kit .small { color: var(--muted); }
 .sg-dup { position: absolute; right: 2px; top: 2px; padding: 1px 3px; font-size: 0.4rem; color: #fff; background: #c0342c; border: 2px solid #120a1c; }
+
+/* Emote läuft im Bild, nicht per Streckung */
+.sg-big { animation: none !important; }
+/* Stift: klein und dezent am Skin */
+.sg-pen { position: absolute; right: 44px; top: 0; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; color: #fff; background: #c0342c; border: 2px solid #120a1c; border-radius: 50%; cursor: pointer; }
+.sg-pen .pxi { width: 12px; height: 12px; filter: none; }
+.sg-tint { align-items: center; }
+/* Anpassen: ruhiges Layout mit Reitern */
+body.wood .kit.parch { display: grid; grid-template-columns: minmax(120px, 200px) minmax(0, 1fr); gap: 18px; width: min(760px, 100%); padding: 16px !important; }
+.kit-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.kit-tabs .wbtn { background: #2a1f48; box-shadow: none; }
+.kit-tabs .wbtn.on { color: var(--ink); background: var(--gold); }
+body.wood .kit-stage { display: grid; place-items: center; background: #2a1f48; border-color: #120a1c; }
+.kit .small { display: none; }
+.kit-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+body.wood .kit-swatch { min-height: 70px; align-content: center; }
+.kit-row[hidden] { display: none; }
+@media (max-width: 560px) { body.wood .kit.parch { grid-template-columns: 1fr; } }
+
+/* Garderobe: Bild leicht weich, Held bleibt erkennbar */
+.tm:has(.sg) .tm-scene { filter: blur(1.5px); }
+.tm:has(.sg) .tm-shade { background: rgba(8, 4, 2, 0.25); }
+/* Anpassen: gleich große Kacheln, lesbare Namen */
+.kit .kit-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.kit .kit-row[hidden] { display: none; }
+body.wood .kit-swatch small { color: inherit; font-size: 0.36rem; line-height: 1.4; text-align: center; }

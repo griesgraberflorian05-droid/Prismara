@@ -1,5 +1,7 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.60', items: ['Skin-Vorschau live am Lagerfeuer', 'Weicher Hintergrund in der Garderobe', 'Skins winken und hüpfen', 'Anpassen mit Reitern'] },
+  { v: '3.23.59', items: ['Skins winken und hüpfen', 'Kleiner Stift am Skin', 'Anpassen mit Reitern'] },
   { v: '3.23.58', items: ['Doppelte Skins per Doppeltipp verkaufen'] },
   { v: '3.23.57', items: ['Garderobe mit Pfeilen, Stift und Emotes', 'Anpassen-Menü dunkel und übersichtlich'] },
   { v: '3.23.56', items: ['Glücksrad als Viertelkreis mit Drehungen', 'Seltenere Gewinne, Skins im Endlos-Modus', 'Echtshop im Testmodus'] },
