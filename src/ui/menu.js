@@ -538,7 +538,7 @@ function wardrobePage(el, msg = '') {
   el.innerHTML = `
     <ul class="mm-stats"><li>${icon('coin')}<b>${getInv().coins}</b></li><li>${icon('star')}<b>${stars}</b></li><li>${icon('gem')}<b>${fragmentCount()}</b></li></ul>
     ${head('#/menu', 'Garderobe', '')}
-    <button class="wbtn big sg-spin" id="spin" type="button" ${getInv().coins < SPIN_PRICE && !isAdmin() ? 'disabled' : ''}>Spin: ${isAdmin() ? 'gratis' : `${SPIN_PRICE} Münzen`}</button>
+    <button class="spin-fab" id="spin" type="button" aria-label="Glücksrad drehen" ${getInv().coins < SPIN_PRICE && !isAdmin() ? 'disabled' : ''}><i></i><small>${isAdmin() ? 'gratis' : SPIN_PRICE}</small></button>
     ${msg ? `<p class="code-msg sg-won">${esc(msg)}</p>` : ''}
     <div id="sel"></div><a class="wbtn sm" href="#/menu/kit">Mehr anpassen</a>`;
   const paint = (id) => (cv) => {

@@ -1422,3 +1422,12 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .spin-card { grid-area: 1 / 1; display: none; }
 .spin-show.open .spin-card { display: block; }
 .spin-show.open .spin-wheel-box { display: none; }
+
+/* Kleines Glücksrad unten rechts */
+.spin-fab { position: fixed; z-index: 20; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); display: grid; justify-items: center; gap: 2px; padding: 0; background: none; border: 0; cursor: pointer; }
+.spin-fab i { display: block; width: 68px; height: 68px; border: 4px solid #120a1c; border-radius: 50%; box-shadow: 0 0 0 3px var(--gold), 0 4px 0 #000; background: conic-gradient(#58c04a 0 216deg, #4f9fff 216deg 316.8deg, #c07cff 316.8deg 352.8deg, #ffd166 352.8deg 360deg); animation: fab-turn 7s linear infinite; }
+.spin-fab small { padding: 2px 5px; font-size: 0.42rem; color: var(--parch); background: rgba(20, 10, 4, 0.85); }
+.spin-fab:hover i { filter: brightness(1.15); }
+.spin-fab:disabled { filter: grayscale(1); cursor: not-allowed; } .spin-fab:disabled i { animation: none; }
+@keyframes fab-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin-fab i { animation: none; } }
