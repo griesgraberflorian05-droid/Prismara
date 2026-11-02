@@ -385,7 +385,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
     if (!hit || (e.type === 'pointermove' && e.pointerType === 'mouse' && !e.buttons)) return;
     const now = performance.now();
     happyUntil = now + 900;
-    if (now - lastHeart > 160) { lastHeart = now; hearts.push({ x: HERO.x + (now % 13) - 4, t0: now }); }
+    if (now - lastHeart > 160) { lastHeart = now; hearts.push({ x: rag.x + (now % 13), y: rag.y, t0: now }); }
     if (now - lastPurr > 420) { lastPurr = now; play('target', 2 + Math.floor(now / 7) % 5); }
   };
   stage.addEventListener('pointerdown', onPoint);
@@ -505,7 +505,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
     for (let i = hearts.length - 1; i >= 0; i--) {
       const h = hearts[i], k = (tms - h.t0) / 1100;
       if (k >= 1) { hearts.splice(i, 1); continue; }
-      const x = Math.round(h.x + Math.sin(k * 7) * 3), y = Math.round(HERO.y - 8 - k * 26);
+      const x = Math.round(h.x + Math.sin(k * 7) * 3), y = Math.round(h.y - 4 - k * 26);
       g.globalAlpha = 1 - k * k;
       R(g, x, y, 2, 1, '#ff5a7a'); R(g, x + 3, y, 2, 1, '#ff5a7a'); R(g, x, y + 1, 5, 2, '#ff5a7a'); R(g, x + 1, y + 3, 3, 1, '#ff5a7a'); R(g, x + 2, y + 4, 1, 1, '#ff5a7a');
     }
