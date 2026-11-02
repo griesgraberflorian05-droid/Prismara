@@ -542,7 +542,7 @@ function heroState(c) {
   if (kind === 'boss') return bossBeaten(+arg) ? { free: true } : { text: `Boss ${foeOf(themeOf(+arg)).boss}` };
   if (kind === 'allboss') return CHAPTERS.every((_, i) => bossBeaten(i)) ? { free: true } : { text: 'Alle 11 Bosse' };
   if (kind === 'coins') return { price: +arg, text: `${arg} Münzen` };
-  if (kind === 'season') { const [a, b = a] = arg.split('-').map(Number); return m >= a && m <= b ? { free: true } : { text: 'Saison-Skin' }; }
+  if (kind === 'season') { const [a, b = a] = arg.split('-').map(Number); if (m >= a && m <= b) { buyHero(c.id); return { free: true }; } return { text: 'Saison-Skin' }; } // einmal gesehen, bleibt er erhalten
   return { text: arg };
 }
 const updateSettingsQuiet = (skin) => updateSettings({ skin });

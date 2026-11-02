@@ -16,7 +16,7 @@ import { icon } from '../ui/icons.js';
 
 const ROWS = ['#############', '#...........#', '#..#.....#..#', '#...........#', '#...........#', '#...........#', '#..#.....#..#', '#...........#', '#############'];
 const W = 13, H = 9;
-const STEP_MS = 135, SWING_MS = 320, SAFE_MS = 950;
+const STEP_MS = 135, SWING_MS = 450, MAGIC_MS = 8000, MODES = ['Rundumschlag', 'Stoß', 'Magie'], SAFE_MS = 950;
 const KEYS = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3, W: 0, D: 1, S: 2, A: 3 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -32,7 +32,7 @@ export function mountArena(root, params) {
   const damage = stat('sword'), maxHp = stat('armor'), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
   const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(420, 760 - ci * 28) * (touch ? 1.4 : 1)), windMs = touch ? 700 : 430;
-  const bossHp = 14 + ci * 4;
+  const bossHp = 30 + ci * 8;
 
   document.body.classList.add('ingame');
   document.body.dataset.world = world;
@@ -41,7 +41,7 @@ export function mountArena(root, params) {
     <section class="adv-full pixel-ui arena${touch ? ' touch' : ''}">
       <canvas id="board" class="pixel-canvas" tabindex="0" aria-label="Kampf. WASD oder Pfeiltasten laufen, Leertaste oder Klick schlägt."></canvas>
       <div class="ihud ihud-tl pixel"><div class="ihud-world">${esc(WORLDS[world]?.name || '')}</div><div class="ihud-room" id="wave">WELLE 1/2</div></div>
-      <div class="ar-hearts" id="hearts" role="img"></div>
+      <div class="ar-hearts" id="hearts" role="img"></div><div class="ar-mode pixel" id="mode"></div>
       <div class="ar-boss" id="bossbar" hidden><span>${esc(foe.boss)}</span><i><b id="bosshp"></b></i></div>
       <div class="ihud ihud-tr"><button class="ibtn" id="pause" title="Pause (Esc)" aria-label="Pause">${icon('pause')}</button></div>
       <div class="pause" id="panel" hidden role="dialog"><div class="pause-card pixel-card" id="panel-card"></div></div>
@@ -51,7 +51,7 @@ export function mountArena(root, params) {
   const $ = (s) => root.querySelector(s);
   const canvas = $('#board'), ctx = canvas.getContext('2d');
 
-  let shots = [], hero, mobs, boss, tele, phase, held, paused, running = true, shake = 0, view = null, sparks;
+  let mode = 0, magicAt = 0, shots = [], hero, mobs, boss, tele, phase, held, paused, running = true, shake = 0, view = null, sparks;
   const reduced = prefersReducedMotion();
 
   function spawnMobs(n) {
@@ -67,8 +67,12 @@ export function mountArena(root, params) {
     setMusic(world); held = null; paused = false;
     spawnMobs(touch ? 2 : 3);
     $('#wave').textContent = 'WELLE 1/2'; $('#bossbar').hidden = true; $('#panel').hidden = true;
-    showHearts();
+    showHearts(); showMode();
     canvas.focus();
+  }
+  function showMode() {
+    const left = Math.ceil(Math.max(0, magicAt - performance.now()) / 1000);
+    $('#mode').textContent = MODES[mode] + (mode === 2 && left ? ` ${left}s` : '');
   }
   function showHearts() {
     $('#hearts').innerHTML = Array.from({ length: maxHp }, (_, i) => `<span class="${i < hero.hp ? 'on' : ''}">${icon('heart')}</span>`).join('');
@@ -77,9 +81,9 @@ export function mountArena(root, params) {
   const bossCells = () => (boss ? [[boss.x, boss.y], [boss.x + 1, boss.y], [boss.x, boss.y + 1], [boss.x + 1, boss.y + 1]] : []);
   const blocked = (x, y) => wall(x, y) || mobs.some((m) => m.x === x && m.y === y) || bossCells().some(([a, b]) => a === x && b === y);
 
-  function hurt(now) {
+  function hurt(now, n = 1) {
     if (now < hero.safe || phase === 0) return;
-    hero.hp--; hero.safe = now + SAFE_MS; shake = now + 220;
+    hero.hp -= n; hero.safe = now + SAFE_MS; shake = now + 220;
     play('bump'); navigator.vibrate?.(60);
     showHearts();
     if (hero.hp <= 0) lose();
@@ -89,16 +93,25 @@ export function mountArena(root, params) {
     const [dx, dy] = DIRS[d], x = hero.x + dx, y = hero.y + dy;
     hero.next = now + STEP_MS;
     if (blocked(x, y)) return;
-    hero.x = x; hero.y = y; hero.moved = now;
+    hero.fromX = hero.x; hero.fromY = hero.y; hero.x = x; hero.y = y; hero.moved = now;
   }
   function swing() {
     const now = performance.now();
-    if (paused || phase === 0 || now < hero.swing + SWING_MS) return;
+    if (paused || phase === 0) return;
+    if (mode === 2) { // Magie: Lichtnova trifft alles im Raum
+      if (now < magicAt) return;
+      magicAt = now + MAGIC_MS; shake = now + 300; bossSound('slam');
+      for (const m of [...mobs]) { m.hp -= damage + 1; m.hit = now; if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } }
+      if (boss) { boss.hp = Math.max(0, boss.hp - damage * 2); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) win(); }
+      showMode(); return;
+    }
+    if (now < hero.swing + SWING_MS) return;
     hero.swing = now; play('swipe');
     // Rundumschlag: trifft alles im Kreis um den Helden
     let hitBoss = false;
     for (let y = hero.y - reach; y <= hero.y + reach; y++) for (let x = hero.x - reach; x <= hero.x + reach; x++) {
       if (wall(x, y) || (x === hero.x && y === hero.y)) continue;
+      if (mode === 1) { const [fx, fy] = DIRS[hero.dir], d = (x - hero.x) * fx + (y - hero.y) * fy; if (d < 1 || (x - hero.x) * fy !== 0 || (y - hero.y) * fx !== 0) continue; } // Stoß: nur nach vorn
       const dx = Math.sign(x - hero.x), dy = Math.sign(y - hero.y);
       for (const m of [...mobs]) if (m.x === x && m.y === y) {
         m.hp -= damage; m.hit = now; play('target', 3);
@@ -115,7 +128,14 @@ export function mountArena(root, params) {
 
   // ---------- Boss-Angriffe: tele = rote Felder, die nach at Schaden machen ----------
   const inner = (fn) => { const out = []; for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (!wall(x, y) && fn(x, y)) out.push([x, y]); return out; };
+  const hop = (now) => (boss?.jump ? Math.sin(Math.min(1, (now - boss.jump) / 1500) * Math.PI) * 40 : 0);
   function attack(now) {
+    if (now >= boss.ultra) { // Ultra: Boss springt hoch und landet dort, wo du gerade stehst
+      const x = Math.min(W - 3, Math.max(1, hero.x)), y = Math.min(H - 3, Math.max(1, hero.y));
+      boss.jump = now; boss.ultra = now + 9000 - ci * 200; boss.next = now + 2600; bossSound('roar');
+      tele.push({ cells: inner((a, b) => Math.abs(a - x - 0.5) <= 2 && Math.abs(b - y - 0.5) <= 2), at: now + 1500, dmg: 2, then: () => { boss.x = x; boss.y = y; boss.jump = 0; } });
+      return;
+    }
     const angry = boss.hp <= bossHp / 2, wind = (angry ? 700 : 900) - ci * 12;
     const name = foe.moves[boss.turn++ % foe.moves.length];
     if (name !== 'shots') bossSound(name === 'summon' ? 'roar' : 'charge');
@@ -161,7 +181,7 @@ export function mountArena(root, params) {
       const z = tele.splice(i, 1)[0];
       z.then?.();
       bossSound('slam'); shake = now + 160;
-      if (z.cells.some(([x, y]) => x === hero.x && y === hero.y)) hurt(now);
+      if (z.cells.some(([x, y]) => x === hero.x && y === hero.y)) hurt(now, z.dmg || 1);
     }
     for (let i = shots.length - 1; i >= 0; i--) {
       const p = shots[i];
@@ -175,6 +195,11 @@ export function mountArena(root, params) {
     if (phase === 0) return;
     if (boss) {
       if (now >= boss.next) attack(now);
+      if (!boss.jump && now >= boss.walk) { // zwischen den Angriffen rückt er nach
+        boss.walk = now + (boss.hp <= bossHp / 2 ? 450 : 650);
+        const nx = boss.x + Math.sign(hero.x - boss.x), ny = boss.y + Math.sign(hero.y - boss.y);
+        if (nx >= 1 && nx <= W - 3) boss.x = nx; else if (ny >= 1 && ny <= H - 3) boss.y = ny;
+      }
       if (bossCells().some(([a, b]) => a === hero.x && b === hero.y)) { // vom Ansturm getroffen: zur Seite geschleudert
         hurt(now);
         const free = inner((x, y) => !blocked(x, y)).sort((p, q) => Math.abs(p[0] - hero.x) + Math.abs(p[1] - hero.y) - Math.abs(q[0] - hero.x) - Math.abs(q[1] - hero.y));
@@ -183,7 +208,7 @@ export function mountArena(root, params) {
     } else if (!mobs.length) {
       phase++;
       if (phase === 2) { spawnMobs(5); $('#wave').textContent = 'WELLE 2/2'; } else {
-        boss = { x: 9, y: 3, hp: bossHp, next: now + 1600, turn: 0, hit: 0 };
+        boss = { x: 9, y: 3, hp: bossHp, next: now + 1600, turn: 0, hit: 0, walk: now + 2000, ultra: now + 7000, jump: 0 };
         $('#wave').textContent = 'BOSS'; $('#bossbar').hidden = false; $('#bosshp').style.width = '100%';
         setMusic('boss'); bossSound('roar'); shake = now + 500;
       }
@@ -232,7 +257,8 @@ export function mountArena(root, params) {
   function onKeyDown(e) {
     if (e.key === 'Escape') { setPaused(!paused); return; }
     if (paused || phase === 0) return;
-    if (e.key in KEYS) { if (!e.repeat) { held = KEYS[e.key]; hero.next = 0; } e.preventDefault(); } else if (e.key === ' ' || e.key === 'e' || e.key === 'E' || e.key === 'f' || e.key === 'F') { swing(); e.preventDefault(); }
+    if (e.key === 'f' || e.key === 'F') { mode = (mode + 1) % MODES.length; showMode(); play('ui'); return; }
+    if (e.key in KEYS) { if (!e.repeat) { held = KEYS[e.key]; hero.next = 0; } e.preventDefault(); } else if (e.key === ' ' || e.key === 'e' || e.key === 'E') { swing(); e.preventDefault(); }
   }
   function onKeyUp(e) { if (e.key in KEYS && KEYS[e.key] === held) held = null; }
   addEventListener('keydown', onKeyDown); addEventListener('keyup', onKeyUp);
@@ -245,6 +271,7 @@ export function mountArena(root, params) {
     });
     $('#tpad-hit').addEventListener('pointerdown', (ev) => { ev.preventDefault(); swing(); });
     let sw = null;
+    canvas.addEventListener('touchstart', (ev) => { if (ev.touches.length === 2) { mode = (mode + 1) % MODES.length; showMode(); sw = null; } }); // zwei Finger wechseln den Angriff
     canvas.addEventListener('pointerdown', (ev) => { sw = { x: ev.clientX, y: ev.clientY, moved: false }; canvas.setPointerCapture?.(ev.pointerId); });
     canvas.addEventListener('pointermove', (ev) => {
       if (!sw) return;
@@ -259,7 +286,7 @@ export function mountArena(root, params) {
 
   // ---------- Zeichnen ----------
   function drawSword(g, now) {
-    const k = (now - hero.swing) / 240, px = hero.x * T + 8, py = hero.y * T + 8;
+    const k = (now - hero.swing) / 240, px = (hero.rx ?? hero.x) * T + 8, py = (hero.ry ?? hero.y) * T + 8;
     const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
     if (k < 1) { // Rundumschlag: die Klinge zieht einen vollen Kreis, die Spur bleibt kurz stehen
       const len = 8 + T * reach;
@@ -271,7 +298,8 @@ export function mountArena(root, params) {
       const a = k * Math.PI * 2 - Math.PI / 2;
       for (let d = 4; d < len; d += 2) R(Math.round(px + Math.cos(a) * d) - 1, Math.round(py + Math.sin(a) * d) - 1, 3, 3, d > len - 5 ? skin.edge : skin.blade);
     } else {
-      R(px + 6, py - 8, 3, 11, skin.blade); R(px + 6, py - 8, 1, 11, skin.edge); R(px + 4, py + 3, 7, 2, skin.grip); R(px + 6, py + 5, 3, 3, skin.grip);
+      for (let i = 0; i < 10; i++) R(px + 6 - i, py - 7 + i, 2, 2, i < 7 ? skin.blade : skin.grip); // auf dem Rücken getragen
+      R(px + 6, py - 7, 1, 1, skin.edge);
     }
   }
   // Figuren bleiben im dunklen Bosskampf hell: nach dem Abdunkeln noch einmal obenauf zeichnen
@@ -287,9 +315,11 @@ export function mountArena(root, params) {
     if (!running) return;
     if (!paused) update(now);
     const t = reduced ? 0 : now;
-    const walking = now - hero.moved < STEP_MS;
+    const walking = now - hero.moved < STEP_MS, lerp = Math.min(1, (now - hero.moved) / STEP_MS);
+    const rx = walking ? hero.fromX + (hero.x - hero.fromX) * lerp : hero.x, ry = walking ? hero.fromY + (hero.y - hero.fromY) * lerp : hero.y;
+    hero.rx = rx; hero.ry = ry;
     const blink = now < hero.safe && Math.floor(now / 90) % 2;
-    const img = pix.draw(t, { tr, blocks: [], got: [], loot: [], fragments: [], enemies: [], dust: [], theme, grow: Infinity, player: blink ? null : { x: hero.x, y: hero.y, dir: hero.dir, walk: walking ? ((now - hero.moved) / STEP_MS) : null, stamina: 1, hat: hat() } });
+    const img = pix.draw(t, { tr, blocks: [], got: [], loot: [], fragments: [], enemies: [], dust: [], theme, grow: Infinity, player: blink ? null : { x: rx, y: ry, dir: hero.dir, walk: held != null || walking ? (now / 300) % 1 : null, stamina: 1, hat: hat() } });
     const g = img.getContext('2d');
     g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy);
     const r = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
@@ -298,7 +328,7 @@ export function mountArena(root, params) {
       for (const [x, y] of z.cells) { r(x * T + 1, y * T + 1, T - 2, T - 2, on ? 'rgba(255,50,30,0.55)' : 'rgba(255,190,60,0.5)'); r(x * T + 1, y * T + 1, T - 2, 1, '#ffd166'); }
     }
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, { flash: now - m.hit < 110, warn: !!m.wind });
-    if (boss) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T, t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
+    if (boss) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
     if (!blink && phase !== 0) drawSword(g, now);
     sparks = sparks.filter((s) => now - s.t0 < 300);
@@ -309,7 +339,7 @@ export function mountArena(root, params) {
       g.fillStyle = 'rgba(6,0,10,0.45)'; g.fillRect(0, 0, p, q);
       g.fillStyle = `rgba(120,0,10,${0.14 + beat * 0.14})`; g.fillRect(0, 0, p, q);
       for (const m of mobs) drawMinion(mirror(g), foe.minion, foe.colors, m.x * T, m.y * T, t, { flash: now - m.hit < 110, warn: !!m.wind });
-      drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T, t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
+      drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
       if (!blink) pix.ctx && drawHero(g, now);
     }
     const dpr = devicePixelRatio || 1, rect = canvas.getBoundingClientRect();

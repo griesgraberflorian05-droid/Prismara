@@ -15,7 +15,7 @@ import { setMusic } from '../game/music.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 import { foeOf, bossBeaten, bossPending } from '../game/combat.js';
-import { getLook } from '../game/skins.js';
+import { getLook, getSkin } from '../game/skins.js';
 import { FX, fxQuality, sparks, ring, mote, squash as squashFx, buzz, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
 import { codeOn } from '../game/codes.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
@@ -739,7 +739,7 @@ export function mountAdventure(root, params, opts = {}) {
 
   // ---------- Zeichnen ----------
   let running = true, shownStamina = '', view = null, chipTop = null, litSeen = new Set(), lastLit = -1, fxState = null, nextMote = 0, waveDone = false, trail = [], trailAt = { x: -1, y: -1 };
-  const trailColor = getLook().trail.color;
+  const trailColor = getLook().trail.color || (getSkin().color.hero ? getSkin().color.glow : null); // Lichtspur des Skins
   const staminaEl = $('#stamina');
   const lerp = (a, b, k) => a + (b - a) * k;
   function frame(t) {

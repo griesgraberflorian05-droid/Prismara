@@ -1331,3 +1331,4 @@ a.tm-version { display: block; text-decoration: underline; }
 .gal-tex small { font: 600 0.72rem/1.2 var(--font); overflow-wrap: anywhere; }
 .ks-hero { width: 48px; height: 56px; image-rendering: pixelated; }
 .ks-hero.sil { filter: brightness(0); opacity: 0.55; }
+.ar-mode { position: absolute; z-index: 5; right: 12px; bottom: 12px; padding: 6px 8px; font-size: 0.5rem; color: var(--parch); background: rgba(20, 10, 4, 0.72); border: 3px solid var(--wood-0); }
