@@ -1495,3 +1495,6 @@ body.wood .kit-swatch { min-height: 70px; align-content: center; }
 .kit .kit-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
 .kit .kit-row[hidden] { display: none; }
 body.wood .kit-swatch small { color: inherit; font-size: 0.36rem; line-height: 1.4; text-align: center; }
+
+.kit-cape { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; max-width: 320px; }
+.kit-cape b { font-weight: normal; font-size: 0.55rem; text-align: center; color: var(--parch); }

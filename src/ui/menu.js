@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, CAPES, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
@@ -721,11 +721,7 @@ function kitPage(el, scene) {
         <div class="kit-stage"><canvas class="kit-big" width="48" height="48" aria-label="Vorschau deines Helden: Umhang ${esc(skin.color.name)}${worn ? `, ${esc(HATS[worn].name)}` : ''}"></canvas></div>
         <div>
           <h3>Umhang</h3>
-          <div class="kit-row">${SKIN_COLORS.filter((c) => !c.hero && (!c.secret || isAdmin() || hasHalloween())).map((c) => {
-            const locked = !isAdmin() && stars < c.stars, active = skin.color.id === c.id;
-            return `<button class="kit-swatch${active ? ' active' : ''}" ${locked ? 'disabled' : `data-pick="color" data-id="${c.id}"`} aria-pressed="${active}" title="${esc(c.name)}${locked ? ` – ab ★ ${c.stars}` : ''}">
-              <canvas class="ks-cloak" data-color="${c.id}" width="12" height="12"></canvas><small>${locked ? `🔒 ★${c.stars}` : esc(c.name)}</small></button>`;
-          }).join('')}</div>
+          <div class="kit-cape"><button class="wbtn sm" type="button" data-cape="-1" aria-label="Vorheriger Umhang">◀</button><b>${esc(look.cape.name)}</b><button class="wbtn sm" type="button" data-cape="1" aria-label="Nächster Umhang">▶</button></div>
           <h3>Hut</h3>
           <div class="kit-row">
             <button class="kit-swatch${worn ? '' : ' active'}" data-hat="" aria-pressed="${!worn}"><canvas class="ks-hat" data-hat="" width="24" height="28"></canvas><small>Ohne</small></button>
@@ -767,6 +763,10 @@ function kitPage(el, scene) {
       const c = SKIN_COLORS.find((x) => x.id === b.dataset.hero), u = heroState(c);
       if (!u.free) { if (getInv().coins < u.price) { play('bump'); return; } addCoins(-u.price); buyHero(c.id); }
       setSkin({ color: c.id }); play('ui'); render();
+    }));
+    el.querySelectorAll('[data-cape]').forEach((b) => b.addEventListener('click', () => {
+      const i = CAPES.indexOf(getLook().cape), next = CAPES[(i + +b.dataset.cape + CAPES.length) % CAPES.length];
+      setLook({ cape: next.id }); play('ui'); render();
     }));
     el.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
       setSkin({ color: b.dataset.id }); play('ui'); render();

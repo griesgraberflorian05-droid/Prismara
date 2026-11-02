@@ -408,6 +408,8 @@ export class PixelRenderer {
   /** Accessoires der Skins, gezeichnet relativ zum Kopf (8 Pixel breit). */
   acc(skin, hx, hy, t) {
     const R = (x, y, w, h, c) => this.r(hx + x, hy + y, w, h, c), a = skin.stops[0], b = skin.stops[1];
+    const cape = getLook().cape;
+    if (cape.color) { const f = Math.floor(t / 300) % 2; R(-2, 7, 2, 8 + f, cape.color); R(8, 7, 2, 9 - f, cape.color); R(-1, 6, 10, 2, cape.color); R(-1, 6, 10, 1, cape.edge); R(3, 7, 2, 1, cape.edge); }
     for (const id of skin.acc || []) {
       if (id === 'stirnband') { R(0, 1, 8, 1, a); R(8, 2, 2, 1, a); } else if (id === 'maske') R(0, 4, 8, 2, a);
       else if (id === 'muetze') { R(0, -1, 8, 2, a); R(1, -3, 6, 2, a); } else if (id === 'visier') R(0, 2, 8, 1, a);
