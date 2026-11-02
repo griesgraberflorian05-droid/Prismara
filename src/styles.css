@@ -1431,3 +1431,20 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .spin-fab:disabled { filter: grayscale(1); cursor: not-allowed; } .spin-fab:disabled i { animation: none; }
 @keyframes fab-turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin-fab i { animation: none; } }
+
+/* Glücksrad als Viertelkreis in der Ecke, Drehungen groß; Rad ploppt auf */
+.spin-fab { right: 0; bottom: 0; display: block; width: 132px; height: 132px; overflow: hidden; }
+.spin-fab i { position: absolute; right: -132px; bottom: -132px; width: 264px; height: 264px; box-sizing: border-box; box-shadow: 0 0 0 4px var(--gold); background: conic-gradient(#58c04a 0 252deg, #4f9fff 252deg 338.4deg, #c07cff 338.4deg 356.4deg, #ffd166 356.4deg 360deg); }
+.spin-fab b { position: absolute; right: 12px; bottom: 12px; font: normal 1.5rem 'Press Start 2P', monospace; color: #fff; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000; }
+.spin-wheel-box { animation: wheel-pop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1); transform-origin: 100% 100%; }
+@keyframes wheel-pop { from { transform: translate(40vw, 40vh) scale(0.1); } }
+.spin-wheel { background: repeating-conic-gradient(rgba(0, 0, 0, 0.16) 0 6deg, transparent 6deg 12deg), conic-gradient(#58c04a 0 252deg, #4f9fff 252deg 338.4deg, #c07cff 338.4deg 356.4deg, #ffd166 356.4deg 360deg); }
+/* Echtshop */
+.rs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.rs-pack { display: grid; gap: 8px; padding: 14px 8px !important; font-family: inherit; text-align: center; cursor: pointer; }
+.rs-pack b { font-weight: normal; font-size: 0.5rem; line-height: 1.6; } .rs-pack span { font-size: 0.7rem; color: #2f7a2a; }
+.pay { position: fixed; inset: 0; z-index: 970; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.6); }
+.pay-card { display: grid; gap: 12px; width: min(360px, 100%); padding: 20px; color: #1a1a1a; font: 15px/1.4 system-ui, sans-serif; background: #fff; border-radius: 12px; }
+.pay-card h2 { margin: 0; font-size: 18px; } .pay-row { display: flex; justify-content: space-between; } .pay-card small { color: #666; }
+.pay-go { padding: 12px; font: 600 15px system-ui, sans-serif; color: #fff; background: #1f6feb; border: 0; border-radius: 8px; cursor: pointer; }
+.pay-no { padding: 8px; font: 14px system-ui, sans-serif; background: none; border: 0; color: #555; cursor: pointer; }

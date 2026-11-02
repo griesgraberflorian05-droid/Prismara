@@ -8,6 +8,7 @@ import { WORLDS } from '../game/worlds.js';
 import { addCoins, getInv, hat } from '../game/inventory.js';
 import { getSettings, updateSettings } from '../settings.js';
 import { markFound } from '../game/inventory.js';
+import { addSpins } from '../game/skins.js';
 import { magicColor, hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
 import { drawMinion, drawBoss } from '../game/monsters.js';
 import { play, bossSound } from '../game/sound.js';
@@ -299,6 +300,7 @@ export function mountArena(root, params) {
     }
     const first = !bossBeaten(ci), reward = first ? 60 + ci * 25 : 10;
     addCoins(reward); markBoss(ci); play('exitopen');
+    if (first) addSpins(1);
     const nextCh = CHAPTERS[ci + 1];
     const nextIndex = nextCh ? PUSH_LEVELS.findIndex((l) => l.id === nextCh.levels[0]) : -1;
     panel(`<h2 class="pixel">BOSS BESIEGT!</h2><p class="pause-hint">${esc(foe.boss)} ist geschlagen. +${reward} Münzen.</p>

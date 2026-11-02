@@ -15,7 +15,7 @@ import { setMusic } from '../game/music.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 import { foeOf, bossBeaten, bossPending } from '../game/combat.js';
-import { getLook, getSkin } from '../game/skins.js';
+import { getLook, getSkin, addSpins } from '../game/skins.js';
 import { FX, fxQuality, bolt, sparks, ring, mote, squash as squashFx, buzz, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
 import { codeOn } from '../game/codes.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
@@ -573,6 +573,7 @@ export function mountAdventure(root, params, opts = {}) {
     const firstTime = !tutorial && prevBest == null;
     const reward = tutorial ? 10 : firstTime ? 10 + 3 * starsFor(solveMoves ?? state.moves, def.par) : improved ? 5 : 1;
     addCoins(reward);
+    if (Math.random() < 0.04) { addSpins(1); later(() => toast('Glück gehabt: +1 Drehung am Glücksrad!'), 900); } // bewusst selten
     const stars = starsFor(counted, def.par);
     for (let i = 0; i < stars; i++) later(() => play('lamp', i * 2), 1550 + i * 150); // Sterne fliegen mit steigendem Ton ein
     const lastInWorld = !tutorial && (!chapter || roomNo === chapter.levels.length);

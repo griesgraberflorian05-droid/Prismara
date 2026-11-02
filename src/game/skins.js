@@ -37,9 +37,9 @@ export const SKIN_COLORS = [
   { id: "h-robot", name: "Roboter R-16", stops: ["#ffc84a", "#6a7480", "#6a7480"], glow: "#ffc84a", stars: 0, secret: true, hero: true, how: "coins:1500", acc: ["antenne"] },
   { id: "h-piratin", name: "Piratin", stops: ["#c0342c", "#f0e6c8", "#f0e6c8"], glow: "#c0342c", stars: 0, secret: true, hero: true, how: "coins:1200", acc: ["stirnband"] },
   { id: "h-frosch", name: "Froschkostüm", stops: ["#ffb7c8", "#4f9446", "#4f9446"], glow: "#ffb7c8", stars: 0, secret: true, hero: true, how: "coins:800", acc: ["ohren"] },
-  { id: "h-drache", name: "Kleiner Drache", stops: ["#ffc84a", "#c0342c", "#c0342c"], glow: "#ffc84a", stars: 0, secret: true, hero: true, how: "coins:3500", acc: ["hoerner", "fluegel"] },
-  { id: "h-geist", name: "Geisterchen", stops: ["#c8cce4", "#e8eaf6", "#e8eaf6"], glow: "#c8cce4", stars: 0, secret: true, hero: true, how: "never:Neue Bedingung folgt", acc: ["heiligenschein"] },
-  { id: "h-speed", name: "Speedrunner", stops: ["#ffffff", "#e84030", "#e84030"], glow: "#ffffff", stars: 0, secret: true, hero: true, how: "never:10 Räume unter 30 s", acc: ["stirnband"] },
+  { id: "h-drache", name: "Kleiner Drache", stops: ["#ffc84a", "#c0342c", "#c0342c"], glow: "#ffc84a", stars: 0, secret: true, hero: true, how: "real:Drache", acc: ["hoerner", "fluegel"] },
+  { id: "h-geist", name: "Geisterchen", stops: ["#c8cce4", "#e8eaf6", "#e8eaf6"], glow: "#c8cce4", stars: 0, secret: true, hero: true, how: "endless:25", acc: ["heiligenschein"] },
+  { id: "h-speed", name: "Speedrunner", stops: ["#ffffff", "#e84030", "#e84030"], glow: "#ffffff", stars: 0, secret: true, hero: true, how: "endless:10", acc: ["stirnband"] },
   { id: "h-tagesheld", name: "Tagesheld", stops: ["#ff5a4a", "#ffc84a", "#ffc84a"], glow: "#ff5a4a", stars: 0, secret: true, hero: true, how: "never:30 Tagesrätsel", acc: ["muetze"] },
   { id: "h-regenbogen", name: "Regenbogen-Kind", stops: ["#ffd166", "#ff4a3a", "#ff4a3a"], glow: "#ffd166", stars: 0, secret: true, hero: true, how: "never:Jede Farbe mischen", acc: ["stirnband"] },
   { id: "h-kuerbis", name: "Kürbiskopf", stops: ["#ff7a1a", "#2a1a30", "#2a1a30"], glow: "#ff7a1a", stars: 0, secret: true, hero: true, how: "season:10", acc: ["kuerbis"] },
@@ -54,7 +54,7 @@ export const SKIN_COLORS = [
 export const skinTint = (id) => (getSettings().skinTint || {})[id] || null;
 export const setSkinTint = (id, tint) => updateSettings({ skinTint: { ...(getSettings().skinTint || {}), [id]: tint } });
 // Seltenheit je Skin: Grundlage ist die Freischaltung, Gewicht gilt für den Spin
-export const RARITY = { common: { name: 'Gewöhnlich', weight: 60 }, rare: { name: 'Selten', weight: 28 }, epic: { name: 'Episch', weight: 10 }, legend: { name: 'Legendär', weight: 2 } };
+export const RARITY = { common: { name: 'Gewöhnlich', weight: 70 }, rare: { name: 'Selten', weight: 24 }, epic: { name: 'Episch', weight: 5 }, legend: { name: 'Legendär', weight: 1 } };
 export function rarityOf(c) {
   const [kind, arg] = c.how.split(':');
   if (kind === 'allboss' || /Prisma|100 %|Sternen/.test(arg || '')) return 'legend';
@@ -64,10 +64,13 @@ export function rarityOf(c) {
 }
 /** Zufälliger noch fehlender Skin, seltene seltener. */
 export function rollSkin() {
-  const pool = SKIN_COLORS.filter((c) => c.hero && c.how !== 'start' && !ownedHeroes().includes(c.id));
+  const pool = SKIN_COLORS.filter((c) => c.hero && !/^(start|endless|real)/.test(c.how) && !ownedHeroes().includes(c.id));
   let n = Math.random() * pool.reduce((s, c) => s + RARITY[rarityOf(c)].weight, 0);
   return pool.find((c) => (n -= RARITY[rarityOf(c)].weight) < 0) || pool[0] || null;
 }
+// Gewonnene Drehungen fürs Glücksrad
+export const getSpins = () => getSettings().spins || 0;
+export const addSpins = (n) => updateSettings({ spins: getSpins() + n });
 export const ownedHeroes = () => getSettings().heroSkins || [];
 export const buyHero = (id) => updateSettings({ heroSkins: [...ownedHeroes(), id] });
 export const hasHalloween = () => !!getSettings().halloween;

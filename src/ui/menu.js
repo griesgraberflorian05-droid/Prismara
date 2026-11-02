@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
@@ -97,6 +97,7 @@ export function mountMenu(root, params = []) {
   else if (page === 'shop') shopPage(ui);
   else if (page === 'forge') forgePage(ui);
   else if (page === 'radio') radioPage(ui);
+  else if (page === 'echtshop') realShopPage(ui);
   else if (page === 'updates') updatesPage(ui);
   else if (page === 'galerie') galleryPage(ui);
   else if (page === 'settings') settingsPage(ui);
@@ -153,6 +154,7 @@ function mainPage(el) {
         return `<a class="wbtn mm-tile${glow ? ' glow' : ''}" href="${href}">${icon(MODE_ICON[m.id])}<span>${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</span></a>`;
       }).join('')}<a class="wbtn mm-tile" href="#/menu/forge">${icon('sword')}<span>Schmiede</span></a><a class="wbtn mm-tile" href="#/arena/endlos/1">${icon('map')}<span>Endlos</span></a></nav>
       <div class="mm-tools">
+        <a class="wbtn sm" href="#/menu/echtshop">${icon('gem')}<span>Echtshop</span></a>
         <a class="wbtn sm" href="#/menu/code">${icon('key')}<span>Code</span></a>
         <a class="wbtn sm" href="#/menu/settings">${icon('gear')}<span>Optionen</span></a>
         <button class="wbtn sm" id="upd" type="button">${icon('reset')}<span>Update</span></button>
@@ -538,7 +540,7 @@ function wardrobePage(el, msg = '') {
   el.innerHTML = `
     <ul class="mm-stats"><li>${icon('coin')}<b>${getInv().coins}</b></li><li>${icon('star')}<b>${stars}</b></li><li>${icon('gem')}<b>${fragmentCount()}</b></li></ul>
     ${head('#/menu', 'Garderobe', '')}
-    <button class="spin-fab" id="spin" type="button" aria-label="Glücksrad drehen" ${getInv().coins < SPIN_PRICE && !isAdmin() ? 'disabled' : ''}><i></i><small>${isAdmin() ? 'gratis' : SPIN_PRICE}</small></button>
+    <button class="spin-fab" id="spin" type="button" aria-label="Glücksrad öffnen"><i></i><b>${getSpins()}x</b></button>
     ${msg ? `<p class="code-msg sg-won">${esc(msg)}</p>` : ''}
     <div id="sel"></div><a class="wbtn sm" href="#/menu/kit">Mehr anpassen</a>`;
   const paint = (id) => (cv) => {
@@ -549,10 +551,11 @@ function wardrobePage(el, msg = '') {
     updateSettingsQuiet(keep); pr.ctx.restore();
   };
   el.querySelector('#spin').addEventListener('click', () => {
-    if (!isAdmin() && getInv().coins < SPIN_PRICE) { play('bump'); return; }
+    const have = getSpins();
+    if (!have && !isAdmin() && getInv().coins < SPIN_PRICE) { play('bump'); wardrobePage(el, `Keine Drehung. Eine kostet ${SPIN_PRICE} Münzen, mehr gibt es im Echtshop.`); return; }
     const c = rollSkin();
     if (!c) { wardrobePage(el, 'Du hast schon alle Skins!'); return; }
-    if (!isAdmin()) addCoins(-SPIN_PRICE);
+    if (have) addSpins(-1); else if (!isAdmin()) addCoins(-SPIN_PRICE);
     buyHero(c.id);
     // Bekomm-Animation: Kiste bebt und platzt auf, dann kommt der Skin in der Farbe seiner Seltenheit
     const r = rarityOf(c), o = document.createElement('div');
@@ -561,9 +564,9 @@ function wardrobePage(el, msg = '') {
     document.body.append(o);
     paint(c.id)(o.querySelector('canvas'));
     // Rad dreht und bremst aus, bis der Zeiger im Feld der gezogenen Seltenheit steht
-    const SECT = { common: [0, 216], rare: [216, 316.8], epic: [316.8, 352.8], legend: [352.8, 360] }[r];
+    const SECT = { common: [0, 252], rare: [252, 338.4], epic: [338.4, 356.4], legend: [356.4, 360] }[r];
     const stop = SECT[0] + (SECT[1] - SECT[0]) * (0.2 + Math.random() * 0.6), wheel = o.querySelector('#wheel');
-    requestAnimationFrame(() => requestAnimationFrame(() => { wheel.style.transform = `rotate(${360 * 6 - stop}deg)`; }));
+    requestAnimationFrame(() => requestAnimationFrame(() => { wheel.style.transform = `rotate(${360 * 7 - stop}deg)`; }));
     let tick = 60, at = 0;
     while (at < 3400) { const when = at; setTimeout(() => { if (o.isConnected) play('ui'); }, when); at += tick; tick *= 1.12; }
     setTimeout(() => { o.classList.add('open'); play('chapter'); fxNs.flash(); }, 3800);
@@ -580,6 +583,35 @@ function wardrobePage(el, msg = '') {
       } };
     }),
   });
+}
+
+// ---------- Echtshop: Testkauf, es fließt nie Geld und es werden keine Zahlungsdaten abgefragt ----------
+function realShopPage(el) {
+  const PACKS = [
+    { name: '1 000 Münzen', price: '0,99 €', give: () => addCoins(1000) }, { name: '6 000 Münzen', price: '4,99 €', give: () => addCoins(6000) },
+    { name: '5 Drehungen', price: '1,99 €', give: () => addSpins(5) }, { name: '25 Drehungen', price: '7,99 €', give: () => addSpins(25) },
+    { name: 'Skin Kleiner Drache', price: '2,99 €', give: () => buyHero('h-drache') }, { name: 'Starterpaket', price: '3,99 €', give: () => { addCoins(2500); addSpins(5); } },
+  ];
+  const render = (done = '') => {
+    el.innerHTML = `
+      ${head('#/menu', 'Echtshop', `${icon('coin')} ${getInv().coins} · ${getSpins()}x`)}
+      <div class="rd">${done ? `<p class="code-msg sg-won">${esc(done)}</p>` : ''}
+        <div class="rs-grid">${PACKS.map((p, i) => `<button class="parch rs-pack" type="button" data-p="${i}"><b>${esc(p.name)}</b><span>${p.price}</span></button>`).join('')}</div>
+        <p class="tm-tip">Testmodus: Es wird kein echtes Geld abgebucht.</p></div>`;
+    el.querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () => checkout(PACKS[+b.dataset.p])));
+  };
+  const checkout = (p) => {
+    const o = document.createElement('div'); o.className = 'pay';
+    o.innerHTML = `<div class="pay-card"><h2>Bestellung prüfen</h2><div class="pay-row"><span>${esc(p.name)}</span><b>${p.price}</b></div><div class="pay-row"><span>Gesamt</span><b>${p.price}</b></div>
+      <small>Testkauf ohne echte Zahlung</small><button class="pay-go" type="button">Jetzt kaufen</button><button class="pay-no" type="button">Abbrechen</button></div>`;
+    document.body.append(o);
+    o.querySelector('.pay-no').addEventListener('click', () => o.remove());
+    o.querySelector('.pay-go').addEventListener('click', (e) => {
+      e.target.textContent = 'Wird bearbeitet …'; e.target.disabled = true;
+      setTimeout(() => { p.give(); o.remove(); play('chapter'); render(`Danke! ${p.name} gehört dir.`); }, 1300);
+    });
+  };
+  render();
 }
 
 // ---------- Update-Log ----------
@@ -631,6 +663,8 @@ function shopPage(el) {
 function heroState(c) {
   const [kind, arg] = c.how.split(':'), own = isFull() || ownedHeroes().includes(c.id), m = new Date().getMonth() + 1;
   if (own || kind === 'start') return { free: true };
+  if (kind === 'endless') return (getSettings().endlessBest || 0) >= +arg ? { free: true } : { text: `Endlos: Raum ${arg}` };
+  if (kind === 'real') return { text: 'Nur im Echtshop' };
   if (isAdmin()) return { price: 1, text: 'Gratis kaufen' }; // Code „debug“
   if (kind === 'world') return worldDone(+arg) ? { free: true } : { text: `Welt ${+arg + 1} schaffen` };
   if (kind === 'boss') return bossBeaten(+arg) ? { free: true } : { text: `Boss ${foeOf(themeOf(+arg)).boss}` };

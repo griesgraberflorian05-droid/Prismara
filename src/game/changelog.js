@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.56', items: ['Glücksrad als Viertelkreis mit Drehungen', 'Seltenere Gewinne, Skins im Endlos-Modus', 'Echtshop im Testmodus'] },
   { v: '3.23.52', items: ['Neue Spin-Animation mit Karte', 'Spin geht nicht mehr ins Minus'] },
   { v: '3.23.51', items: ['Boss-Hilfe in den Einstellungen', 'Nach einer Niederlage direkt zurück zur Boss-Phase'] },
   { v: '3.23.50', items: ['Bekomm-Animation beim Spin', 'Grüne gewöhnliche Skins, nicht besessene bleiben grau'] },
