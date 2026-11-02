@@ -377,6 +377,7 @@ export class PixelRenderer {
       if (p.yawn) this.r(fx + 1, fy + 3, 2, 1, '#5a2030');
     }
     this.hat(p.hat ?? currentHat(), hx, hy, t);
+    this.acc(skin.color, hx, hy, t);
     // Laterne (Lichtquelle der Figur) – auf der Seite der Blickrichtung
     const lanX = px + (side ? (dx > 0 ? 13 : 1) : 12) + (strain && side ? dx * 2 : 0), lanY = by + 2;
     this.part(lanX, lanY, 2, 3, getLook().lantern.color); this.r(lanX, lanY + 1, 1, 1, '#ffffff');
@@ -404,6 +405,22 @@ export class PixelRenderer {
   }
 
   /** Hüte vom Hutmacher, auf den Kopf (hx, hy = linke obere Ecke der Kapuze, 8 px breit). */
+  /** Accessoires der Skins, gezeichnet relativ zum Kopf (8 Pixel breit). */
+  acc(skin, hx, hy, t) {
+    const R = (x, y, w, h, c) => this.r(hx + x, hy + y, w, h, c), a = skin.stops[0], b = skin.stops[1];
+    for (const id of skin.acc || []) {
+      if (id === 'stirnband') { R(0, 1, 8, 1, a); R(8, 2, 2, 1, a); } else if (id === 'maske') R(0, 4, 8, 2, a);
+      else if (id === 'muetze') { R(0, -1, 8, 2, a); R(1, -3, 6, 2, a); } else if (id === 'visier') R(0, 2, 8, 1, a);
+      else if (id === 'zauberhut') { R(-1, 0, 10, 1, b); R(1, -2, 6, 2, b); R(3, -5, 2, 3, b); R(1, -1, 6, 1, a); }
+      else if (id === 'ohren') { R(0, -2, 2, 2, b); R(6, -2, 2, 2, b); } else if (id === 'hoerner') { R(-1, -2, 2, 3, a); R(7, -2, 2, 3, a); }
+      else if (id === 'krone') { R(1, -2, 6, 2, a); R(1, -3, 1, 1, a); R(3, -3, 2, 1, a); R(6, -3, 1, 1, a); } else if (id === 'kapuze') { R(-1, 0, 10, 2, b); R(-1, 2, 1, 4, b); R(8, 2, 1, 4, b); }
+      else if (id === 'schnorchel') { R(0, 2, 8, 1, a); R(8, 0, 1, 4, a); } else if (id === 'antenne') { R(4, -3, 1, 3, b); R(3, -4, 3, 1, a); }
+      else if (id === 'heiligenschein') R(1, -3, 6, 1, Math.floor(t / 400) % 2 ? '#fff0a0' : '#ffe070');
+      else if (id === 'kuerbis') { R(-1, -1, 10, 8, '#ff7a1a'); R(1, 2, 2, 2, '#ffd166'); R(5, 2, 2, 2, '#ffd166'); R(3, 5, 2, 1, '#2a1a30'); R(3, -2, 2, 1, '#3f7a3a'); }
+      else if (id === 'fluegel') { R(-5, 7, 3, 4, a); R(10, 7, 3, 4, a); } else if (id === 'umhang') { R(-2, 8, 2, 7, b); R(8, 8, 2, 7, b); }
+    }
+  }
+
   hat(id, hx, hy, t) {
     if (!id) return;
     const R = (x, y, w, h, c) => this.r(hx + x, hy + y, w, h, c);

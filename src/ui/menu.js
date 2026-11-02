@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, ownedHeroes, buyHero } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
@@ -534,6 +534,19 @@ function shopPage(el) {
   render();
 }
 
+// Freischalten: how-Text aus den Skin-Daten auswerten
+function heroState(c) {
+  const [kind, arg] = c.how.split(':'), own = isAdmin() || ownedHeroes().includes(c.id), m = new Date().getMonth() + 1;
+  if (own || kind === 'start') return { free: true };
+  if (kind === 'world') return worldDone(+arg) ? { free: true } : { text: `Welt ${+arg + 1} schaffen` };
+  if (kind === 'boss') return bossBeaten(+arg) ? { free: true } : { text: `Boss ${foeOf(themeOf(+arg)).boss}` };
+  if (kind === 'allboss') return CHAPTERS.every((_, i) => bossBeaten(i)) ? { free: true } : { text: 'Alle 11 Bosse' };
+  if (kind === 'coins') return { price: +arg, text: `${arg} Münzen` };
+  if (kind === 'season') { const [a, b = a] = arg.split('-').map(Number); return m >= a && m <= b ? { free: true } : { text: 'Saison-Skin' }; }
+  return { text: arg };
+}
+const updateSettingsQuiet = (skin) => updateSettings({ skin });
+
 // ---------- Held: Umhangfarbe und Hut – Vorschau ist der echte Pixel-Held aus dem Spiel ----------
 function kitPage(el, scene) {
   const { stars } = totals();
@@ -552,6 +565,12 @@ function kitPage(el, scene) {
             const locked = !isAdmin() && stars < c.stars, active = skin.color.id === c.id;
             return `<button class="kit-swatch${active ? ' active' : ''}" ${locked ? 'disabled' : `data-pick="color" data-id="${c.id}"`} aria-pressed="${active}" title="${esc(c.name)}${locked ? ` – ab ★ ${c.stars}` : ''}">
               <canvas class="ks-cloak" data-color="${c.id}" width="12" height="12"></canvas><small>${locked ? `🔒 ★${c.stars}` : esc(c.name)}</small></button>`;
+          }).join('')}</div>
+          <h3>Skins</h3>
+          <div class="kit-row">${SKIN_COLORS.filter((c) => c.hero).map((c) => {
+            const u = heroState(c), active = skin.color.id === c.id;
+            return `<button class="kit-swatch${active ? ' active' : ''}" ${u.free || u.price ? `data-hero="${c.id}"` : 'disabled'} aria-pressed="${active}" title="${esc(c.name)}">
+              <canvas class="ks-hero${u.free ? '' : ' sil'}" data-color="${c.id}" width="24" height="28"></canvas><small>${u.free ? esc(c.name) : esc(u.text)}</small></button>`;
           }).join('')}</div>
           <h3>Hut</h3>
           <div class="kit-row">
@@ -574,6 +593,18 @@ function kitPage(el, scene) {
       </div>`;
     el.querySelectorAll('.ks-cloak').forEach((c) => drawCloak(c, SKIN_COLORS.find((s) => s.id === c.dataset.color)));
     el.querySelectorAll('.ks-hat').forEach((c) => drawHatPreview(c, c.dataset.hat)); // '' = ohne Hut
+    el.querySelectorAll('.ks-hero').forEach((cv) => {
+      const pr = Object.create(PixelRenderer.prototype), keep = getSettings().skin;
+      pr.ctx = cv.getContext('2d'); pr.ctx.save(); pr.ctx.translate(4, 8);
+      updateSettingsQuiet({ color: cv.dataset.color });
+      pr.player({ x: 0, y: 0, dir: 2, walk: null, stamina: 1, hat: '' }, 0);
+      updateSettingsQuiet(keep); pr.ctx.restore();
+    });
+    el.querySelectorAll('[data-hero]').forEach((b) => b.addEventListener('click', () => {
+      const c = SKIN_COLORS.find((x) => x.id === b.dataset.hero), u = heroState(c);
+      if (!u.free) { if (getInv().coins < u.price) { play('bump'); return; } addCoins(-u.price); buyHero(c.id); }
+      setSkin({ color: c.id }); play('ui'); render();
+    }));
     el.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
       setSkin({ color: b.dataset.id }); play('ui'); render();
       el.querySelector(`[data-id="${b.dataset.id}"]`)?.focus();

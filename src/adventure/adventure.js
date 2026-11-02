@@ -821,7 +821,7 @@ export function mountAdventure(root, params, opts = {}) {
     if (canvas.width !== cw || canvas.height !== chh) { canvas.width = cw; canvas.height = chh; }
     ctx.imageSmoothingEnabled = false;
     // Leichte Bewegungsunschärfe: das vorige Bild scheint kurz durch (ab 50 % Grafik, nicht bei „Weniger Bewegung“)
-    const blur = !reduced && fxQuality() >= 0.5;
+    const blur = !reduced && fxQuality() >= 0.5 && held != null; // nur beim Laufen, Fackeln bleiben im Stand scharf
     if (!blur) ctx.clearRect(0, 0, cw, chh);
     // Raum samt Rückwand einpassen; die Außenwelt drumherum füllt den Rest des Bildschirms
     const v = pix.view;

@@ -16,9 +16,42 @@ export const SKIN_COLORS = [
   { id: 'coral', name: 'Koralle', stops: ['#ffe0d8', '#e8806a', '#a84a3a'], glow: '#ffc0b0', stars: 15 },
   { id: 'ash', name: 'Asche', stops: ['#d8d8dc', '#5a5a64', '#2e2e36'], glow: '#d8d8dc', stars: 24 },
   { id: 'prism', name: 'Regenbogen', stops: ['#ff4d6d', '#ffd166', '#3ddc97', '#4da3ff', '#b18cff'], glow: '#ffffff', stars: 45 },
+  // Skins als Daten: stops = Akzent, Körper; how = Freischaltung; acc = Accessoires. Neuer Skin = neue Zeile.
+  { id: "h-laterne", name: "Laternenträgerin", stops: ["#d94040", "#3f6fb0", "#3f6fb0"], glow: "#d94040", stars: 0, secret: true, hero: true, how: "start", acc: [] },
+  { id: "h-surfer", name: "Strandsurfer", stops: ["#ff5a9a", "#2ab8c8", "#2ab8c8"], glow: "#ff5a9a", stars: 0, secret: true, hero: true, how: "world:0", acc: ["stirnband"] },
+  { id: "h-ninja", name: "Kirschblüten-Ninja", stops: ["#ff7ab0", "#2a1a30", "#2a1a30"], glow: "#ff7ab0", stars: 0, secret: true, hero: true, how: "never:Welt 2 mit allen Sternen", acc: ["maske", "stirnband"] },
+  { id: "h-forscher", name: "Dschungelforscher", stops: ["#c8a66a", "#6b7a34", "#6b7a34"], glow: "#c8a66a", stars: 0, secret: true, hero: true, how: "never:Alle Splitter im Dschungel", acc: ["muetze"] },
+  { id: "h-ritter", name: "Burgritter", stops: ["#c0342c", "#9a98a8", "#9a98a8"], glow: "#c0342c", stars: 0, secret: true, hero: true, how: "boss:3", acc: ["visier", "umhang"] },
+  { id: "h-lehrling", name: "Moorlehrling", stops: ["#d8ff5a", "#4e7a4a", "#4e7a4a"], glow: "#d8ff5a", stars: 0, secret: true, hero: true, how: "boss:4", acc: ["zauberhut"] },
+  { id: "h-eule", name: "Eulenkind", stops: ["#fff0c8", "#8a6a4a", "#8a6a4a"], glow: "#fff0c8", stars: 0, secret: true, hero: true, how: "boss:5", acc: ["ohren", "fluegel"] },
+  { id: "h-schmied", name: "Schmiedemeister", stops: ["#ff7a1a", "#5a2a14", "#5a2a14"], glow: "#ff7a1a", stars: 0, secret: true, hero: true, how: "boss:6", acc: ["stirnband"] },
+  { id: "h-pharao", name: "Wüstenpharao", stops: ["#5fd0ff", "#f0e6c8", "#f0e6c8"], glow: "#5fd0ff", stars: 0, secret: true, hero: true, how: "boss:7", acc: ["krone"] },
+  { id: "h-schatten", name: "Schattenläufer", stops: ["#7a5ab0", "#2a1f48", "#2a1f48"], glow: "#7a5ab0", stars: 0, secret: true, hero: true, how: "boss:8", acc: ["kapuze"] },
+  { id: "h-polar", name: "Polarforscherin", stops: ["#e8f2ff", "#2fb7a0", "#2fb7a0"], glow: "#e8f2ff", stars: 0, secret: true, hero: true, how: "boss:9", acc: ["kapuze"] },
+  { id: "h-taucher", name: "Riff-Taucher", stops: ["#ffc84a", "#0e6a78", "#0e6a78"], glow: "#ffc84a", stars: 0, secret: true, hero: true, how: "boss:10", acc: ["schnorchel"] },
+  { id: "h-magier", name: "Prisma-Magier", stops: ["#5fd0ff", "#4a22a0", "#4a22a0"], glow: "#5fd0ff", stars: 0, secret: true, hero: true, how: "allboss", acc: ["zauberhut"] },
+  { id: "h-legende", name: "Goldene Legende", stops: ["#fff0a0", "#f0b83a", "#f0b83a"], glow: "#fff0a0", stars: 0, secret: true, hero: true, how: "never:Alle Räume mit allen Sternen", acc: ["krone", "umhang"] },
+  { id: "h-glutritter", name: "Glutritter", stops: ["#ff4a3a", "#44434b", "#44434b"], glow: "#ff4a3a", stars: 0, secret: true, hero: true, how: "coins:2000", acc: ["visier"] },
+  { id: "h-kristall", name: "Kristallwächter", stops: ["#d9f2fc", "#2f86b0", "#2f86b0"], glow: "#d9f2fc", stars: 0, secret: true, hero: true, how: "coins:2500", acc: ["hoerner"] },
+  { id: "h-astronaut", name: "Pixel-Astronaut", stops: ["#ff7a5a", "#e4e6f0", "#e4e6f0"], glow: "#ff7a5a", stars: 0, secret: true, hero: true, how: "coins:3000", acc: ["antenne", "visier"] },
+  { id: "h-robot", name: "Roboter R-16", stops: ["#ffc84a", "#6a7480", "#6a7480"], glow: "#ffc84a", stars: 0, secret: true, hero: true, how: "coins:1500", acc: ["antenne"] },
+  { id: "h-piratin", name: "Piratin", stops: ["#c0342c", "#f0e6c8", "#f0e6c8"], glow: "#c0342c", stars: 0, secret: true, hero: true, how: "coins:1200", acc: ["stirnband"] },
+  { id: "h-frosch", name: "Froschkostüm", stops: ["#ffb7c8", "#4f9446", "#4f9446"], glow: "#ffb7c8", stars: 0, secret: true, hero: true, how: "coins:800", acc: ["ohren"] },
+  { id: "h-drache", name: "Kleiner Drache", stops: ["#ffc84a", "#c0342c", "#c0342c"], glow: "#ffc84a", stars: 0, secret: true, hero: true, how: "coins:3500", acc: ["hoerner", "fluegel"] },
+  { id: "h-geist", name: "Geisterchen", stops: ["#c8cce4", "#e8eaf6", "#e8eaf6"], glow: "#c8cce4", stars: 0, secret: true, hero: true, how: "never:Neue Bedingung folgt", acc: ["heiligenschein"] },
+  { id: "h-speed", name: "Speedrunner", stops: ["#ffffff", "#e84030", "#e84030"], glow: "#ffffff", stars: 0, secret: true, hero: true, how: "never:10 Räume unter 30 s", acc: ["stirnband"] },
+  { id: "h-tagesheld", name: "Tagesheld", stops: ["#ff5a4a", "#ffc84a", "#ffc84a"], glow: "#ff5a4a", stars: 0, secret: true, hero: true, how: "never:30 Tagesrätsel", acc: ["muetze"] },
+  { id: "h-regenbogen", name: "Regenbogen-Kind", stops: ["#ffd166", "#ff4a3a", "#ff4a3a"], glow: "#ffd166", stars: 0, secret: true, hero: true, how: "never:Jede Farbe mischen", acc: ["stirnband"] },
+  { id: "h-kuerbis", name: "Kürbiskopf", stops: ["#ff7a1a", "#2a1a30", "#2a1a30"], glow: "#ff7a1a", stars: 0, secret: true, hero: true, how: "season:10", acc: ["kuerbis"] },
+  { id: "h-wichtel", name: "Weihnachtswichtel", stops: ["#c0342c", "#2f7a3a", "#2f7a3a"], glow: "#c0342c", stars: 0, secret: true, hero: true, how: "season:12", acc: ["muetze"] },
+  { id: "h-fee", name: "Frühlingsfee", stops: ["#ffb7d0", "#8fd86a", "#8fd86a"], glow: "#ffb7d0", stars: 0, secret: true, hero: true, how: "season:3-5", acc: ["fluegel", "heiligenschein"] },
+  { id: "h-spiegel", name: "Schattenkönig (Spiegel)", stops: ["#ff3a6a", "#0c0814", "#0c0814"], glow: "#ff3a6a", stars: 0, secret: true, hero: true, how: "never:Das Erste Prisma besiegen", acc: ["krone", "kapuze"] },
+  { id: "h-licht", name: "Lichtgestalt", stops: ["#5fd0ff", "#ffffff", "#ffffff"], glow: "#5fd0ff", stars: 0, secret: true, hero: true, how: "never:100 % des Spiels", acc: ["heiligenschein", "fluegel"] },
   // Nur über den Code „halloween“, bis dahin in der Auswahl unsichtbar
   { id: 'halloween', name: 'Halloween', stops: ['#2a1a30', '#e8701a', '#7a2f0a'], glow: '#ff8a2a', stars: 0, secret: true },
 ];
+export const ownedHeroes = () => getSettings().heroSkins || [];
+export const buyHero = (id) => updateSettings({ heroSkins: [...ownedHeroes(), id] });
 export const hasHalloween = () => !!getSettings().halloween;
 export function setHalloween(on) {
   updateSettings({ halloween: on });
