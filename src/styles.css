@@ -1357,3 +1357,11 @@ a.tm-version { display: block; text-decoration: underline; }
 .sg { box-sizing: border-box; min-width: 0; }
 .sg-grid { box-sizing: border-box; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow-x: hidden; }
 .sg-tile { min-width: 0; }
+/* Nie seitlich scrollen: alles passt sich der Breite an */
+html, body { max-width: 100%; overflow-x: hidden; }
+#view, .tm, .tm-ui, .tm-ui > *, .rd, .sg, .shop, .lv, .kit, .parch { box-sizing: border-box; max-width: 100%; min-width: 0; }
+.tm-ui * { min-width: 0; }
+.tm-ui img, .tm-ui canvas:not(.tm-scene) { max-width: 100%; }
+.kit-row { flex-wrap: wrap; }
+.wbtn, .tm-plank, .set-row span, .rname, .rd-text b { overflow-wrap: anywhere; }
+.set-row { flex-wrap: wrap; }

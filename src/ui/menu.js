@@ -150,7 +150,7 @@ function mainPage(el) {
         if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn mm-tile locked" aria-disabled="true" title="${esc(m.info)}">${icon('lock')}<span>${m.name}</span><small>ab ${m.need} Räumen</small></span>`;
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
         return `<a class="wbtn mm-tile${glow ? ' glow' : ''}" href="${href}">${icon(MODE_ICON[m.id])}<span>${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</span></a>`;
-      }).join('')}<a class="wbtn mm-tile" href="#/menu/forge">${icon('sword')}<span>Schmiede</span></a></nav>
+      }).join('')}<a class="wbtn mm-tile" href="#/menu/forge">${icon('sword')}<span>Schmiede</span></a><a class="wbtn mm-tile" href="#/arena/endlos/1">${icon('map')}<span>Endlos</span></a></nav>
       <div class="mm-tools">
         <a class="wbtn sm" href="#/menu/code">${icon('key')}<span>Code</span></a>
         <a class="wbtn sm" href="#/menu/settings">${icon('gear')}<span>Optionen</span></a>

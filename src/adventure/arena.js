@@ -5,7 +5,8 @@ import { DIRS } from '../game/engine.js';
 import { PixelRenderer, PIXEL_THEMES, T } from '../game/pixelRender.js';
 import { CHAPTERS, PUSH_LEVELS } from '../game/pushLevels.js';
 import { WORLDS } from '../game/worlds.js';
-import { addCoins, hat } from '../game/inventory.js';
+import { addCoins, getInv, hat } from '../game/inventory.js';
+import { getSettings, updateSettings } from '../settings.js';
 import { markFound } from '../game/inventory.js';
 import { magicColor, hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
 import { drawMinion, drawBoss } from '../game/monsters.js';
@@ -16,8 +17,19 @@ import { prefersReducedMotion } from '../settings.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 
-const ROWS = ['###################', '#.................#', '#.................#', '#...#.........#...#', '#.................#', '#.................#', '#.................#', '#.................#', '#.................#', '#...#.........#...#', '#.................#', '#.................#', '###################'];
+let ROWS = [],
+  BASE = ['###################', '#.................#', '#.................#', '#...#.........#...#', '#.................#', '#.................#', '#.................#', '#.................#', '#.................#', '#...#.........#...#', '#.................#', '#.................#', '###################'];
+ROWS = BASE;
 const W = 19, H = 13;
+// Endlos-Modus: jeder Raum ein neuer Grundriss mit Möbeln als Deckung; Trupp und Herzen laufen mit
+const RUN = { hp: 0, army: 0 };
+function genRows(depth) {
+  const g = BASE.map((r, y) => [...(y && y < H - 1 ? `#${'.'.repeat(W - 2)}#` : r)]);
+  let s = depth * 7919 + 13;
+  const rnd = (n) => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return (s >>> 16) % n; };
+  for (let k = 0; k < 9; k++) { const x = 3 + rnd(13), y = 1 + rnd(11), wide = rnd(2); if (y !== 4 && y !== 6) { g[y][x] = '#'; if (wide) g[y][x + 1] = '#'; } }
+  return g.map((r) => r.join(''));
+}
 const STEP_MS = 135, SWING_MS = 450, MAGIC_MS = 8000, MODES = ['Rundumschlag', 'Stoß', 'Magie'], SAFE_MS = 950;
 const KEYS = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3, W: 0, D: 1, S: 2, A: 3 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -25,7 +37,9 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 const wall = (x, y) => ROWS[y]?.[x] !== '.';
 
 export function mountArena(root, params) {
-  const ci = Math.max(0, Math.min(CHAPTERS.length - 1, parseInt(params[0] || '0', 10) || 0));
+  const endless = params[0] === 'endlos', depth = endless ? Math.max(1, parseInt(params[1] || '1', 10)) : 0;
+  ROWS = endless ? genRows(depth) : BASE;
+  const ci = endless ? depth % CHAPTERS.length : Math.max(0, Math.min(CHAPTERS.length - 1, parseInt(params[0] || '0', 10) || 0));
   const world = worldOf(ci), foe = foeOf(world), theme = PIXEL_THEMES[world] || PIXEL_THEMES.default;
   const touch = matchMedia('(pointer: coarse)').matches;
   const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: {}, rows: ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)) });
@@ -34,7 +48,7 @@ export function mountArena(root, params) {
   const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), modes = MODES.filter((_, i) => i < 2 || hasMagic()), maxHp = stat('armor'), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
   const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(340, 620 - ci * 26) * (touch ? 1.3 : 1)), windMs = touch ? 700 : 430;
-  const mini = params[1] === 'mini', bossHp = mini ? 10 + ci * 3 : 30 + ci * 8; // Miniboss: kurzer Kampf ohne Ultra
+  const mini = endless ? depth % 5 === 0 : params[1] === 'mini', bossHp = mini ? 10 + ci * 3 : 30 + ci * 8; // Miniboss: kurzer Kampf ohne Ultra
 
   document.body.classList.add('ingame');
   document.body.dataset.world = world;
@@ -54,21 +68,22 @@ export function mountArena(root, params) {
   const $ = (s) => root.querySelector(s);
   const canvas = $('#board'), ctx = canvas.getContext('2d');
 
-  let dying = 0, checkpoint = 0, mode = 0, magicAt = 0, shots = [], hero, mobs, boss, tele, phase, held, paused, running = true, shake = 0, view = null, sparks;
+  let allies = [], dying = 0, checkpoint = 0, mode = 0, magicAt = 0, shots = [], hero, mobs, boss, tele, phase, held, paused, running = true, shake = 0, view = null, sparks;
   const reduced = prefersReducedMotion();
 
   function spawnMobs(n) {
     const spots = [[17, 1], [17, 11], [9, 1], [9, 11], [17, 6], [12, 6]];
     for (let k = 0; k < n; k++) {
       const [x, y] = spots[k % spots.length];
-      if (!(mobs.some((m) => m.x === x && m.y === y) || (hero.x === x && hero.y === y))) mobs.push({ x, y, hp: minionHp, next: performance.now() + 500 + k * 120, wind: 0, hit: 0, struck: -1e9 });
+      if (!wall(x, y) && !(mobs.some((m) => m.x === x && m.y === y) || (hero.x === x && hero.y === y))) mobs.push({ x, y, hp: minionHp, next: performance.now() + 500 + k * 120, wind: 0, hit: 0, struck: -1e9 });
     }
   }
   function start() {
-    hero = { x: 1, y: 4, dir: 1, hp: maxHp, safe: 0, next: 0, swing: 0, moved: 0 };
+    allies = Array.from({ length: endless ? RUN.army : 0 }, (_, i) => ({ x: 1, y: i % 2 ? 5 : 3, next: 0, hitAt: 0 }));
+    hero = { x: 1, y: 4, dir: 1, hp: endless && RUN.hp ? RUN.hp : maxHp, safe: 0, next: 0, swing: 0, moved: 0 };
     mobs = []; tele = []; shots = []; sparks = []; boss = null; phase = 1;
     setMusic(world); held = null; paused = false;
-    spawnMobs(touch ? 2 : 3);
+    spawnMobs(endless ? Math.min(6, 2 + Math.ceil(depth / 2)) : touch ? 2 : 3);
     $('#wave').textContent = 'WELLE 1/2'; $('#bossbar').hidden = true; $('#panel').hidden = true;
     showHearts(); showMode();
     canvas.focus();
@@ -181,6 +196,14 @@ export function mountArena(root, params) {
         }
       }
     }
+    for (const a of allies) { // Trupp: läuft zum nächsten Gegner und schlägt zu
+      if (now < a.next || !mobs.length) continue;
+      a.next = now + 420;
+      const m = [...mobs].sort((p, q) => Math.abs(p.x - a.x) + Math.abs(p.y - a.y) - Math.abs(q.x - a.x) - Math.abs(q.y - a.y))[0];
+      if (Math.abs(m.x - a.x) + Math.abs(m.y - a.y) === 1) { a.hitAt = now; m.hp -= 1; m.hit = now; if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } continue; }
+      const dx = Math.sign(m.x - a.x), dy = Math.sign(m.y - a.y);
+      if (dx && !blocked(a.x + dx, a.y)) a.x += dx; else if (dy && !blocked(a.x, a.y + dy)) a.y += dy;
+    }
     for (let i = tele.length - 1; i >= 0; i--) if (now >= tele[i].at) {
       const z = tele.splice(i, 1)[0];
       z.then?.();
@@ -211,6 +234,7 @@ export function mountArena(root, params) {
       }
     } else if (!mobs.length) {
       phase++;
+      if (endless && !mini) { win(); return; }
       if (phase === 2 && !mini) { spawnMobs(5); $('#wave').textContent = 'WELLE 2/2'; } else {
         boss = { x: 13, y: 5, hp: bossHp, next: now + 1600, turn: 0, hit: 0, stage: 1, walk: now + 2000, ultra: mini ? Infinity : now + 7000, jump: 0 };
         $('#wave').textContent = 'BOSS'; $('#bossbar').hidden = false; $('#bosshp').style.width = '100%';
@@ -241,13 +265,32 @@ export function mountArena(root, params) {
   }
   function panel(html) { $('#panel-card').innerHTML = html; $('#panel').hidden = false; }
   function lose() {
+    if (endless) {
+      phase = 0; held = null; tele = []; shots = []; RUN.hp = 0; RUN.army = 0;
+      const best = Math.max(getSettings().endlessBest || 0, depth); updateSettings({ endlessBest: best });
+      panel(`<h2 class="pixel">GEFALLEN</h2><p class="pause-hint">Raum ${depth} erreicht. Bestleistung: Raum ${best}.</p><a class="btn btn-primary" href="#/arena/endlos/1">Neuer Lauf</a><a class="btn" href="#/menu">Hauptmenü</a>`);
+      return;
+    }
     phase = 0; held = null; tele = []; shots = [];
     panel(`<h2 class="pixel">BESIEGT</h2><p class="pause-hint">${esc(foe.boss)} war stärker. Verbessere dein Schwert in der Schmiede oder versuche es noch einmal.</p>
       <button class="btn btn-primary" id="p-again">Nochmal</button><a class="btn" href="#/menu/shop">Zur Schmiede</a><a class="btn" href="#/menu/chapter/${ci}">Zur Welt</a>`);
     $('#p-again').addEventListener('click', start); $('#p-again').focus();
   }
   function win() {
-    phase = 0; held = null; tele = []; shots = []; mobs = []; setMusic(world); shake = performance.now() + 400;
+    phase = 0; held = null; tele = []; shots = []; mobs = [];
+    if (endless) {
+      RUN.hp = hero.hp; addCoins(5 + depth); play('exitopen');
+      const show = () => {
+        const price = 40 + RUN.army * 30;
+        panel(`<h2 class="pixel">RAUM ${depth} GESCHAFFT</h2><p class="pause-hint">+${5 + depth} Münzen · Münzen ${getInv().coins} · Trupp ${RUN.army}</p>
+          <button class="btn" id="p-buy" ${getInv().coins < price ? 'disabled' : ''}>Soldat anwerben (${price})</button><button class="btn" id="p-heal" ${getInv().coins < 30 || RUN.hp >= maxHp ? 'disabled' : ''}>Herz heilen (30)</button>
+          <a class="btn btn-primary" href="#/arena/endlos/${depth + 1}" id="p-next">Nächster Raum</a><a class="btn" href="#/menu">Lauf beenden</a>`);
+        $('#p-buy').addEventListener('click', () => { addCoins(-price); RUN.army++; play('target', 7); show(); });
+        $('#p-heal').addEventListener('click', () => { addCoins(-30); RUN.hp++; play('target', 2); show(); });
+      };
+      show(); return;
+    }
+    setMusic(world);
     if (mini) {
       addCoins(20 + ci * 5); markFound(params[3], 'mini'); play('exitopen');
       panel(`<h2 class="pixel">WÄCHTER BESIEGT!</h2><p class="pause-hint">+${20 + ci * 5} Münzen.</p><a class="btn btn-primary" href="#/adv/${params[2]}" id="p-next">Weiter</a>`);
@@ -365,6 +408,7 @@ export function mountArena(root, params) {
       const left = (z.at - now) / 900, on = left < 0.4 ? Math.floor(now / 70) % 2 : 1;
       for (const [x, y] of z.cells) { r(x * T + 1, y * T + 1, T - 2, T - 2, on ? 'rgba(255,50,30,0.55)' : 'rgba(255,190,60,0.5)'); r(x * T + 1, y * T + 1, T - 2, 1, '#ffd166'); }
     }
+    for (const a of allies) drawMinion(r, 'wisp', ['#7dff6a', '#2f7a3a'], a.x * T, a.y * T, t, { bite: now - a.hitAt < 150 });
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
     if (boss && !dying) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
