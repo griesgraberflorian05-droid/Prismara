@@ -6,11 +6,13 @@ import { isSolved, bestMoves, starsFor } from '../game/progress.js';
 import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, GOALS, CAPES, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
+import { drawSwordIcon } from '../game/monsters.js';
+const shadeHex = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (c) => Math.max(0, Math.min(255, Math.round(c + (k > 0 ? (255 - c) * k : c * k)))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
 import { CHANGELOG } from '../game/changelog.js';
 import * as fx from '../game/fx.js';
 const fxNs = fx;
 import { TEXTURES, texture } from '../game/textures.js';
-import { swordTint, setSwordTint, MAGIC_COLORS, magicColor, ownsMagic, pickMagic, PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
+import { swordTint, setSwordTint, hasMagic, SPELLS, spellSlots, setSlots, spellOf, presets, savePreset, MAGIC_COLORS, magicColor, ownsMagic, pickMagic, PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
@@ -98,13 +100,14 @@ export function mountMenu(root, params = []) {
   else if (page === 'shop') shopPage(ui);
   else if (page === 'forge') forgePage(ui);
   else if (page === 'radio') radioPage(ui);
+  else if (page === 'magie') magicPage(ui);
   else if (page === 'echtshop') realShopPage(ui);
   else if (page === 'updates') updatesPage(ui);
   else if (page === 'galerie') galleryPage(ui);
   else if (page === 'settings') settingsPage(ui);
   else if (page === 'code') codePage(ui);
   else if (page === 'codes') myCodesPage(ui);
-  else { ui.classList.add('tm-main', 'mm'); mainPage(ui); }
+  else { ui.classList.add('tm-main', 'mm'); if (getSettings().menuStyle === 'b') ui.classList.add('mm2'); if (getSettings().menuStyle === 'c') ui.classList.add('mm3'); mainPage(ui); }
 
   const onKey = (e) => {
     if (e.key === 'Escape' && page !== 'main') location.hash = page === 'chapter' ? `#/menu/chapters/${params[1] || 0}` : page === 'codes' ? '#/menu/code' : '#/menu';
@@ -153,25 +156,16 @@ function mainPage(el) {
         if (!isUnlocked(m.id, t.solved)) return `<span class="wbtn mm-tile locked" aria-disabled="true" title="${esc(m.info)}">${icon('lock')}<span>${m.name}</span><small>ab ${m.need} Räumen</small></span>`;
         const glow = (m.id === 'daily' && !daily) || freshModes.has(m.id);
         return `<a class="wbtn mm-tile${glow ? ' glow' : ''}" href="${href}">${icon(MODE_ICON[m.id])}<span>${m.name}${m.id === 'daily' && daily ? ' ✓' : ''}</span></a>`;
-      }).join('')}<a class="wbtn mm-tile" href="#/menu/forge">${icon('sword')}<span>Schmiede</span></a><a class="wbtn mm-tile" href="#/arena/endlos/1">${icon('map')}<span>Endlos</span></a></nav>
+      }).join('')}<a class="wbtn mm-tile" href="#/menu/forge">${icon('sword')}<span>Schmiede</span></a><a class="wbtn mm-tile" href="#/arena/endlos/1">${icon('map')}<span>Endlos</span></a><a class="wbtn mm-tile" href="#/menu/magie">${icon('gem')}<span>Magie</span></a></nav>
       <div class="mm-tools">
         <a class="wbtn sm" href="#/menu/echtshop">${icon('gem')}<span>Echtshop</span></a>
         <a class="wbtn sm" href="#/menu/code">${icon('key')}<span>Code</span></a>
         <a class="wbtn sm" href="#/menu/settings">${icon('gear')}<span>Optionen</span></a>
-        <button class="wbtn sm" id="upd" type="button">${icon('reset')}<span>Update</span></button>
-        <a class="wbtn sm" href="#/lab">${icon('brain')}<span>Lab</span></a>
       </div>
       <a class="tm-version" href="#/menu/updates">Version ${VERSION === 'dev' ? 'lokal' : LABEL} · Updates</a><a class="tm-version" href="#/menu/galerie">Galerie</a>
     </div>`;
   const logo = logoCanvas(); logo.className = isAdmin() ? 'logo admin' : 'logo'; // Admin-Modus: rotes Logo logo.setAttribute('aria-hidden', 'true');
   el.querySelector('.logo-h1').prepend(logo);
-  el.querySelector('#upd').addEventListener('click', async (e) => {
-    const b = e.currentTarget.querySelector('span');
-    if (VERSION === 'dev') { b.textContent = 'Lokal'; return; }
-    b.textContent = 'Prüfe …';
-    const info = await checkUpdate();
-    if (info) { b.textContent = 'Lädt …'; applyUpdate(info.version); } else { b.textContent = '✓ Aktuell'; play('ui'); }
-  });
   el.querySelector('#play').focus();
   el.querySelector('#play').addEventListener('click', () => play('play'));
 }
@@ -181,6 +175,7 @@ function codePage(el) {
   const applyCode = (text) => {
     const code = redeem(text);
     if (code === 'resetall') { play('bump'); confirmReset(); return; }
+    if (code === 'lab') { location.hash = '#/lab'; return; }
     if (code === 'function') { play('ui'); askPassword(); return; }
     if (code === 'used') { play('bump'); render('Diesen Code hast du schon eingelöst.'); return; }
     if (code === 'moneten') { play('chapter'); render('250 Münzen gehören dir!'); return; }
@@ -286,14 +281,15 @@ function settingsPage(el) {
         <div class="set-row vol-box">${volumeHtml()}</div>
         <div class="set-row"><span>🌀 Bewegung reduzieren</span><button class="wbtn sm" id="motion" aria-pressed="${!!rm}">${rm === null ? 'SYSTEM' : rm ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>✨ Grafik: <b id="gfx-v">${getSettings().gfx ?? 100} %</b></span><input id="gfx" type="range" min="0" max="100" step="10" value="${getSettings().gfx ?? 100}" aria-label="Menge an Effekten und Partikeln"></div>
+        <div class="set-row"><span>🏠 Hauptmenü</span><button class="wbtn sm" id="mstyle">${{ b: 'FREIE SICHT', c: 'MITTE' }[getSettings().menuStyle] || 'SPALTE'}</button></div>
         <div class="set-row"><span>🛡 Boss-Hilfe</span><button class="wbtn sm" id="bh" aria-pressed="${!!getSettings().bossHelp}">${getSettings().bossHelp ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📳 Vibration</span><button class="wbtn sm" id="vib" aria-pressed="${getSettings().vibrate !== false}">${getSettings().vibrate !== false ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📖 Tutorial (Lehrzimmer)</span><a class="wbtn sm" href="#/adv/tutorial">NOCHMAL SPIELEN</a></div>
-        <div class="set-row"><span>◈ Prismara Lab</span><a class="wbtn sm" href="#/lab">ÖFFNEN</a></div>
       </div>`;
     el.querySelector('#snd').addEventListener('click', () => { toggleMute(); play('ui'); render(); el.querySelector('#snd').focus(); });
     bindVolume(el);
     el.querySelector('#gfx').addEventListener('input', (e) => { updateSettings({ gfx: +e.target.value }); el.querySelector('#gfx-v').textContent = `${e.target.value} %`; });
+    el.querySelector('#mstyle').addEventListener('click', () => { updateSettings({ menuStyle: { a: 'b', b: 'c', c: 'a' }[getSettings().menuStyle || 'a'] }); play('ui'); render(); });
     el.querySelector('#bh').addEventListener('click', () => { updateSettings({ bossHelp: !getSettings().bossHelp }); play('ui'); render(); });
     el.querySelector('#vib').addEventListener('click', () => { updateSettings({ vibrate: getSettings().vibrate === false }); play('ui'); render(); });
     el.querySelector('#motion').addEventListener('click', () => {
@@ -436,13 +432,16 @@ function forgePage(el) {
         <div id="sel"></div>
       </div>`;
     el.querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { if (upgrade(b.dataset.up)) play('target', 7); render('Die Klinge glüht – Verbesserung geschafft!'); }));
-    const swatch = (color) => (cv) => { const g = cv.getContext('2d'); for (let i = 0; i < 14; i++) { g.fillStyle = color; g.fillRect(18 - i, 4 + i, 3, 3); } g.fillStyle = '#6b4426'; g.fillRect(4, 19, 5, 5); g.fillRect(2, 16, 9, 2); };
+    const swatch = (color, opt = {}) => (cv) => {
+      const g = cv.getContext('2d'), cur2 = swordSkin();
+      drawSwordIcon(g, 4, 6, { blade: color, edge: opt.edge || shadeHex(color, 0.45), dark: shadeHex(color, -0.4), guard: opt.guard, grip: opt.grip });
+      void cur2;
+    };
     selectGrid(el.querySelector('#sel'), {
       title: 'Ausrüstung', action: 'Ausrüsten',
       items: [
-        ...Object.entries(PARTS).flatMap(([slot, g]) => g.list.map((p) => ({ id: p.id, name: p.name, sub: `${g.name}: ${p.v} ${g.unit}`, owned: ownsPart(p.id), price: p.price, active: partOf(slot).id === p.id, paint: swatch(['#8a8794', '#c9963f', '#e0342c', '#ffd166'][g.list.indexOf(p)]), pick: () => pickPart(slot, p.id) }))),
-        ...shownSkins().map((c) => ({ id: c.id, name: `Skin ${c.name}`, sub: 'Waffen-Skin', owned: ownsSkin(c.id), price: c.price, active: swordSkin().id === c.id, paint: swatch((swordTint(c.id) || [c.blade])[0]), tint: { labels: ['Klinge', 'Schneide'], get: () => swordTint(c.id) || [c.blade, c.edge], set: (t) => setSwordTint(c.id, t) }, pick: () => pickSkin(c.id) })),
-        ...MAGIC_COLORS.map((c) => ({ id: c.id, name: `Magie ${c.name}`, sub: 'Farbe der Lichtnova', owned: ownsMagic(c.id), price: c.price, active: magicColor().id === c.id, paint: swatch(c.color), pick: () => pickMagic(c.id) })),
+        ...Object.entries(PARTS).flatMap(([slot, g]) => g.list.map((p) => ({ id: p.id, name: p.name, sub: `${g.name}: ${p.v} ${g.unit}`, owned: ownsPart(p.id), price: p.price, active: partOf(slot).id === p.id, paint: slot === 'blade' ? swatch(['#8a7a6a', '#c0c4d0', '#e0342c', '#ffd166'][g.list.indexOf(p)]) : slot === 'guard' ? swatch('#8a8794', { guard: ['#8a5a32', '#b0b4c0', '#ffd166'][g.list.indexOf(p)] }) : swatch('#8a8794', { grip: ['#6b4426', '#3f6fb0', '#7fe0ff'][g.list.indexOf(p)] }), pick: () => pickPart(slot, p.id) }))),
+        ...shownSkins().map((c) => ({ id: c.id, name: `Skin ${c.name}`, sub: 'Waffen-Skin', owned: ownsSkin(c.id), price: c.price, active: swordSkin().id === c.id, paint: swatch((swordTint(c.id) || [c.blade])[0], { edge: (swordTint(c.id) || [c.blade, c.edge])[1], grip: c.grip }), tint: { labels: ['Klinge', 'Schneide'], get: () => swordTint(c.id) || [c.blade, c.edge], set: (t) => setSwordTint(c.id, t) }, pick: () => pickSkin(c.id) })),
       ],
       after: () => render(),
     });
@@ -552,7 +551,7 @@ function selectGrid(el, cfg) {
     el.querySelectorAll('.sg-tint input').forEach((i) => i.addEventListener('change', () => { cur.tint.set([el.querySelector('#t0').value, el.querySelector('#t1').value]); render(); }));
     el.querySelector('#sg-info').addEventListener('click', () => { info = !info; render(); });
     el.querySelector('#sg-go').addEventListener('click', () => {
-      if (!cur.pick()) { play('bump'); return; }
+      if (!cur.pick()) { play('bump'); location.hash = '#/menu/echtshop'; return; }
       play('chapter');
       if (cfg.after) cfg.after(); else { cfg.items.forEach((i) => { i.active = i === cur; }); cur.owned = true; render(); }
     });
@@ -581,7 +580,7 @@ function wardrobePage(el, msg = '') {
   };
   el.querySelector('#spin').addEventListener('click', () => {
     const have = getSpins();
-    if (!have && !isAdmin() && getInv().coins < SPIN_PRICE) { play('bump'); wardrobePage(el, `Keine Drehung. Eine kostet ${SPIN_PRICE} Münzen, mehr gibt es im Echtshop.`); return; }
+    if (!have && !isAdmin() && getInv().coins < SPIN_PRICE) { play('bump'); location.hash = '#/menu/echtshop'; return; }
     const c = rollSkin();
     if (!c) { wardrobePage(el, 'Du hast schon alle Skins!'); return; }
     if (have) addSpins(-1); else if (!isAdmin()) addCoins(-SPIN_PRICE);
@@ -618,28 +617,55 @@ function wardrobePage(el, msg = '') {
 // ---------- Echtshop: Testkauf, es fließt nie Geld und es werden keine Zahlungsdaten abgefragt ----------
 function realShopPage(el) {
   const PACKS = [
-    { name: '1 000 Münzen', price: '0,99 €', give: () => addCoins(1000) }, { name: '6 000 Münzen', price: '4,99 €', give: () => addCoins(6000) },
-    { name: '5 Drehungen', price: '1,99 €', give: () => addSpins(5) }, { name: '25 Drehungen', price: '7,99 €', give: () => addSpins(25) },
-    { name: 'Skin Kleiner Drache', price: '2,99 €', give: () => buyHero('h-drache') }, { name: 'Starterpaket', price: '3,99 €', give: () => { addCoins(2500); addSpins(5); } },
+    { name: '200 Münzen', price: '0,99 €', give: () => addCoins(200) }, { name: '1 200 Münzen', price: '4,99 €', give: () => addCoins(1200) },
+    { name: '5 Drehungen', price: '2,99 €', give: () => addSpins(5) }, { name: '25 Drehungen', price: '11,99 €', give: () => addSpins(25) },
+    { name: 'Skin Kleiner Drache', price: '2,99 €', give: () => buyHero('h-drache') }, { name: 'Starterpaket', price: '3,99 €', give: () => { addCoins(600); addSpins(3); } },
   ];
   const render = (done = '') => {
     el.innerHTML = `
       ${head('#/menu', 'Echtshop', `${icon('coin')} ${getInv().coins} · ${getSpins()}x`)}
       <div class="rd">${done ? `<p class="code-msg sg-won">${esc(done)}</p>` : ''}
         <div class="rs-grid">${PACKS.map((p, i) => `<button class="parch rs-pack" type="button" data-p="${i}"><b>${esc(p.name)}</b><span>${p.price}</span></button>`).join('')}</div>
-        <p class="tm-tip">Testmodus: Es wird kein echtes Geld abgebucht.</p></div>`;
+</div>`;
     el.querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () => checkout(PACKS[+b.dataset.p])));
   };
   const checkout = (p) => {
     const o = document.createElement('div'); o.className = 'pay';
-    o.innerHTML = `<div class="pay-card"><h2>Bestellung prüfen</h2><div class="pay-row"><span>${esc(p.name)}</span><b>${p.price}</b></div><div class="pay-row"><span>Gesamt</span><b>${p.price}</b></div>
-      <small>Testkauf ohne echte Zahlung</small><button class="pay-go" type="button">Jetzt kaufen</button><button class="pay-no" type="button">Abbrechen</button></div>`;
+    o.innerHTML = `<div class="pay-card"><h2>Bestellung prüfen</h2><div class="pay-row"><span>${esc(p.name)}</span><b>${p.price}</b></div><div class="pay-row"><span>Gesamt</span><b>${p.price}</b></div><small>Testkauf ohne echte Zahlung</small>
+      <button class="pay-go" type="button">Jetzt kaufen</button><button class="pay-no" type="button">Abbrechen</button></div>`;
     document.body.append(o);
     o.querySelector('.pay-no').addEventListener('click', () => o.remove());
     o.querySelector('.pay-go').addEventListener('click', (e) => {
       e.target.textContent = 'Wird bearbeitet …'; e.target.disabled = true;
       setTimeout(() => { p.give(); o.remove(); play('chapter'); render(`Danke! ${p.name} gehört dir.`); }, 1300);
     });
+  };
+  render();
+}
+
+// ---------- Magie: drei Zauberplätze, Presets, Farben ----------
+function magicPage(el) {
+  let slot = 0;
+  const render = () => {
+    const slots = spellSlots();
+    el.innerHTML = `
+      ${head('#/menu', 'Magie', `${icon('coin')} ${getInv().coins}`)}
+      <div class="sg">
+        <h2 class="sg-title">Deine Zauber</h2>
+        ${hasMagic() ? '' : '<p class="sg-info">Magie wird mit dem ersten besiegten Boss frei.</p>'}
+        <div class="mg-slots">${slots.map((id, i) => `<button class="mg-slot${i === slot ? ' on' : ''}" type="button" data-slot="${i}"><small>Platz ${i + 1}</small><b>${esc(spellOf(id).name)}</b></button>`).join('')}</div>
+        <div class="mg-list">${SPELLS.map((sp) => `<button class="mg-spell${slots[slot] === sp.id ? ' on' : ''}" type="button" data-spell="${sp.id}"><b>${esc(sp.name)}</b><small>${esc(sp.info)} ${sp.cd / 1000} s Pause</small></button>`).join('')}</div>
+        <h2 class="sg-title">Presets</h2>
+        <div class="mg-pre">${presets().map((p, i) => `<div><b>Preset ${i + 1}</b><small>${p ? p.map((x) => esc(spellOf(x).name)).join(' · ') : 'leer'}</small><span><button class="wbtn sm" type="button" data-load="${i}" ${p ? '' : 'disabled'}>Laden</button><button class="wbtn sm" type="button" data-save="${i}">Speichern</button></span></div>`).join('')}</div>
+        <h2 class="sg-title">Farbe</h2>
+        <div class="mg-col">${MAGIC_COLORS.map((c) => `<button class="kit-swatch${magicColor().id === c.id ? ' active' : ''}" type="button" data-col="${c.id}"><span class="ks-dot" style="background:${c.color}"></span><small>${esc(c.name)}${ownsMagic(c.id) ? '' : ` ${c.price}`}</small></button>`).join('')}</div>
+      </div>`;
+    const on = (sel, fn) => el.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => { fn(b); play('ui'); render(); }));
+    on('[data-slot]', (b) => { slot = +b.dataset.slot; });
+    on('[data-spell]', (b) => { const s = spellSlots(); s[slot] = b.dataset.spell; setSlots(s); });
+    on('[data-load]', (b) => setSlots(presets()[+b.dataset.load]));
+    on('[data-save]', (b) => savePreset(+b.dataset.save));
+    on('[data-col]', (b) => pickMagic(b.dataset.col));
   };
   render();
 }
@@ -664,7 +690,7 @@ function shopPage(el) {
           const sold = it.permanent && have;
           return `<li class="parch shop-item${sold ? ' sold' : ''}"><span class="si-icon">${it.icon}</span>
             <span class="si-text"><b>${esc(it.name)}</b><small>${esc(it.info)}</small>${it.permanent ? '<em>dauerhaft</em>' : `<em>im Beutel: ${have}</em>`}</span>
-            <button class="wbtn sm" data-buy="${id}" ${sold || (!isAdmin() && inv.coins < it.price) ? 'disabled' : ''}>${sold ? '✓ gekauft' : isAdmin() ? 'GRATIS' : `🪙 ${it.price}`}</button></li>`;
+            <button class="wbtn sm" data-buy="${id}" ${sold ? 'disabled' : ''}>${sold ? '✓ gekauft' : isAdmin() ? 'GRATIS' : `🪙 ${it.price}`}</button></li>`;
         }).join('')}</ul>
         <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">🎩</span><p>Der Hutmacher nimmt keine Münzen – nur Kristalle 💎 aus den Räumen. Du hast <b>${fragmentCount() - crystalsSpent()}</b> übrig.</p></div>
         <ul class="hat-list">${Object.entries(HATS).map(([id, h]) => {
@@ -681,6 +707,7 @@ function shopPage(el) {
     el.querySelectorAll('[data-wear]').forEach((b) => b.addEventListener('click', () => { wearHat(b.dataset.wear || null); play('ui'); render(); }));
     el.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
       const id = b.dataset.buy;
+      if (!ITEMS[id].permanent || !getInv().items[id]) { if (!isAdmin() && getInv().coins < ITEMS[id].price) { location.hash = '#/menu/echtshop'; return; } } // zu wenig Münzen: ab in den Echtshop
       if (buy(id)) { play('target', 7); render(`${ITEMS[id].icon} ${ITEMS[id].name} – gute Wahl! ${ITEMS[id].permanent ? 'Wirkt ab sofort.' : 'Benutze ihn im Raum mit der Inventarleiste.'}`); }
       else { play('bump'); render('Da fehlen dir leider noch ein paar Münzen.'); }
       el.querySelector(`[data-buy="${id}"]`)?.focus();

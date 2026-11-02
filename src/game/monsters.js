@@ -1,6 +1,13 @@
 // Pixel-Zeichnungen der Gegner. r(x, y, w, h, Farbe) zeichnet ein Rechteck, also passt alles sowohl in
 // den Raum-Renderer (Teaser) als auch in die Arena. Kleine Wesen füllen ein Feld (16 px), Bosse zwei mal zwei.
 
+// Schwert-Sprite nach klassischem Pixel-Aufbau: dunkle Kontur, drei Klingentöne, Parier, Griff, Knauf
+const SWORD = ['.............ooo', '............oeeo', '...........oeebo', '..........oeebdo', '.........oeebdo.', '........oeebdo..', '.......oeebdo...', '..o...oeebdo....', '.ogo.oeebdo.....', '.oggoeebdo......', '..oggebdo.......', '...ogggo........', '..ohoggo........', '.ohoo.oo........', 'oppo............', '.oo.............'];
+export function drawSwordIcon(g, x0, y0, { blade, edge, dark = blade, guard = '#c9963f', grip = '#6b4426' }) {
+  const col = { o: '#17121f', e: edge, b: blade, d: dark, g: guard, h: grip, p: guard };
+  SWORD.forEach((row, y) => [...row].forEach((c, x) => { if (col[c]) { g.fillStyle = col[c]; g.fillRect(x0 + x, y0 + y, 1, 1); } }));
+}
+
 const EYE = '#fff4d0', PUPIL = '#120a1c';
 
 /** Kleines Wesen auf Feld-Pixel (px, py). flash = weiß aufblitzen, warn = holt zum Schlag aus. */

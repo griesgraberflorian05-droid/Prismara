@@ -9,10 +9,10 @@ import { addCoins, getInv, hat } from '../game/inventory.js';
 import { getSettings, updateSettings } from '../settings.js';
 import { markFound } from '../game/inventory.js';
 import { addSpins } from '../game/skins.js';
-import { magicColor, hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
+import { spellSlots, spellOf, magicColor, hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
 import { drawMinion, drawBoss } from '../game/monsters.js';
 import { play, bossSound } from '../game/sound.js';
-import { FX, hitstop, stopped, flash as fxFlash, sparks as sparksFx, ring as ringFx, drawFx } from '../game/fx.js';
+import { FX, hitstop, stopped, flash as fxFlash, sparks as sparksFx, ring as ringFx, bolt as boltFx, drawFx } from '../game/fx.js';
 import { setMusic } from '../game/music.js';
 import { prefersReducedMotion } from '../settings.js';
 import { transitionTo } from '../ui/transition.js';
@@ -46,7 +46,7 @@ export function mountArena(root, params) {
   const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: {}, rows: ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)) });
   const room = createPushState(level), tr = pushTrace(room);
   const pix = new PixelRenderer(level);
-  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), modes = MODES.filter((_, i) => i < 2 || hasMagic()), help = !!getSettings().bossHelp, maxHp = stat('armor') + (help ? 2 : 0), reach = stat('reach'), skin = swordSkin();
+  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), slots = spellSlots(), modes = [...MODES.slice(0, 2), ...(hasMagic() ? slots.map((id) => spellOf(id).name) : [])], ready = {}, help = !!getSettings().bossHelp, maxHp = stat('armor') + (help ? 2 : 0), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
   const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(340, 620 - ci * 26) * (touch ? 1.3 : 1)), windMs = touch ? 700 : 430;
   const mini = endless ? depth % 5 === 0 : params[1] === 'mini', bossHp = mini ? 10 + ci * 3 : 30 + ci * 8; // Miniboss: kurzer Kampf ohne Ultra
@@ -91,8 +91,8 @@ export function mountArena(root, params) {
     canvas.focus();
   }
   function showMode() {
-    const left = Math.ceil(Math.max(0, magicAt - performance.now()) / 1000);
-    $('#mode').textContent = MODES[mode] + (mode === 2 && left ? ` ${left}s` : '');
+    const left = mode >= 2 ? Math.ceil(Math.max(0, (ready[slots[mode - 2]] || 0) - performance.now()) / 1000) : 0;
+    $('#mode').textContent = modes[mode] + (left ? ` ${left}s` : '');
   }
   function showHearts() {
     $('#hearts').innerHTML = Array.from({ length: maxHp }, (_, i) => `<span class="${i < hero.hp ? 'on' : ''}">${icon('heart')}</span>`).join('');
@@ -118,12 +118,17 @@ export function mountArena(root, params) {
   function swing() {
     const now = performance.now();
     if (paused || phase === 0) return;
-    if (mode === 2) { // Magie: Lichtnova trifft alles im Raum
-      if (now < magicAt) return;
-      magicAt = now + MAGIC_MS; shake = now + 300; bossSound('slam');
-      { const c = magicColor().color; sparksFx(hero.x, hero.y, c); sparksFx(hero.x, hero.y, c); ringFx(hero.x, hero.y, c); for (let k = 0; k < 3; k++) ringFx(hero.x, hero.y, c, now + k * 120); }
-      for (const m of [...mobs]) { m.hp -= damage + 1 + magicBonus; m.hit = now; if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } }
-      if (boss) { boss.hp = Math.max(0, boss.hp - (damage + magicBonus) * 2); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) finisher(); else nextStage(now); }
+    if (mode >= 2) { // Zauber aus dem Platz
+      const sp = spellOf(slots[mode - 2]);
+      if (now < (ready[sp.id] || 0)) return;
+      ready[sp.id] = now + sp.cd; shake = now + 240; bossSound('slam');
+      const c = magicColor().color; sparksFx(hero.x, hero.y, c); ringFx(hero.x, hero.y, c);
+      const hurtBoss = (n) => { if (!boss) return; boss.hp = Math.max(0, boss.hp - n); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) finisher(); else nextStage(now); };
+      const zap = (m, n) => { m.hp -= n; m.hit = now; if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } };
+      if (sp.id === 'nova') { for (let k = 0; k < 3; k++) ringFx(hero.x, hero.y, c, now + k * 120); [...mobs].forEach((m) => zap(m, damage + 1 + magicBonus)); hurtBoss((damage + magicBonus) * 2); }
+      if (sp.id === 'blitz') { const m = [...mobs].sort((p, q) => Math.hypot(p.x - hero.x, p.y - hero.y) - Math.hypot(q.x - hero.x, q.y - hero.y))[0]; if (m) { boltFx(m.x, m.y, c, now); zap(m, (damage + magicBonus) * 3); } else if (boss) { boltFx(boss.x, boss.y, c, now); hurtBoss((damage + magicBonus) * 3); } }
+      if (sp.id === 'frost') { for (const m of mobs) { m.next = now + 2500; m.wind = 0; } if (boss) { boss.next += 1800; boss.walk += 1800; } }
+      if (sp.id === 'heil') { hero.hp = Math.min(maxHp, hero.hp + 1); showHearts(); }
       showMode(); return;
     }
     if (now < hero.swing + swingMs) return;

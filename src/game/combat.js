@@ -35,6 +35,17 @@ export function pickPart(slot, id) {
   return true;
 }
 
+// Zaubersprüche: drei Plätze, mit F im Kampf durchschalten; Presets speichern ganze Aufstellungen
+export const SPELLS = [
+  { id: 'nova', name: 'Lichtnova', info: 'Trifft alles im Raum.', cd: 8000 }, { id: 'blitz', name: 'Kettenblitz', info: 'Dreifacher Schaden am nächsten Gegner.', cd: 5000 },
+  { id: 'frost', name: 'Frostbann', info: 'Friert Gegner und Boss kurz ein.', cd: 10000 }, { id: 'heil', name: 'Heillicht', info: 'Heilt ein Herz.', cd: 15000 },
+];
+export const spellSlots = () => load().slots || ['nova', 'blitz', 'frost'];
+export const setSlots = (slots) => { const d = load(); d.slots = slots; save(d); };
+export const presets = () => load().presets || [null, null, null];
+export const savePreset = (i) => { const d = load(); d.presets = presets().map((p, k) => (k === i ? spellSlots() : p)); save(d); };
+export const spellOf = (id) => SPELLS.find((s) => s.id === id) || SPELLS[0];
+
 // Farben der Magie
 export const MAGIC_COLORS = [
   { id: 'licht', name: 'Lichtgold', color: '#ffd166', price: 0 }, { id: 'glut', name: 'Glutrot', color: '#ff4a3a', price: 400 }, { id: 'frost', name: 'Frostblau', color: '#7fe0ff', price: 700 },

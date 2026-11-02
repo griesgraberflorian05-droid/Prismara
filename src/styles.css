@@ -1546,3 +1546,95 @@ body.wood .mm-tools .wbtn.sm { background: var(--panel); }
 body.wood .kit.parch { background: var(--panel-solid) !important; border-color: var(--edge) !important; }
 body.wood .kit-swatch, .kit-tabs .wbtn { background: var(--panel-2); border-color: var(--edge); }
 body.wood .kit-stage { background: var(--panel-2); border-color: var(--edge); }
+/* ===== Neues Startmenü: Spalte links wie ein Spiel-Titelbild, rechts bleibt die Szene mit dem Helden frei ===== */
+.tm-ui.mm { --mm-w: min(380px, 100%); }
+.tm:not(.sub) .tm-shade { background: linear-gradient(90deg, rgba(8, 4, 2, 0.72), rgba(8, 4, 2, 0.34) 38%, transparent 62%); }
+.mm .mm-a > *, .mm .mm-b > *, .mm-tiles > * { animation: mm-in 0.42s cubic-bezier(0.2, 1.2, 0.4, 1) backwards; }
+.mm .mm-a > :nth-child(2) { animation-delay: 0.08s; } .mm .tm-journey { animation-delay: 0.14s; }
+.mm-tiles > :nth-child(1) { animation-delay: 0.18s; } .mm-tiles > :nth-child(2) { animation-delay: 0.22s; } .mm-tiles > :nth-child(3) { animation-delay: 0.26s; } .mm-tiles > :nth-child(4) { animation-delay: 0.3s; } .mm-tiles > :nth-child(5) { animation-delay: 0.34s; } .mm-tiles > :nth-child(6) { animation-delay: 0.38s; }
+@keyframes mm-in { from { opacity: 0; transform: translateX(-26px); } }
+.mm-logo { text-align: left; } .mm-logo p { letter-spacing: 0.08em; }
+/* Modi als Liste statt Kacheln */
+.mm-tiles { grid-template-columns: 1fr !important; gap: 2px; }
+.wbtn.mm-tile { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; min-height: 40px !important; padding: 7px 12px; font-size: 0.62rem !important; text-align: left; color: var(--parch); background: transparent; border: 0; border-left: 4px solid transparent; box-shadow: none; text-shadow: 0 2px 0 #000; transition: transform 0.08s steps(2), background 0.08s; }
+.wbtn.mm-tile span { font-size: inherit; }
+.wbtn.mm-tile .pxi { width: 20px; height: 20px; }
+.wbtn.mm-tile:hover, .wbtn.mm-tile:focus-visible { transform: translateX(8px); color: #fff; background: linear-gradient(90deg, var(--panel), transparent); border-left-color: var(--gold); filter: none; }
+.wbtn.mm-tile.glow { box-shadow: none; animation: none; border-left-color: var(--gold); }
+.wbtn.mm-tile.locked { color: rgba(255, 243, 214, 0.45); background: transparent; box-shadow: none; }
+.mm-tile small { margin-left: auto; font-size: 0.36rem; }
+.mm .tm-journey { padding: 6px 8px !important; background: var(--panel) !important; border-color: var(--edge) !important; color: var(--parch) !important; box-shadow: none !important; }
+.mm .tj-name { color: #fff; } .mm .tj-kicker { color: var(--muted); }
+.mm .tj-bar { background: rgba(0, 0, 0, 0.35); border-color: var(--edge); }
+.mm .tj-bar i { background: var(--gold); }
+/* Werkzeuge klein am Fuß der Spalte */
+.mm-tools { display: flex; flex-wrap: wrap; gap: 4px; }
+.mm-tools .wbtn.sm { flex: 1 1 auto; min-height: 28px; background: transparent !important; box-shadow: none; border-color: transparent; opacity: 0.85; }
+.mm-tools .wbtn.sm:hover { opacity: 1; background: var(--panel) !important; }
+@media (min-width: 980px) and (min-height: 640px) { .mm-a, .mm-b { width: 380px; } .mm .logo-h1 .logo { width: 360px; } }
+@media (max-width: 700px) and (orientation: portrait) {
+  .tm:not(.sub) .tm-shade { background: linear-gradient(rgba(8, 4, 2, 0.62), rgba(8, 4, 2, 0.28) 66%, transparent); }
+  .tm-ui.mm { justify-content: flex-start; padding-top: max(14px, env(safe-area-inset-top)); }
+  .mm-logo { text-align: center; }
+  .mm-tiles { grid-template-columns: 1fr 1fr !important; }
+  .wbtn.mm-tile { min-height: 36px !important; padding: 6px 8px; font-size: 0.48rem !important; gap: 8px; }
+}
+@media (orientation: landscape) and (max-height: 639px) { .mm-tiles { grid-template-columns: 1fr 1fr !important; } .wbtn.mm-tile { min-height: 30px !important; padding: 3px 8px; font-size: 0.44rem !important; } }
+@media (prefers-reduced-motion: reduce) { .mm .mm-a > *, .mm .mm-b > *, .mm-tiles > * { animation: none; } }
+
+/* Magie-Seite */
+.mg-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.mg-slot, .mg-spell { display: grid; gap: 5px; padding: 10px 6px; font-family: inherit; color: var(--parch); text-align: center; background: var(--panel-2); border: 3px solid var(--edge); cursor: pointer; }
+.mg-slot.on, .mg-spell.on { border-color: var(--gold); }
+.mg-slot b, .mg-spell b { font-weight: normal; font-size: 0.48rem; line-height: 1.5; } .mg-slot small { font-size: 0.36rem; color: var(--muted); } .mg-spell small { font: 600 0.78rem/1.2 var(--font); color: var(--muted); }
+.mg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; width: 100%; }
+.mg-pre { display: grid; gap: 6px; width: 100%; } .mg-pre > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; color: var(--parch); background: var(--panel-2); }
+.mg-pre b { font-weight: normal; font-size: 0.44rem; } .mg-pre small { flex: 1; font: 600 0.78rem/1.2 var(--font); color: var(--muted); } .mg-pre span { display: flex; gap: 4px; }
+.mg-col { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+/* Hauptmenü B „Freie Sicht“: schmale Leiste oben, unten nur Spielen, die Welt bleibt frei */
+.tm-ui.mm2 { position: relative; display: block; min-height: 100dvh; padding: 0; }
+.tm:has(.mm2) .tm-shade { background: linear-gradient(rgba(8, 4, 2, 0.5), transparent 22%); }
+.mm2 .mm-a, .mm2 .mm-b { display: contents; }
+.mm2 .mm-logo { position: absolute; left: 14px; top: 10px; } .mm2 .logo-h1 .logo { width: 150px !important; } .mm2 .mm-logo p { display: none; }
+.mm2 .mm-stats { position: absolute; right: 12px; top: 10px; left: auto; }
+.mm2 .mm-tiles { position: absolute; left: 50%; top: 10px; display: flex; gap: 4px; transform: translateX(-50%); }
+.mm2 .wbtn.mm-tile { flex-direction: column; gap: 3px; min-height: 0 !important; padding: 5px 7px; font-size: 0.34rem !important; border: 0; }
+.mm2 .wbtn.mm-tile:hover { transform: translateY(2px); }
+.mm2 .tm-journey { display: none; }
+.wbtn.mm-play { z-index: 2; }
+.mm2 .wbtn.mm-play { position: absolute; left: 50%; bottom: 22px; width: min(300px, 74vw); padding: 8px 12px; font-size: 0.8rem; transform: translateX(-50%); }
+.mm2 .mm-tools { position: absolute; right: 8px; bottom: 6px; width: auto; max-width: 46vw; justify-content: flex-end; }
+.mm2 .mm-tools .wbtn.sm span { display: none; }
+@media (max-width: 760px) { .mm2 .mm-logo { left: 50%; top: 48px; transform: translateX(-50%); } .mm2 .mm-stats { left: 50%; right: auto; transform: translateX(-50%); flex-wrap: nowrap; } .mm2 .mm-tiles { top: 104px; flex-wrap: wrap; justify-content: center; width: 96vw; } .mm2 .wbtn.mm-play { bottom: 150px; } }
+
+/* Menü B: Modi neben dem Logo, Platz für die Leiste rechts */
+.mm2 .mm-tiles { left: 176px; transform: none; }
+@media (max-width: 1040px) { .mm2 .mm-tiles { left: 50%; top: 62px; transform: translateX(-50%); width: max-content; max-width: 96vw; flex-wrap: wrap; justify-content: center; } }
+
+/* Hauptmenü C „Mitte“: alles mittig im oberen Teil, Kacheln wie früher, unten bleibt die Welt mit dem Helden */
+.tm-ui.mm3 { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; padding: 16px; }
+.tm:has(.mm3) .tm-shade { background: linear-gradient(rgba(8, 4, 2, 0.55), transparent 60%); }
+.mm3 .mm-a, .mm3 .mm-b { width: min(620px, 100%); justify-items: center; }
+.mm3 .mm-logo { text-align: center; } .mm3 .logo-h1 .logo { width: min(320px, 72vw) !important; margin: 0 auto; }
+.mm3 .wbtn.mm-play { width: min(380px, 100%); }
+.mm3 .tm-journey { display: none; }
+.mm3 .mm-tiles { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)) !important; gap: 8px; width: 100%; }
+.mm3 .wbtn.mm-tile { flex-direction: column; justify-content: center; gap: 6px; min-height: 66px !important; padding: 8px 4px; font-size: 0.42rem !important; text-align: center; background: var(--panel); border: 3px solid var(--edge); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.5); }
+.mm3 .wbtn.mm-tile:hover, .mm3 .wbtn.mm-tile:focus-visible { transform: translateY(-3px); background: var(--panel-2); border-color: var(--gold); }
+.mm3 .mm-tools { justify-content: center; }
+.mm3 .mm-stats { position: static; justify-content: center; }
+
+/* Modus-Knöpfe: Symbol im farbigen Abzeichen, jeder Modus hat seine Farbe */
+.mm-tiles > :nth-child(1) { --tc: #4f9fff; } .mm-tiles > :nth-child(2) { --tc: #58c04a; } .mm-tiles > :nth-child(3) { --tc: #ff9a3a; }
+.mm-tiles > :nth-child(4) { --tc: #ff5a7a; } .mm-tiles > :nth-child(5) { --tc: #e0342c; } .mm-tiles > :nth-child(6) { --tc: #2fc0b0; } .mm-tiles > :nth-child(7) { --tc: #b06cff; }
+.wbtn.mm-tile .pxi { box-sizing: content-box; flex: none; width: 18px; height: 18px; padding: 5px; color: #fff; background: var(--tc, var(--gold)); border: 2px solid rgba(0, 0, 0, 0.55); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 2px 0 rgba(0, 0, 0, 0.5); filter: none; }
+.wbtn.mm-tile:hover .pxi { filter: brightness(1.15); transform: scale(1.08); }
+.wbtn.mm-tile.locked .pxi { background: #55505c; }
+.mm3 .wbtn.mm-tile { background: linear-gradient(var(--panel-2), var(--panel-solid)); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 4px 0 rgba(0, 0, 0, 0.55); }
+/* Menü Mitte: alle Modi in einer sauberen Reihe, auf dem Handy mittig umbrechend */
+.mm3 .mm-a, .mm3 .mm-b { width: min(680px, 100%); }
+.mm3 .mm-tiles { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.mm3 .wbtn.mm-tile { flex: 0 0 86px; width: 86px; min-height: 82px !important; padding: 8px 2px 6px; }
+.mm3 .wbtn.mm-tile span:not(.sr) { font-size: 0.38rem; }
+.mm3 .wbtn.mm-tile .pxi { width: 22px; height: 22px; }
+@media (max-width: 420px) { .mm3 .wbtn.mm-tile { flex-basis: 76px; width: 76px; min-height: 74px !important; } }
