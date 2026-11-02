@@ -1521,3 +1521,13 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 @keyframes sp-glow { to { filter: brightness(1.25) drop-shadow(0 0 8px #ffb060); } }
 @keyframes sp-load { from { transform: scaleX(0); } }
 @keyframes sp-out { to { opacity: 0; transform: scale(1.06); } }
+/* Raum-HUD: dunkel wie Menüleiste und Garderobe, Schrift hell */
+body.wood .ihud.ihud-tl, body.wood .ihud.ihud-bl { color: var(--parch); background: rgba(14, 9, 26, 0.86); border: 3px solid #120a1c; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5); }
+body.wood .ihud-world { color: var(--muted); } body.wood .ihud-room { color: var(--gold); } body.wood .ihud-name { color: #fff; text-shadow: 0 2px 0 #000; }
+body.wood .ihud-label { color: var(--gold); } body.wood .ihud-moves { color: var(--parch); } body.wood .ihud-moves b { color: var(--gold); }
+body.wood .inv-slot { color: var(--parch); background: #2a1f48; border-color: #120a1c; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3); }
+body.wood .inv-slot:not(:disabled):hover { background: #3f2f6a; }
+body.wood .inv-slot b, body.wood .inv-slot i { color: var(--parch); }
+body.wood .ihud-note, body.wood .adv-toast { color: var(--parch); background: rgba(14, 9, 26, 0.9); border-color: #120a1c; }
+body.wood .coach { color: var(--parch); background: rgba(14, 9, 26, 0.92); border-color: #120a1c; }
+body.wood .coach p, body.wood .coach-step { color: var(--parch); }
