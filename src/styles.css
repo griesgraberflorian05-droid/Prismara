@@ -1531,3 +1531,18 @@ body.wood .inv-slot b, body.wood .inv-slot i { color: var(--parch); }
 body.wood .ihud-note, body.wood .adv-toast { color: var(--parch); background: rgba(14, 9, 26, 0.9); border-color: #120a1c; }
 body.wood .coach { color: var(--parch); background: rgba(14, 9, 26, 0.92); border-color: #120a1c; }
 body.wood .coach p, body.wood .coach-step { color: var(--parch); }
+/* Alle Anzeigen und Knöpfe in der Farbe der Welt: Strand braun, Burg grau, Riff blaugrün … */
+body.wood { --panel: color-mix(in srgb, var(--wood-1) 88%, transparent); --panel-solid: var(--wood-1); --panel-2: var(--wood-2); --edge: var(--wood-0); }
+body.wood .ihud.ihud-tl, body.wood .ihud.ihud-bl, body.wood .ihud-chip, body.wood .ihud-note, body.wood .adv-toast, body.wood .coach, body.wood .mm-stats li, body.wood .ar-mode, body.wood .ar-hearts { background: var(--panel); border-color: var(--edge); }
+body.wood .inv-slot { background: var(--panel-2); border-color: var(--edge); }
+body.wood .inv-slot:not(:disabled):hover { background: var(--wood-3); }
+body.wood .ibtn { color: var(--parch); background: var(--panel-solid); border: 3px solid var(--edge); box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.12), 0 4px 0 rgba(0, 0, 0, 0.5); }
+body.wood .ibtn:hover { background: var(--panel-2); }
+body.wood .ibtn .pxi { color: var(--gold); }
+body.wood .mm-tools .wbtn.sm { background: var(--panel); }
+.sg { background: var(--panel-solid); border-color: var(--edge); }
+.sg-tile { background: var(--panel-2); border-color: var(--edge); }
+.sg-tile.r-common { background: #2f7a3a; } .sg-tile.r-rare { background: #1e4a8a; } .sg-tile.r-epic { background: #5a2a9a; } .sg-tile.r-legend { background: #a87410; }
+body.wood .kit.parch { background: var(--panel-solid) !important; border-color: var(--edge) !important; }
+body.wood .kit-swatch, .kit-tabs .wbtn { background: var(--panel-2); border-color: var(--edge); }
+body.wood .kit-stage { background: var(--panel-2); border-color: var(--edge); }
