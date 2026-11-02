@@ -140,6 +140,9 @@ export function mountArena(root, params) {
       }
       if (!hitBoss && bossCells().some(([a, b]) => a === x && b === y)) hitBoss = true;
     }
+    if (hitBoss && !mini && now > boss.openUntil) { // Panzer zu: Treffer prallt ab
+      boss.hit = 0; sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); hitBoss = false;
+    }
     if (hitBoss) {
       boss.hp = Math.max(0, boss.hp - damage); boss.hit = now; play('target', 6);
       $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`;
@@ -179,6 +182,8 @@ export function mountArena(root, params) {
     }
     if (name === 'summon') { if (mobs.length < 3) spawnMobs(2); else tele.push({ cells: inner((x, y) => x === hero.x || y === hero.y), at: now + wind }); }
     boss.next = now + wind + (angry ? 1000 : 1500);
+    boss.openUntil = now + wind + 1100; // nach dem Angriff liegt der Schwachpunkt kurz frei
+    boss.openAt = now + wind;
   }
 
   function update(now) {
@@ -238,7 +243,7 @@ export function mountArena(root, params) {
       phase++;
       if (endless && !mini) { win(); return; }
       if (phase === 2 && !mini) { spawnMobs(5); $('#wave').textContent = 'WELLE 2/2'; } else {
-        boss = { x: 13, y: 5, hp: bossHp, next: now + 1600, turn: 0, hit: 0, stage: 1, walk: now + 2000, ultra: mini ? Infinity : now + 7000, jump: 0 };
+        boss = { x: 13, y: 5, hp: bossHp, next: now + 1600, turn: 0, hit: 0, openUntil: 0, openAt: 0, stage: 1, walk: now + 2000, ultra: mini ? Infinity : now + 7000, jump: 0 };
         $('#wave').textContent = 'BOSS'; $('#bossbar').hidden = false; $('#bosshp').style.width = '100%';
         setMusic('boss'); bossSound('roar'); shake = now + 500;
         if (checkpoint) { boss.hp = checkpoint; boss.stage = bossHp - checkpoint > bossHp / 2 ? 3 : 2; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; }
@@ -415,6 +420,9 @@ export function mountArena(root, params) {
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
     if (boss && !dying) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
+    if (boss && !dying && !mini && now > boss.openAt && now < boss.openUntil) { // Schwachpunkt leuchtet golden
+      const f = Math.floor(now / 100) % 2 ? '#ffd166' : '#ffffff'; r(boss.x * T - 2, boss.y * T - 2 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T + 32 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T - hop(now), 2, 32, f); r(boss.x * T + 32, boss.y * T - hop(now), 2, 32, f);
+    }
     if (!blink && phase !== 0) drawSword(g, now);
     sparks = sparks.filter((s) => now - s.t0 < 300);
     for (const s of sparks) { const k = (now - s.t0) / 300, a = Math.round(k * 9); for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) r(s.x * T + 7 + dx * a, s.y * T + 7 + dy * a, 3, 3, foe.colors[0]); }
