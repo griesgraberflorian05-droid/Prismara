@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.86', items: ['Eigene Pixel-Symbole in Shop und Inventar'] },
   { v: '3.23.85', items: ['Drei Hauptmenüs wählbar', 'Lab nur noch per Code', 'Update-Knopf entfernt', 'Magie-Seite mit Zaubern und Presets', 'Neue Schwerter'] },
   { v: '3.23.81', items: ['Schönere Spiegelblöcke'] },
   { v: '3.23.80', items: ['Tür klappt auf mit neuem Klick-Sound', 'Held geht sichtbar durch die Tür'] },

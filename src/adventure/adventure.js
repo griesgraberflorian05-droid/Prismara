@@ -249,7 +249,7 @@ export function mountAdventure(root, params, opts = {}) {
         <div class="ihud-label">KRAFT</div>
         <i class="stamina-bar big" id="stamina" style="--k:1"></i>
         <div class="ihud-moves">ZÜGE <b id="moves">0</b> / ${def.par ?? '–'}</div>
-        <div class="inv" id="inv" aria-label="Inventar">${SLOTS.map((id, k) => `<button class="inv-slot" data-item="${id}" title="${ITEMS[id].name} (${k + 1}): ${ITEMS[id].info}"><span>${ITEMS[id].icon}</span><b>0</b><i>${k + 1}</i></button>`).join('')}</div>
+        <div class="inv" id="inv" aria-label="Inventar">${SLOTS.map((id, k) => `<button class="inv-slot" data-item="${id}" title="${ITEMS[id].name} (${k + 1}): ${ITEMS[id].info}"><span>${icon(id)}</span><b>0</b><i>${k + 1}</i></button>`).join('')}</div>
       </div>
       <div class="sign-dlg" id="signdlg" hidden role="dialog" aria-labelledby="sign-title"><div class="parch sign-card">
         <h2 id="sign-title" class="pixel">📜 RAUMFÜHRER</h2>

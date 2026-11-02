@@ -1638,3 +1638,7 @@ body.wood .kit-stage { background: var(--panel-2); border-color: var(--edge); }
 .mm3 .wbtn.mm-tile span:not(.sr) { font-size: 0.38rem; }
 .mm3 .wbtn.mm-tile .pxi { width: 22px; height: 22px; }
 @media (max-width: 420px) { .mm3 .wbtn.mm-tile { flex-basis: 76px; width: 76px; min-height: 74px !important; } }
+
+/* Eigene Pixel-Symbole in Shop und Inventar */
+.si-icon .pxi, .shop-face .pxi { width: 34px; height: 34px; color: var(--wood-2); filter: none; }
+body.wood .inv-slot span .pxi { width: 20px; height: 20px; color: var(--gold); filter: none; }

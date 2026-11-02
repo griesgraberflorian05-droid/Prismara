@@ -422,7 +422,7 @@ function forgePage(el) {
     el.innerHTML = `
       ${head('#/menu', 'Schmiede', `${icon('coin')} ${inv.coins}`)}
       <div class="shop">
-        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">⚒</span><p>Die Schmiede verbessert dein Glut-Schwert. ${msg || 'Billig ist hier nichts, spar gut.'}</p></div>
+        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">${icon('sword')}</span><p>Die Schmiede verbessert dein Glut-Schwert. ${msg || 'Billig ist hier nichts, spar gut.'}</p></div>
         <ul class="shop-list">${Object.entries(UPGRADES).map(([id, u]) => {
           const cost = nextCost(id), lvl = getCombat()[id];
           return `<li class="parch shop-item"><span class="si-icon">${icon(id === 'armor' ? 'heart' : 'sword')}</span>
@@ -684,15 +684,15 @@ function shopPage(el) {
     el.innerHTML = `
       ${head('#/menu', '🛒 Shoppen', purse())}
       <div class="shop">
-        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">🧙</span><p>${msg || 'Willkommen, Lichtläufer! Münzen findest du in Räumen und Truhen – und fürs Entkommen gibt’s auch welche.'}</p></div>
+        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">${icon('hero')}</span><p>${msg || 'Willkommen, Lichtläufer! Münzen findest du in Räumen und Truhen – und fürs Entkommen gibt’s auch welche.'}</p></div>
         <ul class="shop-list">${Object.entries(ITEMS).map(([id, it]) => {
           const have = inv.items[id] || 0;
           const sold = it.permanent && have;
-          return `<li class="parch shop-item${sold ? ' sold' : ''}"><span class="si-icon">${it.icon}</span>
+          return `<li class="parch shop-item${sold ? ' sold' : ''}"><span class="si-icon">${icon(id)}</span>
             <span class="si-text"><b>${esc(it.name)}</b><small>${esc(it.info)}</small>${it.permanent ? '<em>dauerhaft</em>' : `<em>im Beutel: ${have}</em>`}</span>
             <button class="wbtn sm" data-buy="${id}" ${sold ? 'disabled' : ''}>${sold ? '✓ gekauft' : isAdmin() ? 'GRATIS' : `🪙 ${it.price}`}</button></li>`;
         }).join('')}</ul>
-        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">🎩</span><p>Der Hutmacher nimmt keine Münzen – nur Kristalle 💎 aus den Räumen. Du hast <b>${fragmentCount() - crystalsSpent()}</b> übrig.</p></div>
+        <div class="parch shop-keeper"><span class="shop-face" aria-hidden="true">${icon('crown')}</span><p>Der Hutmacher nimmt keine Münzen – nur Kristalle 💎 aus den Räumen. Du hast <b>${fragmentCount() - crystalsSpent()}</b> übrig.</p></div>
         <ul class="hat-list">${Object.entries(HATS).map(([id, h]) => {
           const own = ownsHat(id), worn = hat() === id;
           return `<li class="parch hat-item${worn ? ' worn' : ''}"><canvas class="hat-prev" data-hat="${id}" width="24" height="28"></canvas><b>${esc(h.name)}</b>
