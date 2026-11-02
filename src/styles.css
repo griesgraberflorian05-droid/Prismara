@@ -1413,3 +1413,12 @@ html, body { max-width: 100%; overflow-x: hidden; }
 @keyframes spin-bob { 50% { transform: translateY(-5px); } }
 @keyframes spin-burst { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -1)); } }
 @media (prefers-reduced-motion: reduce) { .spin-card, .spin-show.open .spin-card { animation: none; } .spin-show.open .spin-card { transform: rotateY(180deg); } .spin-front canvas, .spin-show.open > i, .spin-show.open .spin-glow { animation: none; } }
+
+/* Glücksrad: Felder so groß wie die Chance, Zeiger oben */
+.spin-wheel-box { position: relative; display: grid; place-items: center; grid-area: 1 / 1; }
+.spin-pin { position: absolute; z-index: 2; top: -14px; width: 0; height: 0; border: 14px solid transparent; border-top: 26px solid #fff; border-bottom: 0; filter: drop-shadow(0 3px 0 #000); }
+.spin-wheel { display: grid; place-items: center; width: min(78vw, 340px); aspect-ratio: 1; border: 8px solid #120a1c; border-radius: 50%; box-shadow: 0 0 0 4px var(--gold), 0 0 40px rgba(255, 209, 102, 0.4); background: repeating-conic-gradient(rgba(0, 0, 0, 0.16) 0 6deg, transparent 6deg 12deg), conic-gradient(#58c04a 0 216deg, #4f9fff 216deg 316.8deg, #c07cff 316.8deg 352.8deg, #ffd166 352.8deg 360deg); transition: transform 3.5s cubic-bezier(0.12, 0.7, 0.1, 1); }
+.spin-wheel em { display: grid; place-items: center; width: 26%; aspect-ratio: 1; font: normal 1.2rem 'Press Start 2P', monospace; color: #fff; background: #2a1f48; border: 5px solid #120a1c; border-radius: 50%; }
+.spin-card { grid-area: 1 / 1; display: none; }
+.spin-show.open .spin-card { display: block; }
+.spin-show.open .spin-wheel-box { display: none; }

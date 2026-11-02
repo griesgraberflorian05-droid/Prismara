@@ -557,11 +557,16 @@ function wardrobePage(el, msg = '') {
     // Bekomm-Animation: Kiste bebt und platzt auf, dann kommt der Skin in der Farbe seiner Seltenheit
     const r = rarityOf(c), o = document.createElement('div');
     o.className = `spin-show r-${r}`;
-    o.innerHTML = `<div class="spin-glow"></div><div class="spin-card"><div class="spin-back">?</div><div class="spin-front"><small>${RARITY[r].name}</small><canvas width="24" height="28"></canvas><b>${esc(c.name)}</b></div></div><p>Antippen</p>${Array.from({ length: 28 }, (_, i) => `<i style="--a:${i * 49}deg;--d:${120 + (i * 37) % 240}px;--s:${i % 3 * 3 + 5}px;--t:${(i % 5) * 0.08}s"></i>`).join('')}`;
+    o.innerHTML = `<div class="spin-glow"></div><div class="spin-wheel-box"><span class="spin-pin"></span><div class="spin-wheel" id="wheel"><em>?</em></div></div><div class="spin-card"><div class="spin-back">?</div><div class="spin-front"><small>${RARITY[r].name}</small><canvas width="24" height="28"></canvas><b>${esc(c.name)}</b></div></div><p>Antippen</p>${Array.from({ length: 28 }, (_, i) => `<i style="--a:${i * 49}deg;--d:${120 + (i * 37) % 240}px;--s:${i % 3 * 3 + 5}px;--t:${(i % 5) * 0.08}s"></i>`).join('')}`;
     document.body.append(o);
     paint(c.id)(o.querySelector('canvas'));
-    [0, 300, 600, 900].forEach((ms, i) => setTimeout(() => play('lamp', i), ms));
-    setTimeout(() => { o.classList.add('open'); play('chapter'); fxNs.flash(); }, 1300);
+    // Rad dreht und bremst aus, bis der Zeiger im Feld der gezogenen Seltenheit steht
+    const SECT = { common: [0, 216], rare: [216, 316.8], epic: [316.8, 352.8], legend: [352.8, 360] }[r];
+    const stop = SECT[0] + (SECT[1] - SECT[0]) * (0.2 + Math.random() * 0.6), wheel = o.querySelector('#wheel');
+    requestAnimationFrame(() => requestAnimationFrame(() => { wheel.style.transform = `rotate(${360 * 6 - stop}deg)`; }));
+    let tick = 60, at = 0;
+    while (at < 3400) { const when = at; setTimeout(() => { if (o.isConnected) play('ui'); }, when); at += tick; tick *= 1.12; }
+    setTimeout(() => { o.classList.add('open'); play('chapter'); fxNs.flash(); }, 3800);
     o.addEventListener('pointerdown', () => { if (o.classList.contains('open')) { o.remove(); wardrobePage(el, `${RARITY[r].name}: ${c.name}`); } });
   });
   const active = getSkin().color.id;
