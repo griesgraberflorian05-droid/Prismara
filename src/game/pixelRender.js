@@ -201,7 +201,11 @@ export class PixelRenderer {
       this.r(X + 2, Y + 4, 12, 11, '#4b4f5e'); this.r(X + 3, Y + 3, 10, 2, '#7a7f92'); this.r(X + 4, Y + 6, 3, 2, '#8a90a6'); this.r(X + 2, Y + 14, 12, 1, '#25272f');
       return;
     }
-    if (b.kind === 'mirror') return this.crate(X, Y, () => { this.r(X + 3, Y + 3, 10, 9, '#2b3550'); this.diag(X, Y, b.orient, '#e8f0ff'); this.diag(X, Y + 1, b.orient, '#8fa2c8'); });
+    if (b.kind === 'mirror') return this.crate(X, Y, () => { // Spiegel: blaues Glas in Stufen, heller Spiegelstreifen zeigt die Lage, Glanz wandert darüber
+      this.r(X + 3, Y + 3, 10, 9, '#3f5f8a'); this.r(X + 3, Y + 3, 10, 3, '#6f9cc4'); this.r(X + 3, Y + 6, 10, 2, '#527aa6'); this.r(X + 3, Y + 11, 10, 1, '#2b3f62');
+      this.diag(X, Y + 1, b.orient, '#2b3f62'); this.diag(X, Y, b.orient, '#f4fbff');
+      const g = Math.floor(t / 70) % 70; if (g < 10) this.r(X + 3 + g, Y + 3, 1, 9, 'rgba(255,255,255,0.45)');
+    });
     if (b.kind === 'splitter') return this.crate(X, Y, () => { this.r(X + 3, Y + 3, 10, 9, '#123a44'); this.diag(X, Y, b.orient, '#9ff6ff', true); });
     if (b.kind === 'prism') return this.crate(X, Y, () => { this.r(X + 7, Y + 3, 2, 1, '#ffffff'); this.r(X + 6, Y + 5, 4, 1, '#ff4d6d'); this.r(X + 5, Y + 7, 6, 1, '#ffd166'); this.r(X + 4, Y + 9, 8, 1, '#3ddc97'); this.r(X + 3, Y + 11, 10, 1, '#4da3ff'); });
     if (b.kind === 'filter') return this.crate(X, Y, () => { this.r(X + 3, Y + 3, 10, 9, COLOR_INFO[b.pass]?.hex || '#fff'); this.ctx.globalAlpha = 0.5; this.r(X + 4, Y + 4, 3, 7, '#ffffff'); this.ctx.globalAlpha = 1; this.glyphs(X + 8, Y + 8, b.pass, '#ffffff'); });

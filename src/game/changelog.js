@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.81', items: ['Schönere Spiegelblöcke'] },
   { v: '3.23.80', items: ['Tür klappt auf mit neuem Klick-Sound', 'Held geht sichtbar durch die Tür'] },
   { v: '3.23.79', items: ['Schönere Stein-Textur'] },
   { v: '3.23.78', items: ['Startbild nach mehr als einer Minute Pause'] },
