@@ -156,6 +156,15 @@ export class PixelRenderer {
   }
 
   // ---------- Sprites ----------
+  // Stein: behauener Block mit Rissen und einem Glanz, der ab und zu darüberläuft
+  stone(px, py, t) {
+    this.r(px + 1, py + 13, 14, 2, 'rgba(0,0,0,0.3)');
+    this.r(px + 1, py + 2, 14, 12, '#23202a'); this.r(px + 2, py + 3, 12, 10, '#6e6a76'); this.r(px + 2, py + 3, 12, 2, '#a09ca8'); this.r(px + 2, py + 11, 12, 2, '#4a4652');
+    this.r(px + 4, py + 6, 3, 1, '#4a4652'); this.r(px + 6, py + 7, 1, 2, '#4a4652'); this.r(px + 10, py + 8, 2, 1, '#4a4652'); this.r(px + 11, py + 5, 1, 2, '#8a8692');
+    this.r(px + 3, py + 4, 2, 1, '#c8c4d0');
+    const g = Math.floor(t / 60) % 110; if (g < 12) { this.r(px + 2 + g, py + 3, 1, 10, 'rgba(255,255,255,0.35)'); }
+  }
+
   crate(px, py, inner) {
     this.r(px + 1, py + 2, 14, 13, '#3a2416');
     this.r(px + 2, py + 2, 12, 11, '#9b6a3e');
@@ -200,7 +209,7 @@ export class PixelRenderer {
     if (b.kind === 'filter') return this.crate(X, Y, () => { this.r(X + 3, Y + 3, 10, 9, COLOR_INFO[b.pass]?.hex || '#fff'); this.ctx.globalAlpha = 0.5; this.r(X + 4, Y + 4, 3, 7, '#ffffff'); this.ctx.globalAlpha = 1; this.glyphs(X + 8, Y + 8, b.pass, '#ffffff'); });
     if (b.kind === 'shifter') return this.crate(X, Y, () => { const ph = Math.floor(t / 300) % 3; [1, 2, 4].forEach((c, i) => this.glyph(X + 5 + ((i + ph) % 3) * 3, Y + 6 + (i % 2) * 3, c)); });
     if (b.kind === 'lamp') return this.crate(X, Y, () => { const hex = COLOR_INFO[b.color]?.hex; this.r(X + 5, Y + 4, 6, 7, '#2a1d14'); this.r(X + 6, Y + 5, 4, 5, hex); this.r(X + 7, Y + 6, 2, 2, '#ffffff'); const [dx, dy] = DIRS[b.dir]; this.r(X + 7 + dx * 5, Y + 7 + dy * 5, 2, 2, hex); });
-    this.crate(X, Y);
+    this.stone(X, Y, t);
   }
 
   // Lichtquelle als Glutfackel: Holzstiel, glühender Kopf in der Signalfarbe mit Funken;
