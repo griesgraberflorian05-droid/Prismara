@@ -46,6 +46,17 @@ const bolts = [];
 export function bolt(x, y, color, now = performance.now()) { if (fxQuality() > 0 && !prefersReducedMotion()) bolts.push({ x, y, color, t0: now }); }
 export function ring(x, y, color, now = performance.now(), small = false) { if (fxQuality() > 0) rings.push({ x, y, color, t0: now, small }); }
 
+/** Tor-Animation in Pixel-Art: Aufschlag, Ringwellen und Funken je Stil. */
+export function goalBurst(id, x, y, color, now = performance.now()) {
+  addTrauma(0.75); hitstop(110, now); flash(now);
+  const rainbow = ['#ff4a4a', '#ffd166', '#7dff6a', '#4f9fff', '#c07cff'];
+  const pick = (k) => (id === 'prisma' ? rainbow[k % 5] : color);
+  for (let k = 0; k < 4; k++) { ring(x, y, pick(k), now + k * 90); sparks(x, y, pick(k), now); }
+  if (id === 'feuerwerk') for (let k = 0; k < 5; k++) { const a = k * 1.26, sx = x + Math.cos(a) * 3, sy = y + Math.sin(a) * 2.4; setTimeout(() => { const t = performance.now(); sparks(sx, sy, rainbow[k], t); ring(sx, sy, rainbow[k], t, true); }, 180 + k * 110); }
+  if (id === 'blitz') for (let k = 0; k < 5; k++) setTimeout(() => { bolt(x + (k - 2) * 1.5, y, color); addTrauma(0.2); }, k * 80);
+  if (id === 'glut') for (let k = 0; k < 3; k++) setTimeout(() => { const t = performance.now(); ring(x, y, '#ffd166', t); sparks(x, y, color, t); sparks(x, y, '#ffd166', t); addTrauma(0.3); }, 140 + k * 140);
+}
+
 /** Bildversatz in Bildschirm-Pixeln (Trauma² × Stärke). */
 export function shake(scale, now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;

@@ -16,7 +16,7 @@ import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 import { foeOf, bossBeaten, bossPending } from '../game/combat.js';
 import { getLook, getSkin, addSpins } from '../game/skins.js';
-import { FX, fxQuality, bolt, sparks, ring, mote, squash as squashFx, buzz, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
+import { FX, fxQuality, goalBurst, bolt, sparks, ring, mote, squash as squashFx, buzz, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
 import { codeOn } from '../game/codes.js';
 import { volumeHtml, bindVolume } from '../ui/volume.js';
 import { isAdmin } from '../game/admin.js';
@@ -811,6 +811,7 @@ export function mountAdventure(root, params, opts = {}) {
     if (tr.visited.size && t > nextMote) { nextMote = t + 180; const c = [...tr.visited][Math.floor(Math.random() * tr.visited.size)]; mote(c % level.w, Math.floor(c / level.w), glow, t); }
     if (exitOpen && !waveDone) { // Lichtwelle läuft durch die Leitung zur Tür
       waveDone = true;
+      { const g = getLook().goal; goalBurst(g.id, exit.x, exit.y, g.color || glow, t); celebrateT0 = t; }
       const cells = [...tr.visited].map((c) => ({ x: c % level.w, y: Math.floor(c / level.w) })).sort((p, q) => Math.hypot(q.x - exit.x, q.y - exit.y) - Math.hypot(p.x - exit.x, p.y - exit.y));
       cells.forEach((c, i) => ring(c.x, c.y, glow, t + i * 35, true));
       ring(exit.x, exit.y, glow, t + cells.length * 35); buzz(40);

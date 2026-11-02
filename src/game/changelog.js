@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.65', items: ['Tor-Animationen beim Öffnen der Tür, wählbar unter Anpassen'] },
   { v: '3.23.64', items: ['Umhang wie ein Minecraft-Cape', 'Held im Menü packen und werfen', 'Version unten links'] },
   { v: '3.23.63', items: ['Held am Lagerfeuer ist jetzt der echte Spieler'] },
   { v: '3.23.61', items: ['Echte Umhänge für jeden Skin'] },

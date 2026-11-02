@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, CAPES, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, GOALS, CAPES, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { CHANGELOG } from '../game/changelog.js';
@@ -483,7 +483,7 @@ function radioPage(el) {
 
 // ---------- Galerie: jedes neue Element einzeln ansehen ----------
 function galleryPage(el) {
-  const BTN = { Funken: () => fx.sparks(3.5, 2, '#ffd166'), Lichtring: () => fx.ring(3.5, 2, '#ff8a3a'), Beben: () => fx.addTrauma(0.7), Weißblitz: () => fx.flash(), Hitstop: () => fx.hitstop(fx.FX.hitstopBoss), Federn: () => fx.squash(), Vibration: () => fx.buzz(40),
+  const BTN = { Funken: () => fx.sparks(3.5, 2, '#ffd166'), Lichtring: () => fx.ring(3.5, 2, '#ff8a3a'), Beben: () => fx.addTrauma(0.7), Weißblitz: () => fx.flash(), Hitstop: () => fx.hitstop(fx.FX.hitstopBoss), Tor: () => fx.goalBurst('feuerwerk', 3.5, 2, '#ff5a7a'), Federn: () => fx.squash(), Vibration: () => fx.buzz(40),
     Tonleiter: () => [0, 1, 2, 3, 4].forEach((i) => setTimeout(() => play('lamp', i), i * 160)),
     Iris: () => { const d = document.createElement('div'); d.className = 'iris'; d.addEventListener('animationend', () => d.remove()); document.body.append(d); } };
   el.innerHTML = `
@@ -728,6 +728,8 @@ function kitPage(el, scene) {
           </div>
           <h3>Hautton</h3>
           <div class="kit-row">${SKIN_TONES.map((t) => `<button class="kit-swatch${look.tone.id === t.id ? ' active' : ''}" data-tone="${t.id}" aria-pressed="${look.tone.id === t.id}"><span class="ks-dot" style="background:${t.color}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
+          <h3>Tor-Animation</h3>
+          <div class="kit-row">${GOALS.map((t) => { const locked = !isAdmin() && stars < t.stars, on = look.goal.id === t.id; return `<button class="kit-swatch${on ? ' active' : ''}" ${locked ? 'disabled' : `data-goal="${t.id}"`} aria-pressed="${on}"><span class="ks-dot" style="background:${t.color || 'var(--gold)'}"></span><small>${locked ? `★${t.stars}` : esc(t.name)}</small></button>`; }).join('')}</div>
           <h3>Spur</h3>
           <div class="kit-row">${TRAILS.map((t) => { const locked = !isAdmin() && stars < t.stars, on = look.trail.id === t.id; return `<button class="kit-swatch${on ? ' active' : ''}" ${locked ? 'disabled' : `data-trail="${t.id}"`} aria-pressed="${on}"><span class="ks-dot" style="background:${t.color || 'transparent'}"></span><small>${locked ? `★${t.stars}` : esc(t.name)}</small></button>`; }).join('')}</div>
           <h3>Laterne</h3>
@@ -778,6 +780,7 @@ function kitPage(el, scene) {
     pick('tone', (id) => setLook({ tone: id }));
     pick('lantern', (id) => setLook({ lantern: id }));
     pick('trail', (id) => setLook({ trail: id }));
+    pick('goal', (id) => setLook({ goal: id }));
     pick('bg', (id) => { updateSettings({ menuBg: id || null }); scene.setWorld(menuBackground()); document.body.dataset.world = menuBackground(); });
     el.querySelectorAll('button[data-hat]').forEach((b) => b.addEventListener('click', () => {
       wearHat(b.dataset.hat || null); play('ui'); render();

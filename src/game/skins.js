@@ -117,6 +117,11 @@ export const CAPES = [
   { id: 'wald', name: 'Waldgrün', color: '#2f6a34', edge: '#c9e8a0' }, { id: 'violett', name: 'Violett', color: '#5a2a9a', edge: '#d8b8ff' }, { id: 'schwarz', name: 'Schatten', color: '#1a1420', edge: '#b48cff' },
   { id: 'gold', name: 'Gold', color: '#c98a00', edge: '#fff0a0' }, { id: 'schnee', name: 'Schnee', color: '#e4eaf4', edge: '#9ad1ff' },
 ];
+// Tor-Animation: spielt ab, wenn die Tür aufgeht; color null = Farbe der Welt
+export const GOALS = [
+  { id: 'welle', name: 'Lichtwelle', color: null, stars: 0 }, { id: 'feuerwerk', name: 'Feuerwerk', color: '#ff5a7a', stars: 3 }, { id: 'blitz', name: 'Blitzschlag', color: '#9fd8ff', stars: 8 },
+  { id: 'glut', name: 'Glutexplosion', color: '#ff7a2a', stars: 14 }, { id: 'prisma', name: 'Prisma', color: '#ffffff', stars: 24 },
+];
 // Spur hinter dem Helden, mit Sternen freigeschaltet
 export const TRAILS = [
   { id: 'none', name: 'Keine', color: null, stars: 0 }, { id: 'steps', name: 'Fußspuren', color: '#4a3020', stars: 2 }, { id: 'petals', name: 'Blüten', color: '#f0a0c0', stars: 8 },
@@ -124,7 +129,7 @@ export const TRAILS = [
 ];
 export function getLook() {
   const l = getSettings().look || {};
-  return { tone: SKIN_TONES.find((t) => t.id === l.tone) || SKIN_TONES[0], lantern: LANTERNS.find((t) => t.id === l.lantern) || LANTERNS[0], trail: TRAILS.find((t) => t.id === l.trail) || TRAILS[0], cape: CAPES.find((t) => t.id === l.cape) || CAPES[0] };
+  return { tone: SKIN_TONES.find((t) => t.id === l.tone) || SKIN_TONES[0], lantern: LANTERNS.find((t) => t.id === l.lantern) || LANTERNS[0], trail: TRAILS.find((t) => t.id === l.trail) || TRAILS[0], cape: CAPES.find((t) => t.id === l.cape) || CAPES[0], goal: GOALS.find((t) => t.id === l.goal) || GOALS[0] };
 }
 export function setLook(patch) { updateSettings({ look: { ...(getSettings().look || {}), ...patch } }); }
 
