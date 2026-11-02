@@ -1,7 +1,7 @@
 // Inventar und Münzen (Spielstand im Browser). Münzen findet man in Räumen und Truhen und
 // bekommt sie fürs Entkommen; ausgeben kann man sie im Shop. Gegenstände liegen in Räumen
 // oder werden gekauft und im Raum über die Inventarleiste (Tasten 1–4) benutzt.
-import { isAdmin } from './admin.js';
+import { isAdmin, isFull } from './admin.js';
 
 const KEY = 'prismara.inventory.v1';
 
@@ -52,13 +52,13 @@ addEventListener('storage', (e) => { if (e.key === KEY) cache = null; });
 
 export const getInv = () => load();
 export const coins = () => load().coins;
-export const count = (id) => (isAdmin() ? Infinity : load().items[id] || 0); // Admin: alles unendlich
+export const count = (id) => (isFull() ? Infinity : load().items[id] || 0); // Admin: alles unendlich
 export const owns = (id) => count(id) > 0;
 
 export function addCoins(n) { const d = load(); d.coins += n; if (n > 0) d.earned = (d.earned || 0) + n; save(d); return d.coins; }
 export function addItem(id, n = 1) { const d = load(); d.items[id] = (d.items[id] || 0) + n; save(d); return d.items[id]; }
 export function useItem(id) {
-  if (isAdmin()) return true;
+  if (isFull()) return true;
   const d = load();
   if (!d.items[id]) return false;
   if (!ITEMS[id]?.permanent) d.items[id]--;
@@ -81,7 +81,7 @@ export const HATS = {
   crown: { icon: '👑', name: 'Krone', price: 10 },
 };
 export const hat = () => (cache || load()) && cache.hat || null;
-export const ownsHat = (id) => isAdmin() || (load().hats || []).includes(id);
+export const ownsHat = (id) => isFull() || (load().hats || []).includes(id);
 export const crystalsSpent = () => load().crystalsSpent || 0;
 export function buyHat(id, crystalsHave) {
   const d = load(), it = HATS[id];

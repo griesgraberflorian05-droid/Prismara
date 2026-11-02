@@ -809,12 +809,14 @@ export class PixelRenderer {
     // Endet der Strahl am Helden, läuft seine Spitze mit der Figur mit und verschwindet hinter ihr
     const pl = opts.player, hx = pl && pl.x + 0.5, hy = pl && pl.y + 0.5;
     const shown = !pl ? tr.beams : tr.beams.map((b) => {
-      const n = b.points.length, end = b.points[n - 1], prev = b.points[n - 2];
+      const n = b.points.length, end = b.points[n - 1];
       if (n < 2 || Math.hypot(end[0] - hx, end[1] - hy) > 1.6) return b;
-      const tip = prev[0] === end[0] ? [end[0], hy] : [hx, end[1]];
-      return { ...b, points: [...b.points.slice(0, -1), tip] };
+      // Richtung aus dem letzten echten Abschnitt, damit die Spitze immer bis in die Figur reicht
+      let k = n - 2; while (k > 0 && b.points[k][0] === end[0] && b.points[k][1] === end[1]) k--;
+      const prev = b.points[k], tip = prev[0] === end[0] ? [end[0], hy] : [hx, end[1]];
+      return { ...b, points: [...b.points.slice(0, k + 1), tip] };
     });
-    this.beams(shown, t, opts.grow ?? Infinity);
+    this.beams(shown, t, (opts.grow ?? Infinity) + 2); // Spitze nie vom Wachsen abschneiden
     // Objekte von oben nach unten (Schrägsicht: weiter unten = davor)
     const items = [];
     level.cells.forEach((c, i) => {

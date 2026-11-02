@@ -33,7 +33,7 @@ function drawHatPreview(canvas, id) {
 import { roomThumb } from './menuScene.js';
 import { mountTitleArt, titleThumb } from './titleArt.js';
 import { logoCanvas } from './logo.js';
-import { isAdmin } from '../game/admin.js';
+import { isAdmin, isFull } from '../game/admin.js';
 import { checkUpdate, applyUpdate, showUpdate } from './updater.js';
 import { transitionTo, CURTAINS } from './transition.js';
 import { VERSION, LABEL } from '../version.js';
@@ -513,7 +513,7 @@ function selectGrid(el, cfg) {
         ${cur.tint && cur.owned ? `<div class="sg-tint"><label>${esc(cur.tint.labels[0])}<input type="color" id="t0" value="${cur.tint.get()[0]}"></label><label>${esc(cur.tint.labels[1])}<input type="color" id="t1" value="${cur.tint.get()[1]}"></label></div>` : ''}
         <div class="sg-grid">${cfg.items.map((it, i) => `<button class="sg-tile${it === cur ? ' on' : ''}" type="button" data-i="${i}" aria-label="${esc(it.name)}"><canvas class="${it.owned ? '' : 'sil'}" width="24" height="28"></canvas>${it.owned ? '' : icon('lock')}${it.active ? '<i></i>' : ''}</button>`).join('')}</div>
         <div class="sg-bar"><button class="wbtn" type="button" id="sg-info">Info</button>
-          <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? `Kaufen ${cur.price}` : 'Gesperrt'}</button></div>
+          <button class="wbtn big" type="button" id="sg-go" ${can && !cur.active ? '' : 'disabled'}>${icon('play')} ${cur.active ? 'Aktiv' : cur.owned ? cfg.action : cur.price ? (isAdmin() ? 'Gratis kaufen' : `Kaufen ${cur.price}`) : 'Gesperrt'}</button></div>
       </div>`;
     cur.paint(el.querySelector('.sg-big'));
     el.querySelectorAll('.sg-tile canvas').forEach((c, i) => cfg.items[i].paint(c));
@@ -547,7 +547,7 @@ function wardrobePage(el) {
     items: SKIN_COLORS.filter((c) => c.hero).map((c) => {
       const u = heroState(c);
       return { id: c.id, name: c.name, sub: 'Skin', owned: !!u.free, price: u.price || 0, lockText: u.text, active: active === c.id, paint: paint(c.id), tint: { labels: ['Akzent', 'Körper'], get: () => skinTint(c.id) || [c.stops[0], c.stops[1]], set: (t) => setSkinTint(c.id, t) }, pick: () => {
-        if (!heroState(c).free) { if (getInv().coins < u.price) return false; addCoins(-u.price); buyHero(c.id); }
+        if (!heroState(c).free) { if (!isAdmin()) { if (getInv().coins < u.price) return false; addCoins(-u.price); } buyHero(c.id); }
         setSkin({ color: c.id }); return true;
       } };
     }),
@@ -601,8 +601,9 @@ function shopPage(el) {
 
 // Freischalten: how-Text aus den Skin-Daten auswerten
 function heroState(c) {
-  const [kind, arg] = c.how.split(':'), own = isAdmin() || ownedHeroes().includes(c.id), m = new Date().getMonth() + 1;
+  const [kind, arg] = c.how.split(':'), own = isFull() || ownedHeroes().includes(c.id), m = new Date().getMonth() + 1;
   if (own || kind === 'start') return { free: true };
+  if (isAdmin()) return { price: 1, text: 'Gratis kaufen' }; // Code „debug“
   if (kind === 'world') return worldDone(+arg) ? { free: true } : { text: `Welt ${+arg + 1} schaffen` };
   if (kind === 'boss') return bossBeaten(+arg) ? { free: true } : { text: `Boss ${foeOf(themeOf(+arg)).boss}` };
   if (kind === 'allboss') return CHAPTERS.every((_, i) => bossBeaten(i)) ? { free: true } : { text: 'Alle 11 Bosse' };

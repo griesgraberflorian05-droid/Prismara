@@ -1,7 +1,7 @@
 // Einlösbare Codes: was sie schalten, ob sie an sind, und das Merken der schon eingelösten.
 // Die Seite „Meine Codes“ im Menü zeigt nur eingelöste Codes, damit sie geheim bleiben.
 import { getSettings, updateSettings } from '../settings.js';
-import { isAdmin, setAdmin } from './admin.js';
+import { isFull, setAdmin, isDebug, setDebug } from './admin.js';
 import { addCoins } from './inventory.js';
 import { hasHalloween, setHalloween, isDinnerbone, setDinnerbone } from './skins.js';
 
@@ -20,7 +20,8 @@ export const codeOn = fxOn;
 export function applyFx() { for (const id of ['retro', 'disco', 'nachtsicht', 'kopfueber']) document.body.classList.toggle(`fx-${id}`, fxOn(id)); }
 
 export const CODES = [
-  { id: 'freeadmin', name: 'Admin-Modus', info: 'Alles frei, alle Gegenstände unendlich.', on: isAdmin, set: setAdmin },
+  { id: 'freeadmin', name: 'Admin-Modus', info: 'Alles frei, alle Gegenstände unendlich.', on: isFull, set: setAdmin },
+  { id: 'debug', name: 'Debug-Modus', info: 'Alle Level und Debug-Funktionen frei, alles gratis kaufbar.', on: isDebug, set: setDebug },
   { id: 'halloween', name: 'Halloween-Umhang', info: 'Der geheime Kürbis-Umhang.', on: hasHalloween, set: setHalloween },
   { id: 'dinnerbone', name: 'Dinnerbone', info: 'Dein Held steht auf dem Kopf.', on: isDinnerbone, set: setDinnerbone },
   toggle('replay', 'Replay', 'Nach jedem geschafften Raum kannst du deinen Lauf noch einmal ansehen.'),

@@ -4,7 +4,7 @@ import { CHAPTERS } from './pushLevels.js';
 import { isSolved } from './progress.js';
 import { CHAPTER_WORLD } from './worlds.js';
 import { getInv, addCoins } from './inventory.js';
-import { isAdmin } from './admin.js';
+import { isAdmin, isFull } from './admin.js';
 import { hasHalloween } from './skins.js';
 
 const KEY = 'prismara.combat.v1';
@@ -24,13 +24,12 @@ export const PARTS = {
   grip: { name: 'Griff', list: [{ id: 'leder', name: 'Ledergriff', price: 0, v: 0 }, { id: 'rune', name: 'Runengriff', price: 700, v: 1 }, { id: 'kristall', name: 'Kristallgriff', price: 2000, v: 2 }], unit: 'Magie' },
 };
 export const partOf = (slot) => { const d = load().parts?.[slot]; return PARTS[slot].list.find((p) => p.id === d) || PARTS[slot].list[0]; };
-export const ownsPart = (id) => isAdmin() || !PARTS.blade.list.concat(PARTS.guard.list, PARTS.grip.list).find((p) => p.id === id)?.price || (load().ownedParts || []).includes(id);
+export const ownsPart = (id) => isFull() || !PARTS.blade.list.concat(PARTS.guard.list, PARTS.grip.list).find((p) => p.id === id)?.price || (load().ownedParts || []).includes(id);
 /** Kauft ein Teil, falls nötig, und baut es ins Schwert ein. */
 export function pickPart(slot, id) {
   const p = PARTS[slot].list.find((x) => x.id === id), d = load();
   if (!ownsPart(id)) {
-    if (getInv().coins < p.price) return false;
-    addCoins(-p.price); d.ownedParts = [...(d.ownedParts || []), id];
+    if (!pay(p.price)) return false; d.ownedParts = [...(d.ownedParts || []), id];
   }
   d.parts = { ...(d.parts || {}), [slot]: id }; save(d);
   return true;
@@ -42,16 +41,18 @@ export const MAGIC_COLORS = [
   { id: 'gift', name: 'Giftgrün', color: '#7dff6a', price: 1000 }, { id: 'nacht', name: 'Nachtviolett', color: '#b48cff', price: 1500 }, { id: 'prisma', name: 'Prisma', color: '#ffffff', price: 3000 },
 ];
 export const magicColor = () => MAGIC_COLORS.find((m) => m.id === load().magicColor) || MAGIC_COLORS[0];
-export const ownsMagic = (id) => isAdmin() || !MAGIC_COLORS.find((m) => m.id === id)?.price || (load().magics || []).includes(id);
+export const ownsMagic = (id) => isFull() || !MAGIC_COLORS.find((m) => m.id === id)?.price || (load().magics || []).includes(id);
 export function pickMagic(id) {
   const m = MAGIC_COLORS.find((x) => x.id === id), d = load();
   if (!ownsMagic(id)) {
-    if (getInv().coins < m.price) return false;
-    addCoins(-m.price); d.magics = [...(d.magics || []), id];
+    if (!pay(m.price)) return false; d.magics = [...(d.magics || []), id];
   }
   d.magicColor = id; save(d);
   return true;
 }
+
+// Bezahlen: mit Code „debug“ gratis, gekauft wird trotzdem von Hand
+const pay = (n) => { if (isAdmin()) return true; if (getInv().coins < n) return false; addCoins(-n); return true; };
 
 export const SWORD_SKINS = [
   { id: 'redstone', name: 'Glutstein', blade: '#e0342c', edge: '#ff8a70', grip: '#5a2a1a', price: 0 },
@@ -102,14 +103,13 @@ export function swordSkin() {
 export const swordTint = (id) => load().tints?.[id] || null;
 export function setSwordTint(id, tint) { const d = load(); d.tints = { ...(d.tints || {}), [id]: tint }; save(d); }
 export const shownSkins = () => SWORD_SKINS.filter((s) => !s.secret || isAdmin() || hasHalloween());
-export const ownsSkin = (id) => isAdmin() || load().skins.includes(id) || (id === 'pumpkin' && hasHalloween());
+export const ownsSkin = (id) => isFull() || load().skins.includes(id) || (id === 'pumpkin' && hasHalloween());
 /** Kauft einen Skin, falls nötig, und legt ihn an. */
 export function pickSkin(id) {
   const s = SWORD_SKINS.find((x) => x.id === id), d = load();
   if (!s) return false;
   if (!ownsSkin(id)) {
-    if (getInv().coins < s.price) return false;
-    addCoins(-s.price); d.skins.push(id);
+    if (!pay(s.price)) return false; d.skins.push(id);
   }
   d.skin = id; save(d);
   return true;
