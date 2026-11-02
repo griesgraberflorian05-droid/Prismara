@@ -1297,3 +1297,13 @@ body.fx-nachtsicht #view { filter: grayscale(1) sepia(1) hue-rotate(70deg) satur
 body.fx-kopfueber #view { transform: rotate(180deg); }
 body.fx-disco #view { animation: fx-disco 3s linear infinite; }
 @keyframes fx-disco { to { filter: hue-rotate(360deg); } }
+
+/* Update-Log */
+.up-card { display: grid; gap: 8px; padding: 12px 14px !important; }
+.up-card b { font-weight: normal; font-size: 0.6rem; }
+.up-card ul { margin: 0; padding-left: 18px; font: 600 0.9rem/1.4 var(--font); }
+a.tm-version { display: block; text-decoration: underline; }
+
+/* Shader-Look: Farbkorrektur und Vignette über dem Spielbild */
+.adv-full .pixel-canvas { filter: contrast(1.08) saturate(1.14); }
+.adv-full::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(6, 3, 14, 0.42) 100%); }

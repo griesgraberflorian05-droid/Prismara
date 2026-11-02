@@ -6,6 +6,7 @@ import { isSolved, bestMoves, starsFor } from '../game/progress.js';
 import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
+import { CHANGELOG } from '../game/changelog.js';
 import { UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
@@ -92,6 +93,7 @@ export function mountMenu(root, params = []) {
   else if (page === 'shop') shopPage(ui);
   else if (page === 'forge') forgePage(ui);
   else if (page === 'radio') radioPage(ui);
+  else if (page === 'updates') updatesPage(ui);
   else if (page === 'settings') settingsPage(ui);
   else if (page === 'code') codePage(ui);
   else if (page === 'codes') myCodesPage(ui);
@@ -104,7 +106,7 @@ export function mountMenu(root, params = []) {
   return () => { cleanup(); scene.stop(); window.removeEventListener('keydown', onKey); };
 }
 
-const head = (back, title, right = '') => `<div class="tm-head"><a class="wbtn sm" href="${back}">← Zurück</a><h2 class="tm-plank">${title}</h2><span class="tm-purse">${right}</span></div>`;
+const head = (back, title, right = '') => `<div class="tm-head"><a class="wbtn sm" href="${back}">← Zurück</a><h2 class="tm-plank">${title}</h2>${right ? `<span class="tm-purse">${right}</span>` : '<span></span>'}</div>`;
 const purse = () => `🪙 ${getInv().coins} · 💎 ${fragmentCount()}`;
 
 // ---------- Hauptseite ----------
@@ -151,7 +153,7 @@ function mainPage(el) {
         <button class="wbtn sm" id="upd" type="button">${icon('reset')}<span>Update</span></button>
         <a class="wbtn sm" href="#/lab">${icon('brain')}<span>Lab</span></a>
       </div>
-      <p class="tm-version">Version ${VERSION === 'dev' ? 'lokal' : LABEL}</p>
+      <a class="tm-version" href="#/menu/updates">Version ${VERSION === 'dev' ? 'lokal' : LABEL} · Updates</a>
     </div>`;
   const logo = logoCanvas(); logo.className = isAdmin() ? 'logo admin' : 'logo'; // Admin-Modus: rotes Logo logo.setAttribute('aria-hidden', 'true');
   el.querySelector('.logo-h1').prepend(logo);
@@ -446,6 +448,13 @@ function radioPage(el) {
     }));
   };
   render();
+}
+
+// ---------- Update-Log ----------
+function updatesPage(el) {
+  el.innerHTML = `
+    ${head('#/menu', 'Updates')}
+    <div class="rd">${CHANGELOG.map((u, i) => `<section class="parch up-card"><b>Version ${esc(u.v)}${i ? '' : ' · Neu'}</b><ul>${u.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></section>`).join('')}</div>`;
 }
 
 // ---------- Shoppen ----------
