@@ -198,7 +198,7 @@ export class PixelRenderer {
     const shift = sq ? DIRS[b.squashDir] : [0, 0];
     const X = px + shift[0] * sq, Y = py + shift[1] * sq;
     if (b.kind === 'stone') {
-      this.r(X + 2, Y + 4, 12, 11, '#4b4f5e'); this.r(X + 3, Y + 3, 10, 2, '#7a7f92'); this.r(X + 4, Y + 6, 3, 2, '#8a90a6'); this.r(X + 2, Y + 14, 12, 1, '#25272f');
+      this.stone(X, Y, t);
       return;
     }
     if (b.kind === 'mirror') return this.crate(X, Y, () => { // Spiegel: blaues Glas in Stufen, heller Spiegelstreifen zeigt die Lage, Glanz wandert darüber
@@ -211,7 +211,7 @@ export class PixelRenderer {
     if (b.kind === 'filter') return this.crate(X, Y, () => { this.r(X + 3, Y + 3, 10, 9, COLOR_INFO[b.pass]?.hex || '#fff'); this.ctx.globalAlpha = 0.5; this.r(X + 4, Y + 4, 3, 7, '#ffffff'); this.ctx.globalAlpha = 1; this.glyphs(X + 8, Y + 8, b.pass, '#ffffff'); });
     if (b.kind === 'shifter') return this.crate(X, Y, () => { const ph = Math.floor(t / 300) % 3; [1, 2, 4].forEach((c, i) => this.glyph(X + 5 + ((i + ph) % 3) * 3, Y + 6 + (i % 2) * 3, c)); });
     if (b.kind === 'lamp') return this.crate(X, Y, () => { const hex = COLOR_INFO[b.color]?.hex; this.r(X + 5, Y + 4, 6, 7, '#2a1d14'); this.r(X + 6, Y + 5, 4, 5, hex); this.r(X + 7, Y + 6, 2, 2, '#ffffff'); const [dx, dy] = DIRS[b.dir]; this.r(X + 7 + dx * 5, Y + 7 + dy * 5, 2, 2, hex); });
-    this.stone(X, Y, t);
+    this.crate(X, Y);
   }
 
   // Lichtquelle als Glutfackel: Holzstiel, glühender Kopf in der Signalfarbe mit Funken;
