@@ -66,7 +66,7 @@ export function stoneTile() {
 
 // Böden in 32 × 32: jede Welt ihr eigenes Material, vier Varianten, damit nichts nach Kacheln aussieht
 const mix = (a, b, k) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',')})`; };
-const STYLES = { default: 'planks', beach: 'sand', reef: 'sand', cherry: 'planks', moor: 'planks', jungle: 'flags', night: 'flags', castle: 'cobble', shadow: 'cobble', temple: 'tiles', aurora: 'ice', volcano: 'embers' };
+const STYLES = { default: 'planks', beach: 'planks', reef: 'sand', cherry: 'planks', moor: 'planks', jungle: 'flags', night: 'flags', castle: 'cobble', shadow: 'cobble', temple: 'tiles', aurora: 'ice', volcano: 'embers' };
 const n2 = (x, y, s) => hash(Math.floor(x), Math.floor(y), s);
 const PAINT = {
   sand: (x, y, v, [a, b, d]) => { const r = Math.sin((y + Math.sin(x / 7 + v) * 2) / 2.6) > 0.82; const g = n2(x, y, v + 1); return r ? b : g > 0.93 ? d : g < 0.06 ? mix(a, '#ffffff', 0.3) : a; },
@@ -82,6 +82,7 @@ export function floorTile32(world, pal, v) {
   const key = `${world}|${v}`;
   if (floors[key]) return floors[key];
   const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'), f = PAINT[STYLES[world] || 'planks'];
+  if (world === 'beach') pal = ['#b98a58', '#a4764a', '#8a6038']; // Strandhaus: helles Treibholz statt Sand
   for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) { g.fillStyle = f(x, y, v, pal); g.fillRect(x, y, 1, 1); }
   return (floors[key] = c);
 }
