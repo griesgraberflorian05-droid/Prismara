@@ -275,6 +275,8 @@ export function mountAdventure(root, params, opts = {}) {
             <button class="btn" data-dbg="open">Tür öffnen</button><button class="btn" data-dbg="solve">Raum lösen</button>
             <button class="btn" data-dbg="hint">Nächster Zug</button><button class="btn" data-dbg="curtain">Vorhang testen</button>
             <button class="btn" data-dbg="prev" ${index > 0 ? '' : 'disabled'}>◀ Raum</button><button class="btn" data-dbg="next" ${index >= 0 && index + 1 < PUSH_LEVELS.length ? '' : 'disabled'}>Raum ▶</button>
+            <button class="btn" data-dbg="wprev" ${chIndex > 0 ? '' : 'disabled'}>◀ Welt</button><button class="btn" data-dbg="wnext" ${chIndex >= 0 && chIndex + 1 < CHAPTERS.length ? '' : 'disabled'}>Welt ▶</button>
+            <button class="btn" data-dbg="boss" ${chIndex >= 0 ? '' : 'disabled'}>⚔ Weltboss</button>
           </div></div>` : ''}
           <button class="btn btn-primary" id="p-resume">${icon('play')} Weiter</button>
           <button class="btn" id="p-reset">${icon('reset')} Raum neu</button>
@@ -658,6 +660,8 @@ export function mountAdventure(root, params, opts = {}) {
     if (a === 'open') { exitOpen = true; if (solveMoves == null) solveMoves = state.moves; play('exitopen'); updateHud(); }
     if (a === 'hint') { hintMark = null; use('scroll'); }
     if (a === 'next' || a === 'prev') location.hash = `#/adv/${index + (a === 'next' ? 1 : -1)}`;
+    if (a === 'wnext' || a === 'wprev') location.hash = `#/adv/${PUSH_LEVELS.findIndex((l) => l.id === CHAPTERS[chIndex + (a === 'wnext' ? 1 : -1)].levels[0])}`; // erster Raum der Nachbarwelt
+    if (a === 'boss') location.hash = `#/arena/${chIndex}`;
     if (a === 'curtain') transitionTo(location.hash, { from: themeId, to: themeId, label: 'Vorhang-Test' });
     if (a === 'solve') {
       const res = solvePush(level, { from: state, limit: 800000 });
