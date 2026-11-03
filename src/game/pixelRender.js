@@ -526,7 +526,10 @@ export class PixelRenderer {
     if (ex.y === 0) { // Tür in der hohen Rückwand: höher, mit Rahmen und Türsturz
       this.r(px + 1, py - 12, 14, 28, '#2a1a10'); this.r(px, py - 14, 16, 3, '#6b4a2a'); this.r(px + 6, py - 13, 4, 1, '#ffd166');
       this.r(px + 2, py - 10, 12, 11, open ? '#0c0a14' : '#7a4f2c');
-      if (!open) { this.r(px + 7, py - 10, 1, 11, '#3a2416'); this.r(px + 3, py - 6, 10, 1, '#5a3a22'); }
+      if (!open) { // Holztür mit Füllungen, Eisenbändern und Knauf
+        this.r(px + 7, py - 10, 1, 26, '#3a2416'); this.r(px + 4, py - 8, 3, 7, '#5a3a22'); this.r(px + 9, py - 8, 3, 7, '#5a3a22'); this.r(px + 4, py + 3, 3, 9, '#5a3a22'); this.r(px + 9, py + 3, 3, 9, '#5a3a22');
+        this.r(px + 2, py - 7, 5, 1, '#23202a'); this.r(px + 2, py + 9, 5, 1, '#23202a'); this.r(px + 11, py + 1, 2, 2, '#ffd166');
+      }
       else { this.r(px + 4, py - 8, 8, 9, Math.floor(t / 150) % 2 ? '#bff8f0' : '#9ff0e8'); this.r(px + 6, py - 6, 4, 7, '#ffffff'); }
     }
     if (open) {
@@ -624,7 +627,7 @@ export class PixelRenderer {
   chest(c, t) {
     const px = c.x * T, py = c.y * T;
     this.r(px + 1, py + 2, 14, 13, '#1a0f08');
-    this.r(px + 2, py + 7, 12, 7, '#6b4426'); this.r(px + 2, py + 13, 12, 1, '#3a2414');
+    this.r(px + 2, py + 7, 12, 7, '#6b4426'); this.r(px + 2, py + 13, 12, 1, '#3a2414'); this.r(px + 3, py + 8, 1, 6, '#c9963f'); this.r(px + 12, py + 8, 1, 6, '#c9963f'); for (let k = 0; k < 3; k++) this.r(px + 5, py + 9 + k * 2, 6, 1, '#8a5a32');
     if (c.open) {
       this.r(px + 2, py + 2, 12, 3, '#9b6a3e'); this.r(px + 3, py + 5, 10, 2, '#2a1a08');
       if (t - (c.t0 || 0) < 1500) for (let k = 0; k < 5; k++) this.r(px + 4 + k * 2, py + 4 - ((t / 60 + k * 7) % 10), 1, 1, '#ffd166');

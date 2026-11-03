@@ -223,7 +223,12 @@ const FURN = {
   },
   planter(p, px, py, seg) {
     p.r(px, py + 3, T, 11, '#6b4426'); p.r(px, py + 3, T, 1, '#9b6a3e'); p.r(px, py + 8, T, 1, '#4a2e18');
-    for (let k = 0; k < 4; k++) { const lx = px + 1 + k * 4; p.r(lx, py - 3 + (k % 2) * 2, 3, 7, '#3f7d34'); p.r(lx + 1, py - 4 + (k % 2) * 2, 1, 2, '#6cb455'); }
+    // Einzelne Töpfe mit Pflanzen statt einer Hecke
+    for (let k = 0; k < 2; k++) {
+      const lx = px + 1 + k * 8;
+      p.r(lx, py, 6, 4, '#a85a32'); p.r(lx, py, 6, 1, '#d08a54'); p.r(lx + 1, py + 4, 4, 1, '#7a3f22');
+      p.r(lx + 2, py - 4, 2, 4, '#3f7d34'); p.r(lx, py - 3, 2, 2, '#5aa047'); p.r(lx + 4, py - 3, 2, 2, '#5aa047'); p.r(lx + 2, py - 5, 2, 1, '#8fd16a');
+    }
     if (hash(px, py, 7) > 0.5) { p.r(px + 5, py - 5, 2, 2, '#ff9cc8'); p.r(px + 11, py - 3, 2, 2, '#fff6b0'); }
   },
   barrel(p, px, py) {
@@ -342,7 +347,7 @@ const WALL = {
   },
   shelf(p, px) {
     p.r(px + 1, -20, 14, 2, '#5a3a22'); p.r(px + 1, -9, 14, 2, '#5a3a22'); p.r(px + 2, -18, 1, 2, '#3a2414'); p.r(px + 13, -18, 1, 2, '#3a2414');
-    p.r(px + 3, -25, 3, 5, '#7fb8a8'); p.r(px + 3, -26, 3, 1, '#5a3a22'); p.r(px + 8, -23, 4, 3, '#b0623a');
+    p.r(px + 3, -25, 3, 5, '#7fb8a8'); p.r(px + 3, -25, 1, 5, '#c8ece0'); p.r(px + 3, -22, 3, 2, '#7a3fa0'); p.r(px + 3, -26, 3, 1, '#5a3a22'); p.r(px + 8, -23, 4, 3, '#b0623a');
     for (let k = 0; k < 5; k++) p.r(px + 2 + k * 2, -15 + (k % 2), 2, 6 - (k % 2), ['#a83a3a', '#3a6aa8', '#c9963f', '#4a8a3a', '#7a3fa0'][k]);
     p.r(px + 12, -12, 2, 3, '#efe6d0');
   },
