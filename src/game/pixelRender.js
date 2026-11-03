@@ -6,7 +6,7 @@
 import { COLOR_INFO, DIRS } from './engine.js';
 import { getSkin, getLook, isDinnerbone } from './skins.js';
 import { drawMinion } from './monsters.js';
-import { texture, stoneTile } from './textures.js';
+import { stoneTile, floorTile32 } from './textures.js';
 import { squashScale } from './fx.js';
 import { hat as currentHat } from './inventory.js';
 import { MARGIN, makeDecor, DecorSteps, drawFlames, drawGlows, drawShafts, drawMotes, shadeMargin } from './roomDecor.js';
@@ -101,9 +101,10 @@ export class PixelRenderer {
 
   floorTile(x, y, th) {
     const px = x * T, py = y * T;
-    if (th.tex) {
-      texture(th.tex).forEach((row, j) => row.forEach((c, i) => this.r(px + i, py + j, 1, 1, c)));
-      if (this.rs > 1) for (let k = 0; k < 14; k++) { const a = hash(x, y, 90 + k), b = hash(y, x, 120 + k); this.r(px + Math.floor(a * 32) / 2, py + Math.floor(b * 32) / 2, 0.5, 0.5, k % 2 ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.2)'); } // feines Korn
+    { // neue Böden: Material je Welt, Variante je Feld
+      const world = Object.keys(PIXEL_THEMES).find((k) => PIXEL_THEMES[k] === th) || 'default';
+      this.ctx.imageSmoothingEnabled = false;
+      this.ctx.drawImage(floorTile32(world, th.floor, Math.floor(hash(x, y, 33) * 4)), px, py, T, T);
       return;
     }
     const [a, b, d] = th.floor;
@@ -726,7 +727,7 @@ export class PixelRenderer {
         const [x, y, lvl] = queue.shift();
         // Rund statt Raute: Helligkeit nach echtem Abstand, außen weich auslaufend
         const reach = lvl0 / (l.falloff ?? 2), k = Math.max(0, 1 - Math.hypot(x + 0.5 - l.x, y + 0.5 - l.y) / reach);
-        const f = k * k * (3 - 2 * k) * Math.pow(lvl0 / 15, 1.6) * (l.i ?? 1);
+        const f = 0.72 * k * k * (3 - 2 * k) * Math.pow(lvl0 / 15, 1.6) * (l.i ?? 1);
         const i = y * w + x;
         R[i] += rgb[0] * f; G[i] += rgb[1] * f; B[i] += rgb[2] * f;
         if (opaque[i] && !(x === sx && y === sy)) continue; // Licht trifft die Wand, geht aber nicht hindurch
