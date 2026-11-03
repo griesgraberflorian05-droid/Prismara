@@ -282,6 +282,9 @@ function backWall(p, level, th, cfg, exit, out) {
     const floorBelow = level.cells[w + x]?.type !== 'wall';
     if (x === 0 || x === w - 1 || !floorBelow) {
       p.r(px, top, T, BACK * T, th.top); p.r(px, top, T, 1, th.trim);
+      for (let k = 0; k * 5 < BACK * T; k++) { const yy = top + k * 5, cut = (x + k) % 2 ? 5 : 11; // gleiche Mauerkrone wie die Wandfelder
+        p.r(px, yy + 4.5, T, 0.5, th.dark); p.r(px + cut, yy, 0.5, 4.5, th.dark); p.r(px, yy, T, 0.5, 'rgba(255,255,255,0.18)');
+        if (hash(x, k, 41) > 0.6) p.r(px + (cut > 8 ? 1 : 6), yy + 0.5, 4, 4, 'rgba(0,0,0,0.1)'); }
       if (x === 0) p.r(px + T - 1, top + 4, 1, BACK * T - 4, th.dark);
       if (x === w - 1) p.r(px, top + 4, 1, BACK * T - 4, th.dark);
       continue;

@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.105', items: ['Nebelmoor: passende Wandfarben', 'Obere Wandflächen texturiert'] },
   { v: '3.23.104', items: ['Admin-Debug: Welten vor und zurück springen', 'Admin-Debug: Weltboss rufen'] },
   { v: '3.23.103', items: ['Wände und Außenumgebung neu: Holzbohlen, Deckenbalken, Trampelweg'] },
   { v: '3.23.102', items: ['Skins, Mobs und Bosse überarbeitet', 'Neues Schild, neue Icons, feinere Wände', 'Neue Eisplatten'] },

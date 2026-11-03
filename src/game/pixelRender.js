@@ -36,7 +36,7 @@ export const PIXEL_THEMES = {
   reef:    { tex: 'korallensand', floor: ['#1f6f86', '#185d71', '#114a5a'], top: '#5a6d8a', face: '#3a4a66', dark: '#1d2840', trim: '#ff7a8f', pattern: 'water', dark01: 0.5, ambient: '#021428' },
   castle:  { tex: 'burgziegel', floor: ['#4a4650', '#3e3a44', '#2c2a32'], top: '#6a6674', face: '#45414e', dark: '#24222a', trim: '#c9963f', pattern: 'stone', dark01: 0.68, ambient: '#08060c' },
   shadow:  { tex: 'schattenstein', floor: ['#3a3048', '#2f273b', '#211b2a'], top: '#5c5070', face: '#3d3450', dark: '#1d1726', trim: '#b46bff', pattern: 'stone', dark01: 0.8, ambient: '#05020c' },
-  moor:    { tex: 'morschholz', floor: ['#4a4a32', '#3e3f2a', '#2c2e1e'], top: '#6a6a4a', face: '#4a4a34', dark: '#22241a', trim: '#c8d68a', pattern: 'moss', dark01: 0.66, ambient: '#060a06' },
+  moor:    { tex: 'morschholz', floor: ['#4a4a32', '#3e3f2a', '#2c2e1e'], top: '#667059', face: '#515a48', dark: '#23291f', trim: '#869468', pattern: 'moss', dark01: 0.66, ambient: '#060a06' },
 };
 
 export class PixelRenderer {
