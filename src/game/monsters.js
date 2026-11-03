@@ -14,9 +14,10 @@ const EYE = '#fff4d0', PUPIL = '#120a1c';
 export function drawMinion(raw, kind, [body, dark], px0, py0, t, { flash = false, warn = false, lunge = [0, 0], bite = false } = {}) {
   const px = px0 + lunge[0], py = py0 + lunge[1];
   // Laufzyklus in 4 Bildern: stauchen, abheben, strecken, landen; Warnen zittert, Beißen streckt nach vorn
-  const ph = t / 170 + px0 / 16 + py0 / 16, hop = (1 + Math.sin(ph)) * 0.8, sq = bite ? 1.15 : 1 + Math.sin(ph + 1.2) * 0.08; // stufenlos, gleiche Bildrate wie der Held
-  const shake = warn ? Math.sin(t / 30) * 0.5 : 0, feet = py + 15;
-  const R = (x, y, w, h, c) => raw(x + shake, feet + (y - feet) * sq - hop, w, h * sq, c);
+  // Der ganze Körper bewegt sich als starrer Block auf dem Halbpixel-Raster: nichts dehnt sich, also keine Lücken oder Zittern
+  const half = (v) => Math.round(v * 2) / 2, ph = t / 170 + px0 / 16 + py0 / 16, hop = half((1 + Math.sin(ph)) * 0.8);
+  const shake = warn ? half(Math.sin(t / 30) * 0.5) : 0;
+  const R = (x, y, w, h, c) => raw(x + shake, y - hop, w, h, c);
   const b = flash ? '#ffffff' : warn ? '#ff4a3a' : body, d = flash ? '#ffffff' : dark;
   const y = py;
   R(px + 2, py + 13, 12, 2, 'rgba(0,0,0,0.3)');
@@ -33,9 +34,9 @@ export function drawMinion(raw, kind, [body, dark], px0, py0, t, { flash = false
     r(px, y + 9, 3, 1, d); r(px + 4, y + 12, 2, 1, d); r(px + 9, y + 12, 2, 1, d);
   } else if (kind === 'wisp') {
     r(px + 4, y + 4, 8, 8, b); r(px + 5, y + 2, 6, 2, b); r(px + 7, y, 2, 2, d);
-    for (let k = 0; k < 4; k++) r(px + 4 + k * 2, y + 12 + ((k + t / 180) % 2), 2, 1, d);
+    for (let k = 0; k < 4; k++) r(px + 4 + k * 2, y + 12 + (Math.floor(k + t / 180) % 2), 2, 1, d);
   } else if (kind === 'bat') {
-    const up = Math.sin(t / 70);
+    const up = Math.round(Math.sin(t / 70) + 1) / 2;
     r(px + 5, y + 5, 6, 7, b); r(px + 5, y + 3, 1, 2, d); r(px + 10, y + 3, 1, 2, d);
     r(px, y + 5 + up, 5, 3, d); r(px + 11, y + 5 + up, 5, 3, d);
   } else { // slime
@@ -43,7 +44,7 @@ export function drawMinion(raw, kind, [body, dark], px0, py0, t, { flash = false
   } };
   shape((x, yy, w, h) => R(x - 0.5, yy - 0.5, w + 1, h + 1, '#17121f')); shape(R);
   const r = R;
-  if (!flash) { r(px + 5, y + 7, 4, 0.5, '#ffffff66'); r(px + 4, y + 12, 8, 0.5, 'rgba(0,0,0,0.3)'); } // Licht oben, Schatten unten
+  if (!flash) r(px + 4, y + 12, 8, 0.5, 'rgba(0,0,0,0.3)'); // Schatten unten
   const ey = kind === 'crab' ? y + 7 : kind === 'wisp' || kind === 'bat' ? y + 6 : y + 8;
   // Böser Blick: schräge Brauen, glühende Augen beim Ausholen, Maul mit Zähnen
   const glow = warn || bite ? '#ffe45a' : EYE;
@@ -65,7 +66,7 @@ export function drawBoss(r, shape, [main, dark], px, py, t, { flash = false, ang
   const ghost = state === 'ghost', aggro = state === 'aggro', hurt = state === 'hurt' || aggro;
   const tone = (c) => (flash ? '#ffffff' : ghost ? '#9ff0ee66' : c);
   const hi = tone(shadeHex(main, 0.32)), mid = tone(main), lo = tone(shadeHex(main, -0.3)), deep = tone(dark), line = ghost ? '#c8fffb88' : '#17121f';
-  const bob = (1 + Math.sin(t / 420)) * 0.75, step = aggro ? Math.sin(t / 100) : 0, y = py + bob;
+  const bob = Math.round((1 + Math.sin(t / 420)) * 1.5) / 2, step = aggro ? Math.round(Math.sin(t / 100)) : 0, y = py + bob;
   // Platte: Kontur, Licht oben, Schatten unten, Nieten in den Ecken
   const plate = (x, yy, w, h, face = mid, top = hi, bottom = lo) => {
     r(px + x - 1, yy - 1, w + 2, h + 2, line); r(px + x, yy, w, h, face); r(px + x, yy, w, 1, top); r(px + x, yy + h - 1, w, 1, bottom); r(px + x, yy, 1, h, top);
