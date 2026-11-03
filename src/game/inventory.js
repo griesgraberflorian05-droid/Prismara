@@ -1,21 +1,19 @@
 // Inventar und Münzen (Spielstand im Browser). Münzen findet man in Räumen und Truhen und
 // bekommt sie fürs Entkommen; ausgeben kann man sie im Shop. Gegenstände liegen in Räumen
-// oder werden gekauft und im Raum über die Inventarleiste (Tasten 1–4) benutzt.
+// oder werden gekauft und im Raum über die Inventarleiste (Tasten 1–2) benutzt.
 import { isAdmin, isFull } from './admin.js';
 
 const KEY = 'prismara.inventory.v1';
 
 /** Alle Gegenstände: Symbol (Pixel-Emoji im HUD), Name, Erklärung, Preis im Shop. */
 export const ITEMS = {
-  bread: { icon: '🍞', name: 'Kraftbrot', info: 'Füllt die Kraftleiste sofort ganz auf.', price: 15 },
-  scroll: { icon: '📜', name: 'Wegrolle', info: 'Zeigt dir den nächsten richtigen Zug (der Löser rechnet mit).', price: 0 },
   lens: { icon: '🔍', name: 'Lupe', info: 'Zeigt eine Runde lang, wo Kristalle, Münzen und Schlüssel liegen.', price: 25 },
   pick: { icon: '🔧', name: 'Dietrich', info: 'Öffnet eine Schatztruhe in der Wand (lauf gegen die Truhe). Wird dabei verbraucht.', price: 30 },
   boots: { icon: '🥾', name: 'Wanderstiefel', info: 'Dauerhaft: Laufen lädt doppelt so viel Kraft auf.', price: 120, permanent: true },
   gloves: { icon: '🧤', name: 'Kletterhandschuhe', info: 'Dauerhaft: Schieben kostet weniger Kraft (9 statt 6 Schübe am Stück).', price: 160, permanent: true },
   lantern: { icon: '🏮', name: 'Große Laterne', info: 'Dauerhaft: Deine Laterne leuchtet heller und weiter.', price: 90, permanent: true },
 };
-export const SLOTS = ['bread', 'scroll', 'lens', 'pick'];
+export const SLOTS = ['lens', 'pick'];
 
 /** Raumführer: Erklärung jedes Elements, das in einem Raum vorkommt (für die Hinweisschilder). */
 export const GUIDE = {
@@ -79,6 +77,18 @@ export const HATS = {
   pirate: { icon: '🏴‍☠️', name: 'Piratenhut', price: 5 },
   wizard: { icon: '🧙', name: 'Zauberhut', price: 6 },
   crown: { icon: '👑', name: 'Krone', price: 10 },
+  cap: { icon: '🧢', name: 'Schirmmütze', price: 2 },
+  beanie: { icon: '🧶', name: 'Bommelmütze', price: 2 },
+  cowboy: { icon: '🤠', name: 'Cowboyhut', price: 3 },
+  chef: { icon: '👨‍🍳', name: 'Kochmütze', price: 3 },
+  viking: { icon: '🪖', name: 'Wikingerhelm', price: 4 },
+  knight: { icon: '🛡', name: 'Ritterhelm', price: 5 },
+  tophat: { icon: '🎩', name: 'Zylinder', price: 5 },
+  party: { icon: '🥳', name: 'Partyhut', price: 3 },
+  santa: { icon: '🎅', name: 'Weihnachtsmütze', price: 4 },
+  miner: { icon: '⛏', name: 'Grubenhelm', price: 5 },
+  bunny: { icon: '🐰', name: 'Hasenohren', price: 4 },
+  halo: { icon: '😇', name: 'Heiligenschein', price: 8 },
 };
 export const hat = () => (cache || load()) && cache.hat || null;
 export const ownsHat = (id) => isFull() || (load().hats || []).includes(id);

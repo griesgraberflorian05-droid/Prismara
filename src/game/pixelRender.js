@@ -11,6 +11,22 @@ import { squashScale } from './fx.js';
 import { hat as currentHat } from './inventory.js';
 import { MARGIN, makeDecor, DecorSteps, drawFlames, drawGlows, drawShafts, drawMotes, shadeMargin } from './roomDecor.js';
 
+// Neue Hüte als Rechteck-Listen [x, y, b, h, Farbe] relativ zum Kopf, mit automatischer Kontur
+const HAT_ART = {
+  cap: [[0, -1, 8, 2, '#c0342c'], [1, -2, 6, 1, '#e8584a'], [6, 0, 4, 1, '#8a1f1a'], [3, -2, 2, 0.5, '#ffffff']],
+  beanie: [[0, 0, 8, 1.5, '#e8e0d0'], [0.5, -2, 7, 2, '#3a6aa8'], [1.5, -3, 5, 1, '#5a8acc'], [3, -4.5, 2, 2, '#ffffff']],
+  cowboy: [[-2.5, 0, 13, 1, '#6b4426'], [1, -3, 6, 3, '#8f5f36'], [1, -3, 6, 0.5, '#c99766'], [1, -0.5, 6, 0.5, '#c0342c']],
+  chef: [[1, -1, 6, 2, '#e8e8f0'], [0, -4, 8, 3, '#ffffff'], [1, -4.5, 2, 1, '#ffffff'], [5, -4.5, 2, 1, '#ffffff']],
+  viking: [[0.5, -2, 7, 3, '#8a8690'], [1, -2, 6, 0.5, '#d4d0dc'], [-1.5, -3, 2, 3, '#f0e6c8'], [7.5, -3, 2, 3, '#f0e6c8'], [3.5, -2, 1, 3, '#ffd166']],
+  knight: [[0, -2, 8, 5, '#a0a0aa'], [0, -2, 8, 0.5, '#e0e0ea'], [3.5, -4, 1, 2, '#c0342c'], [0, 3, 8, 1, '#5a5a66']],
+  tophat: [[-1, 0, 10, 1, '#1a1622'], [1, -5, 6, 5, '#2a2436'], [1, -5, 6, 0.5, '#5a5070'], [1, -1, 6, 1, '#c0342c']],
+  party: [[2, -1, 4, 2, '#ff5a8a'], [3, -3, 2, 2, '#ffd166'], [3.5, -4, 1, 1, '#3ddc97'], [3.5, -5, 1, 1, '#ffffff']],
+  santa: [[0, 0, 8, 1.5, '#ffffff'], [1, -2, 6, 2, '#d0242c'], [3, -3, 5, 1, '#d0242c'], [8, -3, 1.5, 1.5, '#ffffff']],
+  miner: [[0, -2, 8, 3, '#e8b030'], [0, -2, 8, 0.5, '#ffe9a8'], [-1, 0.5, 10, 0.5, '#a87410'], [3, -2, 2, 2, '#4a4652']],
+  bunny: [[1, -5, 2, 5, '#ffffff'], [5, -5, 2, 5, '#ffffff'], [1.5, -4, 1, 3, '#ffb0c8'], [5.5, -4, 1, 3, '#ffb0c8']],
+  halo: [[1, -4, 6, 1, '#ffd166'], [2, -3.5, 4, 0.5, '#fff0a0']],
+};
+
 export const T = 16; // Pixel pro Feld
 const shade = (hex, f) => { const n = parseInt(hex.slice(1), 16); const ch = (v) => Math.max(0, Math.min(255, Math.round(v + (f < 0 ? v * f : (255 - v) * f)))); return `rgb(${ch(n >> 16)},${ch((n >> 8) & 255)},${ch(n & 255)})`; };
 const hexRgb = (hex) => { const n = parseInt(hex.slice(1), 16); return hex.length === 4 ? [((n >> 8) & 15) / 15, ((n >> 4) & 15) / 15, (n & 15) / 15] : [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; };
@@ -73,7 +89,7 @@ export class PixelRenderer {
       if (cell.type === 'wall') continue;
       this.floorTile(x, y, theme);
     }
-    DecorSteps.rug(this, level, cfg, out);
+    if (!this.skipRug) DecorSteps.rug(this, level, cfg, out);
     DecorSteps.scatter(this, level, cfg, out);
     // Licht von oben links: Wände werfen einen gedithert auslaufenden Schatten auf den Boden
     for (let y = 0; y < level.h; y++) for (let x = 0; x < level.w; x++) {
@@ -487,6 +503,7 @@ export class PixelRenderer {
   hat(id, hx, hy, t) {
     if (!id) return;
     const R = (x, y, w, h, c) => this.r(hx + x, hy + y, w, h, c);
+    if (HAT_ART[id]) { for (const [x, y, w, h, c] of HAT_ART[id]) { R(x - 0.5, y - 0.5, w + 1, h + 1, '#17121f'); } for (const [x, y, w, h, c] of HAT_ART[id]) R(x, y, w, h, c); if (id === 'halo' && Math.floor(t / 400) % 2) R(3, -4, 2, 0.5, '#ffffff'); if (id === 'miner') R(3.5, -1.5, 1, 1, Math.floor(t / 300) % 2 ? '#ffffff' : '#ffe070'); return; }
     if (id === 'straw') { R(-2, 0, 12, 2, '#3a2a10'); R(-1, 0, 10, 1, '#e8c86a'); R(1, -3, 6, 3, '#d8b050'); R(1, -1, 6, 1, '#c94f4f'); R(2, -3, 2, 1, '#f2dc8a'); }
     else if (id === 'crown') { R(1, -2, 6, 3, '#c98a00'); R(1, -2, 6, 2, '#ffd166'); R(1, -4, 1, 2, '#ffd166'); R(3, -5, 2, 3, '#ffd166'); R(6, -4, 1, 2, '#ffd166'); R(3, -1, 2, 1, '#ff4d6d'); if (Math.floor(t / 500) % 4 === 0) R(4, -5, 1, 1, '#ffffff'); }
     else if (id === 'flowers') { R(0, 0, 8, 1, '#3f8a3a'); [['#ff9cc8', 0], ['#fff6b0', 3], ['#ffffff', 6]].forEach(([c, x]) => { R(x, -1, 2, 2, c); R(x, -1, 1, 1, '#ffd166'); }); }
@@ -639,7 +656,7 @@ export class PixelRenderer {
     if (Math.floor(t / 600) % 4 === 0) this.r(px + 6, py + 6, 1, 1, '#ffffff');
   }
 
-  /** Abenteuer-Fundstücke: Münze (dreht sich), Dietrich, Kraftbrot, Wegrolle, Lupe. */
+  /** Abenteuer-Fundstücke: Münze (dreht sich), Dietrich, Lupe. */
   loot(it, t) {
     if (it.got) return;
     if (it.kind === 'critter') { drawMinion((x, y, w, h, c) => this.r(x, y, w, h, c), it.foe.minion, it.foe.colors, it.x * T, it.y * T, t); return; }
@@ -653,14 +670,6 @@ export class PixelRenderer {
     } else if (it.kind === 'pick') { // Dietrich
       this.r(px + 3.5, py + 5.5, 4, 4, O); this.r(px + 7, py + 6.5, 7, 2, O); this.r(px + 12, py + 7.5, 2, 2.5, O);
       this.r(px + 4, py + 6, 3, 3, '#a0a0aa'); this.r(px + 4.5, py + 6.5, 2, 2, O); this.r(px + 7, py + 7, 6.5, 1, '#c0c0c8'); this.r(px + 7, py + 7, 6.5, 0.5, '#ffffff'); this.r(px + 12.5, py + 8, 1, 1.5, '#c0c0c8');
-    } else if (it.kind === 'bread') {
-      this.r(px + 3.5, py + 5.5, 9, 6, O); this.r(px + 5, py + 4.5, 6, 1, O); this.r(px + 4, py + 6, 8, 5, '#b8782e'); this.r(px + 5, py + 5, 6, 3, '#e0a050'); this.r(px + 5, py + 5, 6, 0.5, '#ffd9a0');
-      for (const a of [6, 8, 10]) this.r(px + a, py + 5.5, 0.5, 3, '#fff0d0');
-      this.r(px + 4, py + 10.5, 8, 0.5, '#7a4a18');
-    } else if (it.kind === 'scroll') {
-      this.r(px + 2.5, py + 4.5, 11, 7, O); this.r(px + 4, py + 5, 8, 6, '#f3e1b8'); this.r(px + 3, py + 5, 1, 6, '#c9a35a'); this.r(px + 12, py + 5, 1, 6, '#c9a35a'); this.r(px + 3, py + 5, 0.5, 6, '#f0d890');
-      for (const a of [6, 7.5, 9]) this.r(px + 5, py + a, 5 + (a === 7.5 ? 1 : 0), 0.5, '#6b4a22');
-      this.r(px + 7, py + 10, 2, 1.5, '#c0342c');
     } else if (it.kind === 'lens') {
       this.r(px + 9, py + 9, 4, 4, O); this.r(px + 9.5, py + 9.5, 3, 3, '#8a5a2a');
       this.r(px + 3.5, py + 3.5, 7, 7, O); this.r(px + 4, py + 4, 6, 6, '#c9963f'); this.r(px + 5, py + 5, 4, 4, '#7fc4e8'); this.r(px + 5, py + 5, 2, 1, '#e8fbff'); this.r(px + 5, py + 6, 0.5, 1, '#e8fbff');
@@ -854,11 +863,22 @@ export class PixelRenderer {
     const { level, ctx } = this;
     const th = opts.theme || PIXEL_THEMES.default;
     const exitKey = opts.exit ? `${opts.exit.x},${opts.exit.y}` : '';
-    if (!this.static || this.staticTheme !== th || this.staticExit !== exitKey) { this.buildStatic(th, opts.exit); this.staticTheme = th; this.staticExit = exitKey; }
+    if (!this.static || this.staticTheme !== th || this.staticExit !== exitKey) {
+      this.skipRug = true; this.buildStatic(th, opts.exit); this.bare = this.static; this.skipRug = false;
+      this.buildStatic(th, opts.exit); this.staticTheme = th; this.staticExit = exitKey; this.rollT0 = null;
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(this.static, 0, 0);
+    // Teppich rollt von links aus: rechts der Rolle zeigt noch der Raum ohne Teppich
+    this.rollT0 ??= t;
+    const roll = t ? Math.min(1, (t - this.rollT0) / 1100) : 1;
+    if (roll < 1 && level.w >= 7 && level.h >= 6) {
+      const k = this.rs, x0 = (this.ox + 2 * T + 2) * k, x1 = (this.ox + (level.w - 2) * T - 2) * k, edge = Math.round(x0 + (x1 - x0) * roll * (2 - roll));
+      ctx.drawImage(this.bare, 0, 0); ctx.drawImage(this.static, 0, 0, edge, this.static.height, 0, 0, edge, this.static.height);
+      const y = (this.oy + 2 * T + 3) * k, h = (level.h - 4) * T * k - 6 * k;
+      ctx.fillStyle = '#17121f'; ctx.fillRect(edge - 2 * k, y, 8 * k, h); ctx.fillStyle = '#8c3a3a'; ctx.fillRect(edge - k, y, 6 * k, h); ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(edge, y, 2 * k, h); // die Rolle
+    } else ctx.drawImage(this.static, 0, 0);
     ctx.setTransform(this.rs, 0, 0, this.rs, this.ox * this.rs, this.oy * this.rs);
     const tr = opts.tr;
     const sensorInfo = new Map((tr.sensors || []).map((s) => [s.y * level.w + s.x, s]));
@@ -874,7 +894,7 @@ export class PixelRenderer {
       if (c.hole || c.crumble) this.bog(x, y, c, (opts.fill || []).includes(i), (opts.broken || []).includes(i), t);
     });
     for (const s of opts.sinking || []) this.sinkFx(s, t);
-    // Fundstücke des Abenteuers (Münzen, Dietrich, Brot …), Truhe und Schild
+    // Fundstücke des Abenteuers (Münzen, Dietrich, Lupe), Truhe und Schild
     for (const it of opts.loot || []) this.loot(it, t);
     for (const f of opts.fragments || []) if (!f.got) this.fragment(f, t);
     // Lichtranken unter den Objekten (wachsen nach jeder Änderung neu aus der Lampe)

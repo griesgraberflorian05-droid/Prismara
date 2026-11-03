@@ -260,7 +260,7 @@ function key(s) {
 }
 
 /** Breitensuche über Spielerposition + Blöcke. Blickrichtung zählt nur fürs Drehen.
- *  from: optional ein laufender Spielstand (für die Wegrolle: nächster richtiger Zug). */
+ *  from: optional ein laufender Spielstand (für den Debug-Hinweis: nächster richtiger Zug). */
 export function solvePush(level, { limit = 400000, onProgress = null, every = 50000, from = null } = {}) {
   const start = from ? { ...from, moves: 0, dead: false } : createPushState(level);
   const queue = [{ s: start, path: [] }];

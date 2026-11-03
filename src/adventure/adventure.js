@@ -152,7 +152,7 @@ export function planLoot(level, def, exit, fragments) {
   const pick = () => free.splice(Math.floor(rnd() * free.length), 1)[0];
   const loot = [];
   for (let k = 0; k < 3 && free.length; k++) loot.push({ ...pick(), kind: 'coin', id: `coin${k}` });
-  const r = rnd(), bonus = r < 0.4 ? 'pick' : r < 0.68 ? 'bread' : r < 0.86 ? 'lens' : 'scroll';
+  const r = rnd(), bonus = r < 0.6 ? 'pick' : 'lens';
   if (free.length) loot.push({ ...pick(), kind: bonus, id: 'item' });
   // Truhe: Seitenwand mit freiem Nachbarfeld, nicht der Ausgang
   const niches = [];
@@ -334,7 +334,16 @@ export function mountAdventure(root, params, opts = {}) {
     $('#frags').textContent = `${fragments.filter((f) => f.got).length}/${fragments.length}`;
     $('#coins').textContent = getInv().coins;
     if (hasKeys) $('#keys').textContent = state.keys || 0;
-    root.querySelectorAll('.inv-slot').forEach((b) => { const n = count(b.dataset.item); b.querySelector('b').textContent = n === Infinity ? '∞' : n; b.disabled = !n; });
+    // Admin-Debug: nächsten richtigen Zug zeigen
+  function showHint() {
+    const res = solvePush(level, { from: state, limit: 150000 });
+    const step = res.path.find((p) => !String(p).startsWith('turn'));
+    if (!res.solvable || step == null) { toast('Von hier aus kein Zug gefunden'); return; }
+    const [dx, dy] = DIRS[step === 'rot' ? state.player.dir : step];
+    hintMark = { x: state.player.x + dx, y: state.player.y + dy };
+    toast(step === 'rot' ? 'Dreh den Block vor dir' : `Nächster Zug: ${['↑ hoch', '→ rechts', '↓ runter', '← links'][step]}`);
+  }
+  root.querySelectorAll('.inv-slot').forEach((b) => { const n = count(b.dataset.item); b.querySelector('b').textContent = n === Infinity ? '∞' : n; b.disabled = !n; });
     coach();
   }
 
@@ -405,7 +414,7 @@ export function mountAdventure(root, params, opts = {}) {
       if (chest.open) { toast('Die Truhe ist leer.'); return true; }
       if (!useItem('pick')) { toast('🧰 Verschlossen – du brauchst einen Dietrich 🔧'); play('bump'); return true; }
       chest.open = true; chest.t0 = performance.now(); markFound(def.id, 'chest');
-      const prize = ['bread', 'lens', 'scroll', 'pick'][seeded(def.id + 'chest') % 4];
+      const prize = ['lens', 'pick'][seeded(def.id + 'chest') % 2];
       addCoins(10); addItem(prize);
       play('door'); later(() => play('target', 7), 200);
       toast(`🧰 Truhe auf! +10 🪙 und ${ITEMS[prize].icon} ${ITEMS[prize].name}`);
@@ -422,16 +431,8 @@ export function mountAdventure(root, params, opts = {}) {
   function closeSign() { $('#signdlg').hidden = true; paused = false; canvas.focus(); }
   function use(id) {
     if (done || caught || !count(id)) { play('bump'); return; }
-    if (id === 'bread') { useItem(id); stamina = 1; restUntil = 0; play('target', 2); toast('🍞 Kraft voll!'); }
-    else if (id === 'lens') { useItem(id); lensUntil = performance.now() + 8000; play('ui'); toast('🔍 Die Lupe zeigt alle Fundstücke'); }
-    else if (id === 'scroll') {
-      const res = solvePush(level, { from: state, limit: 150000 });
-      const step = res.path.find((p) => !String(p).startsWith('turn'));
-      if (!res.solvable || step == null) { toast('📜 Die Rolle bleibt leer – erst einen Zug zurück?'); return; }
-      useItem(id); play('ui');
-      if (step === 'rot') { const [dx, dy] = DIRS[state.player.dir]; hintMark = { x: state.player.x + dx, y: state.player.y + dy }; toast('📜 Dreh den Block vor dir (Leertaste)'); }
-      else { const [dx, dy] = DIRS[step]; hintMark = { x: state.player.x + dx, y: state.player.y + dy }; toast(`📜 Nächster Zug: ${['↑ hoch', '→ rechts', '↓ runter', '← links'][step]}`); }
-    } else if (id === 'pick') { toast('🔧 Lauf gegen eine Truhe in der Wand, um sie zu öffnen.'); return; }
+    if (id === 'lens') { useItem(id); lensUntil = performance.now() + 8000; play('ui'); toast('🔍 Die Lupe zeigt alle Fundstücke'); }
+    else if (id === 'pick') { toast('🔧 Lauf gegen eine Truhe in der Wand, um sie zu öffnen.'); return; }
     updateHud();
   }
   root.querySelectorAll('.inv-slot').forEach((b) => b.addEventListener('click', () => { use(b.dataset.item); canvas.focus(); }));
@@ -659,7 +660,7 @@ export function mountAdventure(root, params, opts = {}) {
   function debug(a) {
     setPaused(false);
     if (a === 'open') { exitOpen = true; if (solveMoves == null) solveMoves = state.moves; play('exitopen'); updateHud(); }
-    if (a === 'hint') { hintMark = null; use('scroll'); }
+    if (a === 'hint') { hintMark = null; showHint(); }
     if (a === 'next' || a === 'prev') location.hash = `#/adv/${index + (a === 'next' ? 1 : -1)}`;
     if (a === 'wnext' || a === 'wprev') location.hash = `#/adv/${PUSH_LEVELS.findIndex((l) => l.id === CHAPTERS[chIndex + (a === 'wnext' ? 1 : -1)].levels[0])}`; // erster Raum der Nachbarwelt
     if (a === 'boss') location.hash = `#/arena/${chIndex}`;
@@ -684,7 +685,7 @@ export function mountAdventure(root, params, opts = {}) {
     if (e.target.closest('input, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
     if (!$('#signdlg').hidden) { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { closeSign(); e.preventDefault(); } return; }
     if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') { setPaused(!paused); e.preventDefault(); return; }
-    if (!paused && e.key >= '1' && e.key <= '4') { use(SLOTS[+e.key - 1]); e.preventDefault(); return; }
+    if (!paused && e.key >= '1' && e.key <= '2') { use(SLOTS[+e.key - 1]); e.preventDefault(); return; }
     if (paused) return;
     if (e.target.closest('a, button') && (e.key === 'Enter' || e.key === ' ')) return;
     if (e.key in KEYS) { if (!e.repeat) { pressed = [...pressed.filter((d) => d !== KEYS[e.key]), KEYS[e.key]]; held = KEYS[e.key]; stepDir(held); lastStep = performance.now(); } e.preventDefault(); }

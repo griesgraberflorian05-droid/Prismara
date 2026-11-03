@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.114', items: ['Kraftbrot und Wegrolle entfernt', '12 neue Hüte', 'Teppich rollt beim Betreten aus'] },
   { v: '3.23.113', items: ['Held und alle Skins feiner', 'Alle Items neu', 'Neue Schalter und Kraftbalken'] },
   { v: '3.23.112', items: ['Logo passt zum Spiel: Fackel, Redstone-Spur, Lampe'] },
   { v: '3.23.111', items: ['Bäume, Tannen, Büsche und Felsen in 32 × 32'] },
