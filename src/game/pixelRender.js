@@ -295,14 +295,16 @@ export class PixelRenderer {
   flip(x, y, c, pressed) {
     const px = x * T, py = y * T;
     const orient = pressed ? (c.orient === '/' ? '\\' : '/') : c.orient;
-    this.r(px + 1, py + 1, 14, 14, '#2a3a4a'); this.r(px + 2, py + 2, 12, 12, '#3d5266');
+    this.r(px + 0.5, py + 0.5, 15, 15, '#17121f'); this.r(px + 1, py + 1, 14, 14, '#57525e'); this.r(px + 1, py + 1, 14, 0.5, '#b0acb8'); this.r(px + 2.5, py + 2.5, 11, 11, '#2b3f62');
     this.diag(px, py, orient, '#e8f0ff');
     this.r(px + 12, py + 12, 3, 3, pressed ? '#4ff0ff' : '#1f7f8f');
   }
 
-  plate(x, y, pressed) {
-    const px = x * T, py = y * T;
-    this.r(px + 3, py + 5, 10, 7, '#2a2a33'); this.r(px + 4, py + (pressed ? 7 : 5), 8, pressed ? 4 : 5, pressed ? '#4ff0ff' : '#5fa8b8');
+  plate(x, y, pressed) { // Trittplatte: Steinfassung, Messingplatte, gedrückt leuchtet sie
+    const px = x * T, py = y * T, top = py + (pressed ? 6 : 4.5);
+    this.r(px + 2, py + 3, 12, 10, '#17121f'); this.r(px + 2.5, py + 3.5, 11, 9, '#57525e'); this.r(px + 2.5, py + 3.5, 11, 0.5, '#8e8894');
+    this.r(px + 3.5, top, 9, 7, '#17121f'); this.r(px + 4, top + 0.5, 8, 5.5, pressed ? '#4ff0ff' : '#a87a34'); this.r(px + 4, top + 0.5, 8, 0.5, pressed ? '#d8ffff' : '#f0cf7a');
+    for (const [c, d] of [[4.5, 1], [10.5, 1], [4.5, 4.5], [10.5, 4.5]]) this.r(px + c, top + d, 1, 1, pressed ? '#ffffff' : '#fff0b0');
   }
 
   portal(x, y, c, t) {
@@ -340,7 +342,7 @@ export class PixelRenderer {
   // p: { x, y, dir, walk (0..1 Schrittphase oder null), push (0..1 Kraftaufwand), stamina (0..1),
   //      exhausted, bump (0..1 Rückstoß), celebrate (0..1), caught, idle (ms ohne Eingabe) }
   // Jeder Körperteil bekommt eine 1-Pixel-Kontur, damit die Figur sich vom Boden abhebt.
-  part(x, y, w, h, c) { this.r(x - 1, y - 1, w + 2, h + 2, '#120a1c'); this.r(x, y, w, h, c); }
+  part(x, y, w, h, c) { this.r(x - 0.5, y, w + 1, h, '#120a1c'); this.r(x, y - 0.5, w, h + 1, '#120a1c'); this.r(x, y, w, h, c); this.r(x, y, 0.5, 0.5, '#120a1c'); this.r(x + w - 0.5, y, 0.5, 0.5, '#120a1c'); }
 
   player(p, t) {
     // Squash & Stretch um die Füße, Code „dinnerbone“: gespiegelt um die Feldmitte
@@ -423,7 +425,11 @@ export class PixelRenderer {
       const eye = '#1a1022';
       if (p.caught) { this.r(fx, fy, 2, 2, '#ffffff'); this.r(fx + (side ? 2 : 2), fy, 2, 2, '#ffffff'); this.r(fx + 1, fy + 3, 2, 1, eye); }
       else if (strain || p.exhausted) { this.r(fx, fy + 1, 2, 1, eye); if (!side) this.r(fx + 2, fy + 1, 2, 1, eye); this.r(fx + 1, fy + 3, 2, 1, '#c9505a'); }
-      else if (!blink) { this.r(fx + (side ? (dx > 0 ? 2 : 0) : 0), fy + 1, 1, 2, eye); if (!side) this.r(fx + 3, fy + 1, 1, 2, eye); }
+      else if (!blink) {
+        const ex = fx + (side ? (dx > 0 ? 2 : 0) : 0);
+        this.r(ex, fy + 0.5, 1, 2, eye); this.r(ex, fy + 0.5, 0.5, 0.5, '#ffffff');
+        if (!side) { this.r(fx + 3, fy + 0.5, 1, 2, eye); this.r(fx + 3, fy + 0.5, 0.5, 0.5, '#ffffff'); this.r(fx, fy + 2.5, 0.5, 0.5, '#e88a8a'); this.r(fx + 3.5, fy + 2.5, 0.5, 0.5, '#e88a8a'); this.r(fx + 1.5, fy + 3, 1, 0.5, '#8a4a4a'); }
+      }
       else { this.r(fx, fy + 2, side ? 2 : 4, 1, eye); }
       if (p.yawn) this.r(fx + 1, fy + 3, 2, 1, '#5a2030');
     }
@@ -639,18 +645,25 @@ export class PixelRenderer {
     if (it.kind === 'critter') { drawMinion((x, y, w, h, c) => this.r(x, y, w, h, c), it.foe.minion, it.foe.colors, it.x * T, it.y * T, t); return; }
     const px = it.x * T, py = it.y * T + Math.round(Math.sin(t / 260 + it.x * 2) * 1.5);
     this.r(px + 5, py + 12, 7, 2, 'rgba(0,0,0,0.25)');
+    const O = '#17121f';
     if (it.kind === 'coin') {
-      const w = [6, 4, 2, 4][Math.floor(t / 140 + it.x) % 4];
-      this.r(px + 8 - w / 2, py + 5, w, 6, '#c98a00'); this.r(px + 8 - w / 2 + (w > 2 ? 1 : 0), py + 6, Math.max(1, w - 2), 4, '#ffd166');
-      if (w === 6) this.r(px + 7, py + 7, 1, 2, '#c98a00');
-    } else if (it.kind === 'pick') {
-      this.r(px + 4, py + 6, 3, 3, '#a0a0aa'); this.r(px + 7, py + 7, 6, 1, '#c0c0c8'); this.r(px + 12, py + 6, 1, 2, '#c0c0c8');
+      const w = [7, 5, 2, 5][Math.floor(t / 140 + it.x) % 4], x = px + 8 - w / 2;
+      this.r(x - 0.5, py + 4.5, w + 1, 7, O); this.r(x, py + 5, w, 6, '#c98a00'); this.r(x + 0.5, py + 5.5, Math.max(1, w - 1), 5, '#ffd166'); this.r(x + 0.5, py + 5.5, Math.max(1, w - 1), 0.5, '#fff6d8');
+      if (w > 4) this.r(px + 7.5, py + 6.5, 1, 3, '#c98a00');
+    } else if (it.kind === 'pick') { // Dietrich
+      this.r(px + 3.5, py + 5.5, 4, 4, O); this.r(px + 7, py + 6.5, 7, 2, O); this.r(px + 12, py + 7.5, 2, 2.5, O);
+      this.r(px + 4, py + 6, 3, 3, '#a0a0aa'); this.r(px + 4.5, py + 6.5, 2, 2, O); this.r(px + 7, py + 7, 6.5, 1, '#c0c0c8'); this.r(px + 7, py + 7, 6.5, 0.5, '#ffffff'); this.r(px + 12.5, py + 8, 1, 1.5, '#c0c0c8');
     } else if (it.kind === 'bread') {
-      this.r(px + 4, py + 6, 8, 5, '#c98a3a'); this.r(px + 5, py + 5, 6, 1, '#e0a050'); this.r(px + 6, py + 7, 1, 1, '#f3e1b8'); this.r(px + 9, py + 7, 1, 1, '#f3e1b8');
+      this.r(px + 3.5, py + 5.5, 9, 6, O); this.r(px + 5, py + 4.5, 6, 1, O); this.r(px + 4, py + 6, 8, 5, '#b8782e'); this.r(px + 5, py + 5, 6, 3, '#e0a050'); this.r(px + 5, py + 5, 6, 0.5, '#ffd9a0');
+      for (const a of [6, 8, 10]) this.r(px + a, py + 5.5, 0.5, 3, '#fff0d0');
+      this.r(px + 4, py + 10.5, 8, 0.5, '#7a4a18');
     } else if (it.kind === 'scroll') {
-      this.r(px + 4, py + 5, 8, 6, '#f3e1b8'); this.r(px + 3, py + 5, 1, 6, '#c9a35a'); this.r(px + 12, py + 5, 1, 6, '#c9a35a'); this.r(px + 5, py + 7, 6, 1, '#6b4a22');
+      this.r(px + 2.5, py + 4.5, 11, 7, O); this.r(px + 4, py + 5, 8, 6, '#f3e1b8'); this.r(px + 3, py + 5, 1, 6, '#c9a35a'); this.r(px + 12, py + 5, 1, 6, '#c9a35a'); this.r(px + 3, py + 5, 0.5, 6, '#f0d890');
+      for (const a of [6, 7.5, 9]) this.r(px + 5, py + a, 5 + (a === 7.5 ? 1 : 0), 0.5, '#6b4a22');
+      this.r(px + 7, py + 10, 2, 1.5, '#c0342c');
     } else if (it.kind === 'lens') {
-      this.r(px + 4, py + 4, 6, 6, '#6b4a22'); this.r(px + 5, py + 5, 4, 4, '#bfe8ff'); this.r(px + 9, py + 9, 3, 3, '#6b4a22');
+      this.r(px + 9, py + 9, 4, 4, O); this.r(px + 9.5, py + 9.5, 3, 3, '#8a5a2a');
+      this.r(px + 3.5, py + 3.5, 7, 7, O); this.r(px + 4, py + 4, 6, 6, '#c9963f'); this.r(px + 5, py + 5, 4, 4, '#7fc4e8'); this.r(px + 5, py + 5, 2, 1, '#e8fbff'); this.r(px + 5, py + 6, 0.5, 1, '#e8fbff');
     }
   }
 

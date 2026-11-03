@@ -1667,3 +1667,17 @@ body.wood .btn:hover:not(:disabled), .wbtn:hover:not(:disabled) { background-col
 body.wood .btn-primary, .wbtn.big { background-color: var(--leaf); }
 body.wood .btn-primary:hover:not(:disabled), .wbtn.big:hover { background-color: var(--leaf-2); }
 .wbtn.mm-tile { background-image: none; }
+
+/* Kraftbalken: Holzrahmen, drei harte Farbstufen und Kerben statt Verlauf */
+.stamina-bar { height: 14px; background: #2a1408; border: 3px solid #17121f; box-shadow: inset 0 0 0 1px #8f5f36, 0 2px 0 #000; image-rendering: pixelated; }
+.stamina-bar.big { height: 20px; }
+.stamina-bar::after {
+  inset: 2px; width: calc((100% - 4px) * var(--k));
+  background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(0, 0, 0, 0.35) 10px 12px), linear-gradient(#ffffff55 0 2px, transparent 2px calc(100% - 3px), #0005 calc(100% - 3px)), linear-gradient(90deg, #d8303a 0 33%, #ffb32a 33% 66%, #5ad04a 66%);
+  background-size: auto, auto, var(--bar-w, 160px) 100%;
+}
+/* Regler und Häkchen im selben Stil */
+input[type=range] { accent-color: #ffb32a; image-rendering: pixelated; }
+.ihud-label { letter-spacing: 1px; text-shadow: 2px 2px 0 #000; }
+.stamina-bar::after { width: auto; background-size: auto, auto, 100% 100%; }
+.stamina-bar::before { content: ''; position: absolute; z-index: 1; top: 2px; right: 2px; bottom: 2px; width: calc((100% - 4px) * (1 - var(--k))); background: #2a1408; transition: width 0.12s steps(6); }
