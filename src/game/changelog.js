@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.118', items: ['Moorgruben, Trittsteine und morsche Dielen neu'] },
   { v: '3.23.117', items: ['Raumführer im Spieldesign', 'Palmen im Blumentopf', 'Teppich läuft unter Möbeln durch'] },
   { v: '3.23.116', items: ['Räume oben ein Feld niedriger, Türen passend', 'Neue Fenster, nachts dunkel', 'Hut-Vorschau auf neutraler Figur'] },
   { v: '3.23.115', items: ['Neue Spiegelblöcke', '8 kaufbare Auren', 'Neue Tutorial-Pfeile und Rahmen', 'HUD im Fass-Design je Welt'] },

@@ -624,25 +624,36 @@ export class PixelRenderer {
    *  eingebrochen = frische Grube mit Bröseln am Rand. */
   bog(x, y, c, filled, broken, t) {
     const px = x * T, py = y * T;
-    if (filled) {
-      this.r(px + 1, py + 1, 14, 14, '#2a2a20'); this.r(px + 2, py + 2, 12, 11, '#7a7a6a'); this.r(px + 2, py + 2, 12, 2, '#9a9a88');
-      this.r(px + 4, py + 6, 3, 1, '#5a5a4a'); this.r(px + 9, py + 9, 3, 1, '#5a5a4a'); this.r(px + 1, py + 13, 14, 2, '#3a4a2a');
+    const rim = () => { // Moorrand aus Erde und Moos, dicht an dicht wie ein Teichufer
+      this.r(px, py, T, T, '#2a3320');
+      for (let k = 0; k < 16; k += 2) for (const [a, b] of [[k, 0], [k, 14.5], [0, k], [14.5, k]]) this.r(px + a, py + b, 1.5, 1.5, hash(x * 16 + a, y * 16 + b, 7) > 0.5 ? '#4f6a3a' : '#3a4a2a');
+    };
+    if (filled) { // Trittstein: versunkener Block, von Wasser und Moos umspült
+      rim(); this.r(px + 1.5, py + 1.5, 13, 13, '#16302a');
+      this.r(px + 2, py + 2.5, 12, 11.5, '#17121f'); this.r(px + 2.5, py + 3, 11, 10, '#7a7a6a'); this.r(px + 2.5, py + 3, 11, 2.5, '#9a9a88'); this.r(px + 2.5, py + 3, 11, 0.5, '#c4c4b0');
+      this.r(px + 4, py + 7, 3, 0.5, '#5a5a4a'); this.r(px + 6.5, py + 7, 0.5, 3, '#5a5a4a'); this.r(px + 9, py + 10, 3, 0.5, '#5a5a4a');
+      for (const [a, b] of [[3, 11], [4.5, 12], [11, 4], [12, 5.5]]) this.r(px + a, py + b, 1.5, 1, '#5a8a44');
       return;
     }
-    if (c.crumble && !broken) {
-      this.r(px + 1, py + 1, 14, 14, 'rgba(60,40,20,0.35)');
-      this.r(px + 3, py + 4, 4, 1, '#2a1a0a'); this.r(px + 6, py + 5, 1, 3, '#2a1a0a'); this.r(px + 7, py + 8, 4, 1, '#2a1a0a'); this.r(px + 10, py + 9, 1, 3, '#2a1a0a');
-      this.r(px + 2, py + 11, 3, 1, '#2a1a0a'); this.r(px + 12, py + 3, 1, 2, '#2a1a0a');
+    if (c.crumble && !broken) { // morsche Dielen mit Spalten
+      for (let k = 0; k < 3; k++) { const yy = py + 1 + k * 5; this.r(px + 1, yy, 14, 4.5, '#17121f'); this.r(px + 1.5, yy + 0.5, 13, 3.5, k % 2 ? '#6b5a3a' : '#7a6844'); this.r(px + 1.5, yy + 0.5, 13, 0.5, '#a08a5a'); }
+      for (const [a, b, l] of [[4, 2, 3], [9, 7, 3], [6, 12, 2]]) { this.r(px + a, py + b, 0.5, l, '#17121f'); this.r(px + a + 0.5, py + b + 1, 1.5, 0.5, '#17121f'); }
+      this.r(px + 12, py + 2, 1, 1, '#4f6a3a'); this.r(px + 2.5, py + 12, 1.5, 1, '#4f6a3a');
       return;
     }
-    this.r(px, py, T, T, '#1a2418'); this.r(px + 1, py + 1, 14, 14, '#16302a'); this.r(px + 2, py + 3, 12, 11, '#1f4a3c');
-    this.r(px + 1, py + 1, 14, 2, '#0e1a14');
-    const w = Math.floor(t / 400 + x * 3) % 4;
-    this.r(px + 4 + w, py + 7, 3, 1, '#3f7a5c'); this.r(px + 9 - w, py + 10, 2, 1, '#3f7a5c');
-    const b = ((t / 900) + x * 0.37 + y * 0.21) % 1;
-    if (b < 0.3) this.r(px + 6 + (x % 3), py + 8 - Math.floor(b * 10), 1, 1, '#9fd8b8');
-    if (broken) { this.r(px, py, 3, 2, '#5a3a22'); this.r(px + 12, py + 1, 3, 2, '#5a3a22'); this.r(px + 2, py + 14, 4, 2, '#5a3a22'); }
-    else { this.r(px + 2, py + 13, 2, 3, '#3f8a3a'); this.r(px + 12, py + 12, 2, 4, '#3f8a3a'); this.r(px + 12, py + 11, 2, 1, '#c9a35a'); }
+    rim();
+    // Wasser: Tiefe von dunkel oben nach heller unten, wandernde Wellenlinien, Ringe und Blasen
+    this.r(px + 1.5, py + 1.5, 13, 13, '#0e2420'); this.r(px + 2, py + 3, 12, 11, '#16403a'); this.r(px + 2, py + 7, 12, 7, '#1f5a4c');
+    const f = t / 500 + x * 1.7 + y;
+    for (let k = 0; k < 3; k++) { const yy = py + 5 + k * 3.5, off = Math.sin(f + k * 2) * 2.5; this.r(px + 5 + off, yy, 6 - k, 0.5, '#5aa88a'); this.r(px + 6 + off, yy + 0.5, 2.5, 0.5, '#2f7a64'); }
+    const b = ((t / 1400) + x * 0.37 + y * 0.21) % 1;
+    if (b < 0.45) { const q = b / 0.45, r = 1 + q * 4, cx = px + 5 + ((x * 5 + y) % 6), cy = py + 8 + (x % 3); this.r(cx - r, cy, r * 2, 0.5, `rgba(159,216,184,${(0.8 - q * 0.8).toFixed(2)})`); this.r(cx - r * 0.6, cy - 1, r * 1.2, 0.5, `rgba(159,216,184,${(0.5 - q * 0.5).toFixed(2)})`); this.r(cx, cy - 2 - q * 3, 1, 1, '#d8ffe8'); }
+    if (broken) for (const [a, e] of [[0, 0], [12, 0.5], [2, 13.5]]) { this.r(px + a, py + e, 3.5, 2.5, '#17121f'); this.r(px + a + 0.5, py + e + 0.5, 2.5, 1.5, '#7a6844'); }
+    else { // Schilfrohr, wiegt sich leicht
+      const sw = Math.sin(t / 700 + x) > 0 ? 0.5 : 0;
+      this.r(px + 2.5, py + 9, 0.5, 5, '#3f8a3a'); this.r(px + 3.5 + sw, py + 7, 0.5, 7, '#5ab845'); this.r(px + 3 + sw, py + 5.5, 1.5, 2, '#8a5a2a'); this.r(px + 12.5, py + 10, 0.5, 4, '#3f8a3a'); this.r(px + 11.5, py + 11.5, 1, 2.5, '#5ab845');
+      this.r(px + 9, py + 12, 2.5, 1, '#4f8a4a'); this.r(px + 9.5, py + 11.5, 1, 0.5, '#ff9cc8'); // Seerose
+    }
   }
 
   /** Block versinkt: Spritzer und Ringe. */
