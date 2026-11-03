@@ -3,7 +3,7 @@
 // Unterseiten: #/menu, #/menu/chapters[/i], #/menu/chapter/i, #/menu/kit, #/menu/shop.
 import { PUSH_LEVELS, CHAPTERS } from '../game/pushLevels.js';
 import { isSolved, bestMoves, starsFor } from '../game/progress.js';
-import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, GOALS, CAPES, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
+import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, AURAS, ownsAura, buyAura, GOALS, CAPES, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
 import { drawSwordIcon } from '../game/monsters.js';
@@ -764,6 +764,8 @@ function kitPage(el, scene) {
           <div class="kit-row">${GOALS.map((t) => { const locked = !isAdmin() && stars < t.stars, on = look.goal.id === t.id; return `<button class="kit-swatch${on ? ' active' : ''}" ${locked ? 'disabled' : `data-goal="${t.id}"`} aria-pressed="${on}"><span class="ks-dot" style="background:${t.color || 'var(--gold)'}"></span><small>${locked ? `★${t.stars}` : esc(t.name)}</small></button>`; }).join('')}</div>
           <h3>Spur</h3>
           <div class="kit-row">${TRAILS.map((t) => { const locked = !isAdmin() && stars < t.stars, on = look.trail.id === t.id; return `<button class="kit-swatch${on ? ' active' : ''}" ${locked ? 'disabled' : `data-trail="${t.id}"`} aria-pressed="${on}"><span class="ks-dot" style="background:${t.color || 'transparent'}"></span><small>${locked ? `★${t.stars}` : esc(t.name)}</small></button>`; }).join('')}</div>
+          <h3>Aura</h3>
+          <div class="kit-row">${AURAS.map((t) => { const have = isAdmin() || ownsAura(t.id), on = look.aura.id === t.id; return `<button class="kit-swatch${on ? ' active' : ''}" data-aura="${t.id}" aria-pressed="${on}"><span class="ks-dot" style="background:${t.color || 'transparent'}"></span><small>${have ? esc(t.name) : `🪙 ${t.price}`}</small></button>`; }).join('')}</div>
           <h3>Laterne</h3>
           <div class="kit-row">${LANTERNS.map((t) => `<button class="kit-swatch${look.lantern.id === t.id ? ' active' : ''}" data-lantern="${t.id}" aria-pressed="${look.lantern.id === t.id}"><span class="ks-dot" style="background:${t.color};box-shadow:0 0 0 3px ${t.glow}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
           <p class="small">Neue Umhänge schaltest du mit Sternen frei, Hüte gibt es im Shop gegen Kristalle 💎.</p>
@@ -808,6 +810,11 @@ function kitPage(el, scene) {
     pick('lantern', (id) => setLook({ lantern: id }));
     pick('trail', (id) => setLook({ trail: id }));
     pick('goal', (id) => setLook({ goal: id }));
+    pick('aura', (id) => {
+      const a = AURAS.find((x) => x.id === id);
+      if (!isAdmin() && !ownsAura(id)) { if (getInv().coins < a.price) { play('bump'); return; } addCoins(-a.price); buyAura(id); }
+      setLook({ aura: id });
+    });
     el.querySelectorAll('button[data-hat]').forEach((b) => b.addEventListener('click', () => {
       wearHat(b.dataset.hat || null); play('ui'); render();
       el.querySelector(`button[data-hat="${b.dataset.hat}"]`)?.focus();

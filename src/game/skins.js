@@ -127,9 +127,19 @@ export const TRAILS = [
   { id: 'none', name: 'Keine', color: null, stars: 0 }, { id: 'steps', name: 'Fußspuren', color: '#4a3020', stars: 2 }, { id: 'petals', name: 'Blüten', color: '#f0a0c0', stars: 8 },
   { id: 'sparks', name: 'Funken', color: '#ffd166', stars: 14 }, { id: 'frost', name: 'Frost', color: '#bfe8ff', stars: 22 }, { id: 'ember', name: 'Glut', color: '#ff7a3a', stars: 32 },
 ];
+// Auren: kleine Daueranimationen um den Spieler, im Anpassen-Menü gegen Münzen zu kaufen
+export const AURAS = [
+  { id: 'none', name: 'Keine', color: null, price: 0 },
+  { id: 'embers', name: 'Glutfunken', color: '#ff7a3a', price: 60 }, { id: 'orbit', name: 'Kreislichter', color: '#9ff6ff', price: 90 },
+  { id: 'hearts', name: 'Herzen', color: '#ff7a9f', price: 110 }, { id: 'leaves', name: 'Blätterwirbel', color: '#6cc455', price: 110 },
+  { id: 'snow', name: 'Schneeflocken', color: '#e8f4ff', price: 130 }, { id: 'stars', name: 'Sternenkranz', color: '#ffd166', price: 180 },
+  { id: 'redstone', name: 'Redstone', color: '#ff3a3a', price: 220 }, { id: 'shadow', name: 'Schattenrauch', color: '#7a5aa8', price: 260 },
+];
+export const ownsAura = (id) => id === 'none' || (getSettings().auras || []).includes(id);
+export function buyAura(id) { updateSettings({ auras: [...(getSettings().auras || []), id] }); }
 export function getLook() {
   const l = getSettings().look || {};
-  return { tone: SKIN_TONES.find((t) => t.id === l.tone) || SKIN_TONES[0], lantern: LANTERNS.find((t) => t.id === l.lantern) || LANTERNS[0], trail: TRAILS.find((t) => t.id === l.trail) || TRAILS[0], cape: CAPES.find((t) => t.id === l.cape) || CAPES[0], goal: GOALS.find((t) => t.id === l.goal) || GOALS[0] };
+  return { tone: SKIN_TONES.find((t) => t.id === l.tone) || SKIN_TONES[0], lantern: LANTERNS.find((t) => t.id === l.lantern) || LANTERNS[0], trail: TRAILS.find((t) => t.id === l.trail) || TRAILS[0], cape: CAPES.find((t) => t.id === l.cape) || CAPES[0], goal: GOALS.find((t) => t.id === l.goal) || GOALS[0], aura: AURAS.find((t) => t.id === l.aura) || AURAS[0] };
 }
 export function setLook(patch) { updateSettings({ look: { ...(getSettings().look || {}), ...patch } }); }
 

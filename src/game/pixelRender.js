@@ -241,12 +241,17 @@ export class PixelRenderer {
       this.stone(X, Y, t);
       return;
     }
-    if (b.kind === 'mirror') { // Standspiegel: Metallrahmen mit Nieten, Glas mit Himmelsverlauf, breite Spiegelplatte zeigt die Lage
-      this.r(X + 1, Y + 1, 14, 14, '#17121f'); this.r(X + 2, Y + 2, 12, 12, '#8a8690'); this.r(X + 2, Y + 2, 12, 0.5, '#d4d0dc'); this.r(X + 2, Y + 13.5, 12, 0.5, '#4a4652');
-      for (const [a, c] of [[2.5, 2.5], [12.5, 2.5], [2.5, 12.5], [12.5, 12.5]]) this.r(X + a, Y + c, 1, 1, '#ffd166');
-      this.r(X + 3.5, Y + 3.5, 9, 9, '#2b3f62'); this.r(X + 3.5, Y + 3.5, 9, 3, '#4f7fb0'); this.r(X + 3.5, Y + 6.5, 9, 2, '#3a5a8a');
-      for (let k = 0; k < 18; k++) { const q = k / 2, x = X + 3.5 + q, y = b.orient === '/' ? Y + 12 - q : Y + 3.5 + q; this.r(x, y - 0.5, 1, 1.5, '#ffffff'); this.r(x, y + 1, 1, 0.5, '#9fd8ff'); }
-      const g = Math.floor(t / 70) % 70; if (g < 9) this.r(X + 3.5 + g, Y + 3.5, 0.5, 9, 'rgba(255,255,255,0.55)');
+    if (b.kind === 'mirror') { // Drehspiegel: dicke Silberplatte auf Messinglagern in einer Steinfassung, die Lage ist sofort lesbar
+      this.r(X + 0.5, Y + 0.5, 15, 15, '#17121f'); this.r(X + 1, Y + 1, 14, 14, '#57525e'); this.r(X + 1, Y + 1, 14, 0.5, '#a09ca8'); this.r(X + 1, Y + 14, 14, 1, '#3a3644');
+      this.r(X + 2.5, Y + 2.5, 11, 11, '#1c1524');
+      for (const [a, c] of [[1.5, 1.5], [13, 1.5], [1.5, 13], [13, 13]]) this.r(X + a, Y + c, 1.5, 1.5, '#d8aa52');
+      const up = b.orient === '/', y0 = (q) => (up ? Y + 13 - q : Y + 3 + q), g = (t / 45) % 60;
+      for (let q = 0; q <= 10; q += 0.5) this.r(X + 3 + q, y0(q) - 3, 0.5, 6, '#17121f');
+      for (let q = 0; q <= 10; q += 0.5) {
+        const x = X + 3 + q, y = y0(q), shine = Math.abs(q - g) < 1;
+        this.r(x, y - 2.5, 0.5, 1, '#ffffff'); this.r(x, y - 1.5, 0.5, 2, shine ? '#ffffff' : '#c8e4f4'); this.r(x, y + 0.5, 0.5, 1, shine ? '#e8fbff' : '#7fa8c8'); this.r(x, y + 1.5, 0.5, 1, '#3a5a7a');
+      }
+      for (const q of [0, 10]) { this.r(X + 2 + q, y0(q) - 1.5, 3, 3, '#17121f'); this.r(X + 2.5 + q, y0(q) - 1, 2, 2, '#ffd166'); this.r(X + 2.5 + q, y0(q) - 1, 1, 0.5, '#fff6d8'); }
       return;
     }
     if (b.kind === 'splitter') return this.crate(X, Y, () => { this.r(X + 3, Y + 3, 10, 9, '#123a44'); this.diag(X, Y, b.orient, '#9ff6ff', true); });
@@ -450,6 +455,7 @@ export class PixelRenderer {
       if (p.yawn) this.r(fx + 1, fy + 3, 2, 1, '#5a2030');
     }
     this.hat(p.hat ?? currentHat(), hx, hy, t);
+    this.aura(getLook().aura, px + 8, py + 8, t);
     this.acc(skin.color, hx, hy, t, p.dir, walking);
     // Laterne (Lichtquelle der Figur) – auf der Seite der Blickrichtung
     const lanX = px + (side ? (dx > 0 ? 13 : 1) : 12) + (strain && side ? dx * 2 : 0), lanY = by + 2;
@@ -498,6 +504,22 @@ export class PixelRenderer {
       else if (id === 'kuerbis') { R(-1, -1, 10, 8, '#ff7a1a'); R(1, 2, 2, 2, '#ffd166'); R(5, 2, 2, 2, '#ffd166'); R(3, 5, 2, 1, '#2a1a30'); R(3, -2, 2, 1, '#3f7a3a'); }
       else if (id === 'fluegel') { R(-5, 7, 3, 4, a); R(10, 7, 3, 4, a); } else if (id === 'umhang') { R(-2, 8, 2, 7, b); R(8, 8, 2, 7, b); }
     }
+  }
+
+  // Auren: kreisen, steigen oder wirbeln um die Figur
+  aura(a, cx, cy, t) {
+    if (!a?.color) return;
+    const c = a.color, hi = shade(c, 0.5);
+    const round = (n, sp, rx, ry, fn) => { for (let k = 0; k < n; k++) { const w = t / sp + (k * 6.283) / n; fn(cx + Math.cos(w) * rx, cy + Math.sin(w) * ry, k, Math.sin(w)); } };
+    const rise = (n, sp, fn) => { for (let k = 0; k < n; k++) { const q = (t / sp + k / n) % 1; fn(cx - 8 + ((k * 37) % 17), cy + 7 - q * 20, q, k); } };
+    if (a.id === 'embers') rise(6, 1500, (x, y, q) => { this.r(x + Math.sin(q * 9), y, 1, 1, q > 0.6 ? c : hi); });
+    else if (a.id === 'orbit') round(3, 320, 10, 4, (x, y) => { this.r(x - 1, y - 1, 2, 2, c); this.r(x - 0.5, y - 0.5, 1, 1, '#ffffff'); });
+    else if (a.id === 'hearts') rise(4, 2000, (x, y) => { this.r(x, y, 1, 1, c); this.r(x + 1.5, y, 1, 1, c); this.r(x, y + 0.5, 2.5, 1, c); this.r(x + 0.5, y + 1.5, 1.5, 0.5, c); this.r(x + 1, y + 2, 0.5, 0.5, c); });
+    else if (a.id === 'leaves') round(5, 450, 9, 7, (x, y, k) => { this.r(x, y, 2, 1, k % 2 ? c : shade(c, -0.3)); this.r(x + 0.5, y + 1, 1, 0.5, hi); });
+    else if (a.id === 'snow') rise(7, 2600, (x, y, q) => { const Y = cy * 2 - y - 8; this.r(x + Math.sin(q * 7) * 1.5, Y, 1, 1, c); });
+    else if (a.id === 'stars') round(4, 700, 10, 3.5, (x, y, k, d) => { if (d < -0.2) y -= 9; this.r(x, y - 1, 0.5, 2.5, c); this.r(x - 1, y, 2.5, 0.5, c); if ((Math.floor(t / 200) + k) % 3 === 0) this.r(x, y, 0.5, 0.5, '#ffffff'); });
+    else if (a.id === 'redstone') { round(8, 900, 8, 3, (x, y, k) => this.r(x, y + 7, 1.5, 1, k % 2 ? c : '#7a1018')); rise(3, 1100, (x, y) => this.r(x, y, 0.5, 0.5, hi)); }
+    else if (a.id === 'shadow') rise(6, 1800, (x, y, q) => { const s = 3 - q * 2; this.r(x, y, s, s, `${c}88`); });
   }
 
   hat(id, hx, hy, t) {
@@ -999,15 +1021,16 @@ export class PixelRenderer {
   }
 
   /** Tutorial-Pfeil: hüpft über dem Feld, auf das es gerade ankommt, mit pulsierendem Rahmen. */
-  marker(m, t) {
-    const px = Math.round(m.x * T), py = Math.round(m.y * T);
-    const bob = Math.round(Math.abs(Math.sin(t / 220)) * 4);
-    const pulse = Math.floor(t / 250) % 2;
-    const c = pulse ? '#fff6b0' : '#ffd166';
-    this.r(px, py, T, 1, c); this.r(px, py + T - 1, T, 1, c); this.r(px, py, 1, T, c); this.r(px + T - 1, py, 1, T, c);
-    const ay = py - 13 - bob;
-    this.r(px + 5, ay - 1, 6, 6, '#120a1c'); this.r(px + 2, ay + 4, 12, 2, '#120a1c'); this.r(px + 4, ay + 6, 8, 2, '#120a1c'); this.r(px + 6, ay + 8, 4, 2, '#120a1c');
-    this.r(px + 6, ay, 4, 5, c); this.r(px + 3, ay + 5, 10, 1, c); this.r(px + 5, ay + 6, 6, 1, c); this.r(px + 7, ay + 7, 2, 2, c);
+  marker(m, t) { // Hinweis: goldener Pfeil mit Kontur und Fase, dazu Eckwinkel auf dem Zielfeld
+    const px = m.x * T, py = m.y * T, f = Math.floor(t / 120) % 6, bob = [0, 0.5, 1.5, 2.5, 1.5, 0.5][f], a = py - 12 + bob, on = Math.floor(t / 250) % 2;
+    const c = on ? '#fff6d8' : '#ffd166';
+    for (const [x, y, sx, sy] of [[0, 0, 1, 1], [16, 0, -1, 1], [0, 16, 1, -1], [16, 16, -1, -1]]) {
+      const X = px + x, Y = py + y, w = (n) => (sx > 0 ? X : X - n), v = (n) => (sy > 0 ? Y : Y - n);
+      this.r(w(5.5), v(2.5), 5.5, 2.5, '#17121f'); this.r(w(2.5), v(5.5), 2.5, 5.5, '#17121f'); this.r(w(4.5), v(1.5), 4.5, 1.5, c); this.r(w(1.5), v(4.5), 1.5, 4.5, c);
+    }
+    this.r(px + 5.5, a - 0.5, 5, 6, '#17121f'); for (let k = 0; k < 6; k += 0.5) this.r(px + 8 - (5.5 - k) - 0.5, a + 5 + k, (5.5 - k) * 2 + 1, 0.5, '#17121f');
+    this.r(px + 6, a, 4, 5.5, '#ffd166'); this.r(px + 6, a, 1, 5.5, '#fff6d8'); this.r(px + 9, a, 1, 5.5, '#c98a00');
+    for (let k = 0; k < 5; k += 0.5) { const h = 5 - k; this.r(px + 8 - h, a + 5.5 + k, h * 2, 0.5, '#ffd166'); this.r(px + 8 - h, a + 5.5 + k, 0.5, 0.5, '#fff6d8'); this.r(px + 8 + h - 0.5, a + 5.5 + k, 0.5, 0.5, '#c98a00'); }
   }
 
   /** Grundton der Dunkelheit (wie in lighting) als CSS-Farbe – für die Außenwelt. */

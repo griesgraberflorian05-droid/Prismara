@@ -758,6 +758,7 @@ export function mountAdventure(root, params, opts = {}) {
 
   // ---------- Zeichnen ----------
   let running = true, shownStamina = '', view = null, chipTop = null, litSeen = new Set(), lastLit = -1, fxState = null, nextMote = 0, waveDone = false, trail = [], trailAt = { x: -1, y: -1 };
+  document.body.dataset.world = themeId; // Fass-Rahmen im HUD nehmen die Weltfarbe
   const trailColor = getLook().trail.color || (getSkin().color.hero ? getSkin().color.glow : null); // Lichtspur des Skins
   const staminaEl = $('#stamina');
   const lerp = (a, b, k) => a + (b - a) * k;
