@@ -30,6 +30,18 @@ export const TEXTURES = {
   sandstein: { name: 'Tempel-Sandstein', draw: speck(clusters(['#b8864f', '#c99a5e', '#d8ae72'], 6), [[6, 7, '#7d5a30'], [7, 6, '#7d5a30'], [8, 6, '#7d5a30'], [9, 7, '#7d5a30'], [7, 8, '#7d5a30'], [8, 8, '#7d5a30'], [7, 7, '#ffcf4a'], [8, 7, '#ffcf4a']]) },
   morschholz: { name: 'Morsches Holz', draw: (x, y) => (y % 4 === 3 ? '#2a1d12' : hash(Math.floor(x / 5), Math.floor(y / 4), 7) < 0.12 && x % 5 === 2 ? '#1a120a' : ramp(['#5c4024', '#6e4d2c', '#7f5a34'], blob(x, y, 4, 7))) },
   moorwasser: { name: 'Moorwasser', draw: (x, y) => ramp(['#13261c', '#1d3a29', '#2b5537', '#467a4b'], blob((x + y) % 16, (y * 2) % 16, 8, 8) * 0.9) },
+  ziegelboden: { name: 'Ziegelboden', draw: (x, y) => {
+    const row = Math.floor(y / 4), ox = row % 2 ? 4 : 0, bx = (x + ox) % 8;
+    if (y % 4 === 3 || bx === 7) return '#3a2a1e';
+    const v = hash(Math.floor((x + ox) / 8), row, 21);
+    return y % 4 === 0 ? (v > 0.5 ? '#9a6a48' : '#8a5e40') : v > 0.66 ? '#8a5c3e' : v > 0.33 ? '#7a5038' : '#6a5a48';
+  } },
+  platten: { name: 'Steinplatten', draw: (x, y) => {
+    if (x === 15 || y === 15) return '#23201e';
+    if (x === 0 || y === 0) return '#5e584e';
+    if ((x === 6 && y > 3 && y < 11) || (y === 10 && x > 5 && x < 12)) return '#2e2a26';
+    return ramp(['#3a3630', '#46423a', '#524c42'], blob(x, y, 8, 22));
+  } },
   lava: { name: 'Lava', draw: (x, y) => ramp(['#3a0a05', '#8a1a0a', '#d4410f', '#ff8a1c', '#ffd25a'], blob(x, y, 4, 9)) },
 };
 

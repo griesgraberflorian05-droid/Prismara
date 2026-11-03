@@ -27,9 +27,9 @@ const hash = (x, y, k = 0) => {
 export const PIXEL_THEMES = {
   default: { floor: ['#6b4a32', '#5a3d29', '#43301f'], top: '#8a6a4f', face: '#5b4030', dark: '#2e1f15', trim: '#a8835f', pattern: 'planks', dark01: 0.62, ambient: '#0c0814' },
   beach:   { floor: ['#d9b37a', '#c79f64', '#a9824c'], top: '#e8c999', face: '#b98a52', dark: '#7a5531', trim: '#f6e3bd', pattern: 'sand', dark01: 0.25, ambient: '#1a1430' },
-  cherry:  { floor: ['#7a5233', '#69462b', '#4f3420'], top: '#a5785a', face: '#6e4a35', dark: '#3c261b', trim: '#f2b7cf', pattern: 'planks', dark01: 0.45, ambient: '#1c0e1e' },
-  jungle:  { floor: ['#3e5a2c', '#324b23', '#243818'], top: '#6b7d55', face: '#455438', dark: '#232d1b', trim: '#8fd16a', pattern: 'stone', dark01: 0.55, ambient: '#06140a' },
-  night:   { floor: ['#2a3b3a', '#223231', '#172423'], top: '#4f5a4a', face: '#333d31', dark: '#161c16', trim: '#9ad1ff', pattern: 'stone', dark01: 0.78, ambient: '#02060e' },
+  cherry:  { tex: 'ziegelboden', floor: ['#7a5233', '#69462b', '#4f3420'], top: '#a5785a', face: '#6e4a35', dark: '#3c261b', trim: '#f2b7cf', pattern: 'planks', dark01: 0.45, ambient: '#1c0e1e' },
+  jungle:  { tex: 'platten', floor: ['#3e5a2c', '#324b23', '#243818'], top: '#6b7d55', face: '#455438', dark: '#232d1b', trim: '#8fd16a', pattern: 'stone', dark01: 0.55, ambient: '#06140a' },
+  night:   { tex: 'platten', floor: ['#2a3b3a', '#223231', '#172423'], top: '#4f5a4a', face: '#333d31', dark: '#161c16', trim: '#9ad1ff', pattern: 'stone', dark01: 0.78, ambient: '#02060e' },
   volcano: { tex: 'glutErz', floor: ['#3a3236', '#2d2629', '#1d181a'], top: '#55494e', face: '#352c30', dark: '#151012', trim: '#ff6a1a', pattern: 'stone', dark01: 0.7, ambient: '#100302' },
   temple:  { tex: 'sandstein', floor: ['#9c7a4a', '#87683d', '#6a5130'], top: '#c9a066', face: '#8f6a3b', dark: '#523a1e', trim: '#ffd166', pattern: 'stone', dark01: 0.5, ambient: '#120a04' },
   aurora:  { tex: 'eis', floor: ['#5f7c9a', '#516b86', '#3f566e'], top: '#e8f2ff', face: '#7d93ac', dark: '#4a5d73', trim: '#4fffb0', pattern: 'ice', dark01: 0.55, ambient: '#020a1e' },
@@ -135,9 +135,11 @@ export class PixelRenderer {
     const left = x > 0 && level.cells[y * level.w + x - 1].type !== 'wall';
     const right = x + 1 < level.w && level.cells[y * level.w + x + 1].type !== 'wall';
     const above = y > 0 && level.cells[(y - 1) * level.w + x].type !== 'wall';
-    if (left) this.r(px, py, 1, T - faceH, th.dark);
-    if (right) this.r(px + T - 1, py, 1, T - faceH, th.dark);
-    if (above) this.r(px, py, T, 2, th.trim);
+    // Holzrahmen rund um den Boden
+    const beam = (x0, y0, w, h) => { this.r(x0, y0, w, h, '#6b4426'); this.r(x0, y0, w > h ? w : 1, w > h ? 1 : h, '#8f5f36'); };
+    if (left) { beam(px, py, 3, T - faceH); this.r(px + 3, py, 1, T - faceH, '#2a1a0e'); }
+    if (right) { beam(px + T - 3, py, 3, T - faceH); this.r(px + T - 4, py, 1, T - faceH, '#2a1a0e'); }
+    if (above) { beam(px, py, T, 3); this.r(px, py + 3, T, 1, '#2a1a0e'); }
     if (hash(x, y, 11) > 0.6) this.r(px + 3 + Math.floor(hash(x, y, 12) * 8), py + 3, 3, 1, th.face);
     // Vorderkante (Schrägsicht) mit Ziegelfugen
     if (faceH) {

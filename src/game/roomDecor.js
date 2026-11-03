@@ -284,10 +284,18 @@ function backWall(p, level, th, cfg, exit, out) {
     const capH = 5, faceTop = top + capH, faceBot = T;
     p.r(px, top, T, capH, th.top); p.r(px, top, T, 1, th.trim); p.r(px, top + capH - 1, T, 1, th.dark);
     p.r(px, faceTop, T, faceBot - faceTop, th.face);
-    for (let k = 0, yy = faceTop + 4; yy < faceBot - 3; yy += 5, k++) {
-      p.r(px, yy, T, 1, th.dark);
-      p.r(px + ((k + x) % 2 ? 4 : 11), yy - 4, 1, 4, th.dark);
-      if (hash(x, k, 61) > 0.7) p.r(px + 1 + Math.floor(hash(x, k, 62) * 10), yy - 3, 3, 1, th.top);
+    // Einzelne Mauersteine: jeder mit eigenem Ton, Lichtkante oben, dunkle Fuge, hier und da Moos
+    for (let k = 0, yy = faceTop; yy < faceBot - 3; yy += 6, k++) {
+      const cut = (k + x) % 2 ? 5 : 12;
+      for (const [a, b, id] of [[0, cut, 0], [cut + 1, T - cut - 1, 1]]) {
+        const v = hash(x * 2 + id, k, 61);
+        p.r(px + a, yy, b, 5, v > 0.66 ? 'rgba(255,255,255,0.1)' : v < 0.33 ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0)');
+        p.r(px + a, yy, b, 1, 'rgba(255,255,255,0.14)');
+        p.r(px + a, yy + 4, b, 1, 'rgba(0,0,0,0.14)');
+        if (hash(x + id, k, 63) > 0.86 && cfg.ivy) p.r(px + a + 1, yy + 4, 3, 2, cfg.ivy[0]);
+      }
+      p.r(px, yy + 5, T, 1, th.dark);
+      p.r(px + cut, yy, 1, 5, th.dark);
     }
     p.r(px, faceBot - 3, T, 3, th.dark); p.r(px, faceBot - 3, T, 1, th.trim);
     if (exit && exit.y === 0 && exit.x === x) continue;
