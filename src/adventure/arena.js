@@ -424,7 +424,7 @@ export function mountArena(root, params) {
     }
     for (const a of allies) drawMinion(r, 'wisp', ['#7dff6a', '#2f7a3a'], a.x * T, a.y * T, t, { bite: now - a.hitAt < 150 });
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
-    if (boss && !dying) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
+    if (boss && !dying) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, state: mini ? 'normal' : boss.stage === 3 ? 'aggro' : boss.stage === 2 ? 'hurt' : 'normal' });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
     if (boss && !dying && !mini && now > boss.openAt && now < boss.openUntil) { // Schwachpunkt leuchtet golden
       const f = Math.floor(now / 100) % 2 ? '#ffd166' : '#ffffff'; r(boss.x * T - 2, boss.y * T - 2 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T + 32 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T - hop(now), 2, 32, f); r(boss.x * T + 32, boss.y * T - hop(now), 2, 32, f);
@@ -433,13 +433,13 @@ export function mountArena(root, params) {
     sparks = sparks.filter((s) => now - s.t0 < 300);
     for (const s of sparks) { const k = (now - s.t0) / 300, a = Math.round(k * 9); for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) r(s.x * T + 7 + dx * a, s.y * T + 7 + dy * a, 3, 3, foe.colors[0]); }
     g.restore();
-    if (boss && dying) { const k = (now - dying) / 1400; for (let i = 0; i < 90; i++) { const a = i * 2.4, d = k * (10 + (i % 17) * 3); g.fillStyle = foe.colors[i % 2]; g.fillRect(pix.ox + boss.x * T + 16 + Math.cos(a) * d, pix.oy + boss.y * T + 16 + Math.sin(a) * d - k * 14, 3, 3); } }
+    if (boss && dying) { const k = (now - dying) / 1400; drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T - k * 24, t, { state: 'ghost' }); for (let i = 0; i < 90; i++) { const a = i * 2.4, d = k * (10 + (i % 17) * 3); g.fillStyle = foe.colors[i % 2]; g.fillRect(pix.ox + boss.x * T + 16 + Math.cos(a) * d, pix.oy + boss.y * T + 16 + Math.sin(a) * d - k * 14, 3, 3); } }
     if (boss && !dying) { // Bosskampf: Raum wird düster, die Ränder pulsieren blutrot
       const p = img.width, q = img.height, beat = reduced ? 0.5 : (Math.sin(now / 420) + 1) / 2;
       g.fillStyle = 'rgba(6,0,10,0.45)'; g.fillRect(0, 0, p, q);
       g.fillStyle = `rgba(120,0,10,${0.14 + beat * 0.14})`; g.fillRect(0, 0, p, q);
       for (const m of mobs) drawMinion(mirror(g), foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
-      drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, angry: boss.hp <= bossHp / 2 });
+      drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, state: mini ? 'normal' : boss.stage === 3 ? 'aggro' : boss.stage === 2 ? 'hurt' : 'normal' });
       if (!blink) pix.ctx && drawHero(g, now);
     }
     g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy); drawFx(g, T, now); g.restore();

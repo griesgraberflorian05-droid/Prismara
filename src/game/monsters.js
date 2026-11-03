@@ -58,50 +58,50 @@ const shadeHex = (hex, k) => {
   return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
 };
 
-/** Boss auf Feld-Pixel (px, py), 32 × 32 groß. */
-export function drawBoss(r, shape, [main, dark], px, py, t, { flash = false, angry = false } = {}) {
-  const b = flash ? '#ffffff' : main, d = flash ? '#ffffff' : dark, l = flash ? '#ffffff' : shadeHex(main, 0.3);
-  const s = Math.floor(t / 300) % 2, y = py + s;
-  const eye = angry ? '#ff3a2a' : '#ffe45a';
-  r(px + 3, py + 28, 26, 4, 'rgba(0,0,0,0.35)');
-  if (shape === 'crab') {
-    r(px + 6, y + 12, 20, 13, b); r(px + 8, y + 10, 16, 2, l); r(px + 6, y + 24, 20, 2, d);
-    r(px - 1, y + 6, 7, 7, d); r(px + 26, y + 6, 7, 7, d); r(px, y + 8 - s, 5, 2, '#120a1c'); r(px + 27, y + 8 - s, 5, 2, '#120a1c');
-    for (let k = 0; k < 3; k++) { r(px + 2 + k * 2, y + 22 + k, 4, 2, d); r(px + 26 - k * 2, y + 22 + k, 4, 2, d); }
-  } else if (shape === 'bloom') {
-    for (const [ox, oy] of [[2, 2], [20, 2], [2, 18], [20, 18]]) r(px + ox, y + oy, 10, 10, l);
-    r(px + 7, y + 7, 18, 18, b); r(px + 12, y - 2, 8, 6, d); r(px + 7, y + 24, 18, 2, d);
-    r(px + 4, y + 26, 2, 4, '#3a7a3a'); r(px + 26, y + 26, 2, 4, '#3a7a3a');
-  } else if (shape === 'tree') {
-    r(px + 2, y + 1, 28, 12, d); r(px + 5, y - 2, 22, 4, l); r(px + 8, y + 12, 16, 16, '#6b4426'); r(px + 8, y + 12, 3, 16, '#3a2414');
-    r(px, y + 13, 8, 4, '#6b4426'); r(px + 24, y + 13, 8, 4, '#6b4426'); r(px + 6, y + 27, 6, 3, '#3a2414'); r(px + 20, y + 27, 6, 3, '#3a2414');
-    r(px + 10, y + 4, 4, 3, b); r(px + 20, y + 2, 4, 3, b);
-  } else if (shape === 'knight') {
-    r(px + 8, y + 2, 16, 12, b); r(px + 8, y + 2, 16, 2, l); r(px + 14, y - 3, 4, 6, '#c0342c'); r(px + 8, y + 9, 16, 1, d);
-    r(px + 5, y + 14, 22, 12, d); r(px + 5, y + 14, 22, 2, b); r(px + 15, y + 15, 2, 11, l);
-    r(px - 1, y + 13, 8, 12, b); r(px + 1, y + 15, 4, 8, d); r(px + 28, y + 2, 3, 22, '#e6e2d8'); r(px + 25, y + 18, 9, 2, '#6b4426');
-    r(px + 8, y + 26, 6, 4, d); r(px + 18, y + 26, 6, 4, d);
-  } else if (shape === 'hag') {
-    r(px + 6, y + 10, 20, 18, d); r(px + 3, y + 26, 26, 3, d); r(px + 9, y + 3, 14, 12, b); r(px + 6, y + 1, 20, 4, d); r(px + 12, y - 4, 8, 5, d);
-    r(px + 1, y + 13, 6, 3, d); r(px + 25, y + 13, 6, 3, d); r(px, y + 8, 3, 8, l);
-  } else if (shape === 'moth') {
-    const f = Math.floor(t / 150) % 2;
-    r(px - 1, y + 3 + f, 13, 18, b); r(px + 20, y + 3 + f, 13, 18, b); r(px + 2, y + 7 + f, 5, 5, l); r(px + 25, y + 7 + f, 5, 5, l);
-    r(px + 11, y + 4, 10, 22, d); r(px + 12, y - 2, 2, 6, d); r(px + 18, y - 2, 2, 6, d);
-  } else if (shape === 'golem') {
-    r(px + 7, y, 18, 12, b); r(px + 3, y + 11, 26, 13, d); r(px + 5, y + 12, 22, 2, b); r(px - 1, y + 10, 8, 15, b); r(px + 25, y + 10, 8, 15, b);
-    r(px + 8, y + 24, 6, 6, d); r(px + 18, y + 24, 6, 6, d); r(px + 13, y + 15, 6, 6, l);
-  } else if (shape === 'pharaoh') {
-    r(px + 5, y + 1, 22, 15, b); for (let k = 0; k < 5; k++) r(px + 5, y + 2 + k * 3, 22, 1, d);
-    r(px + 9, y + 4, 14, 11, '#c98f5e'); r(px + 14, y - 3, 4, 5, '#ffd166'); r(px + 7, y + 15, 18, 13, d); r(px + 7, y + 15, 18, 3, b); r(px + 28, y + 3, 2, 25, '#ffd166');
-  } else if (shape === 'shade') {
-    r(px + 4, y + 4, 24, 22, d); r(px + 7, y, 18, 4, d); for (let k = 0; k < 6; k++) r(px + 4 + k * 4, y + 26 + ((k + Math.floor(t / 170)) % 2) * 2, 4, 3, d);
-    r(px + 8, y + 18, 16, 5, '#120a1c'); for (let k = 0; k < 4; k++) r(px + 9 + k * 4, y + 18, 2, 3, EYE);
-    r(px + 1, y + 10, 4, 10, b); r(px + 27, y + 10, 4, 10, b);
-  } else { // kraken
-    r(px + 7, y, 18, 18, b); r(px + 10, y - 2, 12, 3, l); r(px + 7, y + 16, 18, 3, d);
-    for (let k = 0; k < 6; k++) { const w = (k + Math.floor(t / 200)) % 2; r(px + 2 + k * 5, y + 18, 3, 8 + w * 2, d); r(px + 1 + k * 5 + w, y + 26 + w * 2, 3, 2, b); }
+/** Boss als kantiger Puzzle-Golem aus genieteten Platten, 32 × 32 groß.
+ *  state: normal, hurt (Risse, Rauch), aggro (rote Augen, Glut), ghost (blauer Geist beim Zerfall). */
+export function drawBoss(r, shape, [main, dark], px, py, t, { flash = false, angry = false, state = angry ? 'aggro' : 'normal' } = {}) {
+  const ghost = state === 'ghost', aggro = state === 'aggro', hurt = state === 'hurt' || aggro;
+  const tone = (c) => (flash ? '#ffffff' : ghost ? '#9ff0ee66' : c);
+  const hi = tone(shadeHex(main, 0.32)), mid = tone(main), lo = tone(shadeHex(main, -0.3)), deep = tone(dark), line = ghost ? '#c8fffb88' : '#17121f';
+  const bob = Math.floor(t / 420) % 2, step = aggro ? Math.floor(t / 200) % 2 : 0, y = py + bob;
+  // Platte: Kontur, Licht oben, Schatten unten, Nieten in den Ecken
+  const plate = (x, yy, w, h, face = mid, top = hi, bottom = lo) => {
+    r(px + x - 1, yy - 1, w + 2, h + 2, line); r(px + x, yy, w, h, face); r(px + x, yy, w, 1, top); r(px + x, yy + h - 1, w, 1, bottom); r(px + x, yy, 1, h, top);
+    if (w > 5 && h > 4) for (const [a, b] of [[1, 1], [w - 2, 1], [1, h - 2], [w - 2, h - 2]]) r(px + x + a, yy + b, 1, 1, bottom);
+  };
+  if (!ghost) r(px + 2, py + 29, 28, 3, 'rgba(0,0,0,0.4)');
+  // Beine und Füße, im Zorn stampfend
+  plate(9, y + 24 - step, 5, 5, lo, mid, deep); plate(18, y + 24 + step - 1, 5, 5, lo, mid, deep);
+  // Körper mit Mittelfeld
+  plate(6, y + 13, 20, 12, deep, lo, tone('#120e18'));
+  plate(11, y + 15, 10, 8, mid); r(px + 15, y + 17, 2, 4, line);
+  // Kopf
+  plate(7, y + 1, 18, 12);
+  r(px + 9, y + 11, 14, 1, lo);
+  // Eigenheiten je Boss
+  if (shape === 'crab') { plate(-1, y + 8, 7, 8); plate(26, y + 8, 7, 8); r(px, y + 5, 2, 3, deep); r(px + 4, y + 5, 2, 3, deep); r(px + 26, y + 5, 2, 3, deep); r(px + 30, y + 5, 2, 3, deep); }
+  else if (shape === 'bloom') { for (const [a, b] of [[3, -2], [13, -5], [23, -2]]) plate(a, y + b, 7, 6, hi, '#ffffff66', mid); plate(1, y + 14, 5, 8); plate(26, y + 14, 5, 8); }
+  else if (shape === 'tree') { plate(3, y - 4, 26, 6, lo, mid, deep); plate(-1, y + 13, 7, 9, tone('#6b4426'), tone('#8a5a32'), tone('#3a2414')); plate(26, y + 13, 7, 9, tone('#6b4426'), tone('#8a5a32'), tone('#3a2414')); }
+  else if (shape === 'knight') { r(px + 14, y - 4, 4, 5, tone('#c0342c')); plate(-2, y + 12, 8, 13); r(px + 1, y + 15, 2, 7, deep); r(px + 29, y + 2, 2, 23, tone('#e6e2d8')); plate(26, y + 15, 6, 3, tone('#6b4426')); r(px + 9, y + 8, 14, 1, line); }
+  else if (shape === 'hag') { plate(4, y - 3, 24, 5, deep, lo, line); plate(12, y - 7, 8, 5, deep, lo, line); plate(0, y + 15, 6, 6); plate(26, y + 15, 6, 6); r(px - 1, y + 8, 2, 10, tone('#6b4426')); }
+  else if (shape === 'moth') { const f = Math.floor(t / 170) % 2; plate(-3, y + 4 + f, 9, 16, hi, '#ffffff55', mid); plate(26, y + 4 + f, 9, 16, hi, '#ffffff55', mid); r(px + 10, y - 3, 2, 4, deep); r(px + 20, y - 3, 2, 4, deep); }
+  else if (shape === 'golem') { plate(-1, y + 11, 8, 14, deep, lo, line); plate(25, y + 11, 8, 14, deep, lo, line); plate(13, y - 3, 6, 4, hi); }
+  else if (shape === 'pharaoh') { for (let k = 0; k < 6; k++) { r(px + 4, y + 1 + k * 3, 4, 2, tone('#ffd166')); r(px + 24, y + 1 + k * 3, 4, 2, tone('#ffd166')); r(px + 4, y + 3 + k * 3, 4, 1, tone('#3a2414')); r(px + 24, y + 3 + k * 3, 4, 1, tone('#3a2414')); } plate(12, y - 3, 8, 4, tone('#ffd166'), tone('#fff0a0'), tone('#a87410')); r(px + 29, y + 2, 2, 25, tone('#ffd166')); plate(27, y + 1, 6, 3, tone('#ffd166'), tone('#fff0a0'), tone('#a87410')); r(px + 14, y + 18, 4, 3, line); }
+  else if (shape === 'shade') { plate(1, y + 5, 6, 12, hi); plate(25, y + 5, 6, 12, hi); for (let k = 0; k < 4; k++) r(px + 10 + k * 3, y + 8, 2, 3, tone('#f0e6c8')); }
+  else { for (let k = 0; k < 6; k++) { const w = (k + Math.floor(t / 220)) % 2; plate(1 + k * 5, y + 23 + w, 4, 6 + w, lo, mid, deep); } plate(1, y + 6, 6, 7); plate(25, y + 6, 6, 7); }
+  // Augen: Ringe, blinzeln, im Zorn rot glühend, verletzt ein Auge zugekniffen
+  const blink = !aggro && Math.floor(t / 180) % 22 === 0, eyeY = shape === 'shade' ? y + 4 : y + 4;
+  for (const [i, ex] of [[0, 10], [1, 18]]) {
+    if (ghost) { r(px + ex, eyeY, 4, 4, '#e8fffd99'); continue; }
+    r(px + ex - 1, eyeY - 1, 6, 6, line);
+    if (blink || (state === 'hurt' && i === 1)) { r(px + ex, eyeY + 1, 4, 2, lo); continue; }
+    r(px + ex, eyeY, 4, 4, aggro ? '#ff3a1a' : '#e8b04a'); r(px + ex + 1, eyeY + 1, 2, 2, aggro ? (Math.floor(t / 110) % 2 ? '#fff0a0' : '#ffd166') : line);
   }
-  const ey = { crab: y + 15, bloom: y + 13, tree: y + 17, knight: y + 6, hag: y + 8, moth: y + 8, golem: y + 5, pharaoh: y + 7, shade: y + 10, kraken: y + 8 }[shape] ?? y + 10;
-  r(px + 10, ey, 4, 3, eye); r(px + 18, ey, 4, 3, eye); r(px + 11, ey + 1, 2, 1, PUPIL); r(px + 19, ey + 1, 2, 1, PUPIL);
+  if (hurt && !ghost) { // Risse und Rauch
+    r(px + 21, y + 2, 1, 3, line); r(px + 20, y + 4, 2, 1, line); r(px + 12, y + 16, 1, 4, line); r(px + 13, y + 19, 2, 1, line);
+    for (let k = 0; k < 3; k++) { const q = (t / 900 + k / 3) % 1; r(px + 25 + Math.round(Math.sin(q * 6) * 2), y - 1 - q * 12, 3 - k, 3 - k, 'rgba(190,186,180,0.7)'); }
+  }
+  if (aggro) for (let k = 0; k < 7; k++) { const f = (Math.floor(t / 90) + k * 3) % 4; r(px + 3 + k * 4, y + 1 - f, 2, 2 + f, f > 1 ? '#ffd166' : '#ff5a1a'); } // Flammen
+  if (ghost) for (let k = 0; k < 4; k++) r(px + 2 + k * 9, y + 4 + ((Math.floor(t / 120) + k * 2) % 18), 2, 3, '#c8fffb99');
 }
