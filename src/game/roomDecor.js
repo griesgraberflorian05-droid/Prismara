@@ -15,7 +15,8 @@ const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${
 
 /** Rand um den Raum in Feldern (Außenwelt). Oben ist Platz für die hohe Rückwand. */
 export const MARGIN = { x: 11, top: 14, bottom: 12 }; // gross genug, dass die Aussenwelt jedes Handy fuellt
-const BACK = 2; // Felder Rückwand über Zeile 0
+const BACK = 1; // Felder Rückwand über Zeile 0
+const DECO_Y = 11; // Wanddeko ist für die alte, höhere Wand gezeichnet und rückt nach unten
 
 // Ausstattung je Welt: Außenboden, Außen-Requisiten (Art, Häufigkeit), Streugut, Teppich, Lichtfarbe der
 // Fackeln, Himmel im Fenster, Wanddeko, schwebende Teilchen und Ersatz-Möbel.
@@ -330,8 +331,13 @@ function backWall(p, level, th, cfg, exit, out) {
     // Deko: Fackeln im Takt, dazwischen Fenster, Bilder, Regale …
     const torch = x % 4 === 2;
     const kind = torch ? 'torch' : hash(x, 0, 71) < 0.18 ? null : cfg.wall[(n++ + Math.floor(hash(x, 1, 72) * 3)) % cfg.wall.length];
+    const nf = out.flames.length, ng = out.glows.length;
+    p.ctx.translate(0, DECO_Y);
     if (OUTLINED.has(kind)) WALL[kind](contour(p), px, th, cfg, NO_OUT, x); // dunkle Kontur unter der Wanddeko
     WALL[kind]?.(p, px, th, cfg, out, x);
+    p.ctx.translate(0, -DECO_Y);
+    for (const f of out.flames.slice(nf)) f.y += DECO_Y;
+    for (const g of out.glows.slice(ng)) g.y += DECO_Y;
   }
 }
 
@@ -350,21 +356,25 @@ const WALL = {
   },
   window(p, px, th, cfg, out, x) {
     const [s0, s1] = cfg.sky;
+    const night = cfg === DECOR.jungle ? 0.6 : Math.max(0, Math.min(0.72, ((th.dark01 ?? 0.5) - 0.42) * 2.4)).toFixed(2) * 1; // der Dschungel liegt draußen im Dunkeln
     if (cfg.porthole) {
       p.r(px + 3, -21, 10, 12, '#b08a3a'); p.r(px + 2, -19, 12, 8, '#b08a3a');
       p.r(px + 4, -20, 8, 10, s0); p.r(px + 3, -18, 10, 6, s0); p.r(px + 5, -19, 3, 2, s1); p.r(px + 9, -14, 1, 1, '#ffffff');
     } else {
-      p.r(px + 2, -23, 12, 15, '#2a1a10');
+      // Holzrahmen mit Fase, vier Scheiben, Sprossen, Glanz und Fensterbank
+      p.r(px + 1.5, -23.5, 13, 15.5, '#17121f'); p.r(px + 2, -23, 12, 14.5, '#8f5f36'); p.r(px + 2, -23, 12, 0.5, '#c99766'); p.r(px + 2, -23, 0.5, 14.5, '#b07f4a');
       for (let k = 0; k < 11; k++) p.r(px + 3, -22 + k, 10, 1, k < 6 ? s0 : s1);
       if (cfg.moon) { p.r(px + 9, -21, 3, 3, '#fff6d8'); p.r(px + 4, -19, 1, 1, '#ffffff'); p.r(px + 6, -15, 1, 1, '#ffffff'); }
       else if (cfg.aurora) { p.r(px + 3, -19, 10, 1, '#4fffb0'); p.r(px + 5, -18, 6, 1, '#9f7aff'); }
       else { p.r(px + 4, -20, 3, 1, '#ffffff'); p.r(px + 9, -18, 2, 1, '#ffffff'); }
-      p.r(px + 3, -13, 10, 2, '#3f6b34');
-      p.r(px + 7, -22, 2, 13, '#2a1a10'); p.r(px + 3, -17, 10, 1, '#2a1a10');
-      p.r(px + 1, -9, 14, 2, th.trim); p.r(px + 1, -7, 14, 1, th.dark);
+      p.r(px + 3, -13, 10, 2, cfg.ground[2]); p.r(px + 3, -13, 10, 0.5, cfg.ground[1]);
+      if (night) p.r(px + 3, -22, 10, 11, `rgba(6,8,24,${night})`); // draußen ist es dunkel, also auch hinter dem Glas
+      p.r(px + 4, -21.5, 0.5, 4, 'rgba(255,255,255,0.45)'); p.r(px + 5, -21.5, 0.5, 2, 'rgba(255,255,255,0.3)'); p.r(px + 9.5, -15.5, 0.5, 3, 'rgba(255,255,255,0.3)');
+      p.r(px + 7.5, -22, 1, 11, '#6b4426'); p.r(px + 7.5, -22, 0.5, 11, '#b07f4a'); p.r(px + 3, -17, 10, 1, '#6b4426'); p.r(px + 3, -17, 10, 0.5, '#b07f4a');
+      p.r(px + 0.5, -9.5, 15, 2.5, '#17121f'); p.r(px + 1, -9, 14, 1.5, '#b07f4a'); p.r(px + 1, -9, 14, 0.5, '#e0b888'); p.r(px + 2, -7, 12, 0.5, 'rgba(0,0,0,0.4)');
     }
-    out.lights.push({ x: x + 0.5, y: 0.4, level: 9, color: s1, i: 0.55 });
-    out.shafts.push({ x: px + 3, c: s1 });
+    out.lights.push({ x: x + 0.5, y: 0.4, level: 9, color: s1, i: night ? 0.2 : 0.55 });
+    if (!night) out.shafts.push({ x: px + 3, c: s1 }); // kein Sonnenstrahl aus einem dunklen Fenster
   },
   painting(p, px, th) {
     // Holzrahmen mit Lichtkante, darin Berge im Abendlicht

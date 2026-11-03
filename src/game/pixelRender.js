@@ -63,8 +63,8 @@ export class PixelRenderer {
     this.canvas = document.createElement('canvas');
     this.canvas.width = (level.w + 2 * MARGIN.x) * T * rs; this.canvas.height = (level.h + MARGIN.top + MARGIN.bottom) * T * rs;
     this.ctx = this.canvas.getContext('2d');
-    /** Bildausschnitt, der auf den Bildschirm passen soll: Raum samt Rückwand (2 Felder). */
-    this.view = { x: this.ox, y: this.oy - 2 * T, w: level.w * T, h: (level.h + 2) * T };
+    /** Bildausschnitt, der auf den Bildschirm passen soll: Raum samt Rückwand (1 Feld). */
+    this.view = { x: this.ox, y: this.oy - T, w: level.w * T, h: (level.h + 1) * T };
     // Lichtkarte in 1/4 Auflösung → grobe, „blockige“ Lichtstufen wie bei Minecraft-Shadern
     this.light = document.createElement('canvas');
     this.light.width = Math.ceil(this.canvas.width / (4 * rs)); this.light.height = Math.ceil(this.canvas.height / (4 * rs));
@@ -379,8 +379,9 @@ export class PixelRenderer {
 
   hero(p, t) {
     const skin = getSkin();
-    const body = skin.color.stops[Math.min(1, skin.color.stops.length - 1)];
-    const light = skin.color.stops[0];
+    // plain: neutrale Figur für die Hut-Vorschau, damit nur der Hut auffällt
+    const body = p.plain ? '#4a4652' : skin.color.stops[Math.min(1, skin.color.stops.length - 1)];
+    const light = p.plain ? '#8e8894' : skin.color.stops[0];
     const dark = shade(body, -0.35);
     const [dx, dy] = DIRS[p.dir];
     const side = dx !== 0, back = dy === -1;
@@ -455,8 +456,8 @@ export class PixelRenderer {
       if (p.yawn) this.r(fx + 1, fy + 3, 2, 1, '#5a2030');
     }
     this.hat(p.hat ?? currentHat(), hx, hy, t);
-    this.aura(getLook().aura, px + 8, py + 8, t);
-    this.acc(skin.color, hx, hy, t, p.dir, walking);
+    if (!p.plain) this.aura(getLook().aura, px + 8, py + 8, t);
+    if (!p.plain) this.acc(skin.color, hx, hy, t, p.dir, walking);
     // Laterne (Lichtquelle der Figur) – auf der Seite der Blickrichtung
     const lanX = px + (side ? (dx > 0 ? 13 : 1) : 12) + (strain && side ? dx * 2 : 0), lanY = by + 2;
     this.part(lanX, lanY, 2, 3, getLook().lantern.color); this.r(lanX, lanY + 1, 1, 1, '#ffffff');
@@ -602,7 +603,7 @@ export class PixelRenderer {
   }
 
   exitDoor(ex, open, t) {
-    const px = ex.x * T, tall = ex.y === 0, py = ex.y * T + (tall ? -12 : 1), h = tall ? 28 : 15;
+    const px = ex.x * T, tall = ex.y === 0, py = ex.y * T + (tall ? -5 : 1), h = tall ? 21 : 15;
     // Steinrahmen mit Bogensturz, in den Wänden überall dieselbe Tür
     this.r(px, py - 2, 16, h + 2, '#17121f'); this.r(px + 0.5, py - 1.5, 15, h + 1.5, '#6e6a78'); this.r(px + 0.5, py - 1.5, 15, 0.5, '#b0acb8');
     for (let k = 0; k * 4 < h; k++) { this.r(px + 0.5, py + k * 4, 1.5, 0.5, '#3a3644'); this.r(px + 14, py + k * 4 + 2, 1.5, 0.5, '#3a3644'); }
@@ -615,8 +616,8 @@ export class PixelRenderer {
     }
     // Eichenbohlen, Eisenbänder mit Nieten, Ringgriff
     for (let k = 0; k < 4; k++) { const x = px + 2.5 + k * 2.75; this.r(x, py + 1, 2.5, h - 1, k % 2 ? '#7a4f2c' : '#8f5f36'); this.r(x, py + 1, 0.5, h - 1, '#b07f4a'); this.r(x + 2.25, py + 1, 0.5, h - 1, '#3a2416'); }
-    for (const b of tall ? [4, 20] : [3, 11]) { this.r(px + 2.5, py + b, 11, 1.5, '#23202a'); this.r(px + 2.5, py + b, 11, 0.5, '#6e6a78'); for (let k = 0; k < 3; k++) this.r(px + 4 + k * 3.5, py + b + 0.5, 0.5, 0.5, '#d4d0dc'); }
-    const hy = py + (tall ? 13 : 7); this.r(px + 10.5, hy, 2, 2.5, '#17121f'); this.r(px + 11, hy, 1, 1.5, '#ffd166');
+    for (const b of tall ? [3, 15] : [3, 11]) { this.r(px + 2.5, py + b, 11, 1.5, '#23202a'); this.r(px + 2.5, py + b, 11, 0.5, '#6e6a78'); for (let k = 0; k < 3; k++) this.r(px + 4 + k * 3.5, py + b + 0.5, 0.5, 0.5, '#d4d0dc'); }
+    const hy = py + (tall ? 10 : 7); this.r(px + 10.5, hy, 2, 2.5, '#17121f'); this.r(px + 11, hy, 1, 1.5, '#ffd166');
   }
 
   /** Moor: Grube (dunkles Wasser mit Blasen), gefüllt = Trittstein, brüchiger Boden mit Rissen,

@@ -30,7 +30,7 @@ function drawHatPreview(canvas, id) {
   const pr = Object.create(PixelRenderer.prototype);
   pr.ctx = canvas.getContext('2d');
   pr.ctx.save(); pr.ctx.translate(4, 8);
-  pr.player({ x: 0, y: 0, dir: 2, walk: null, stamina: 1, hat: id }, 0);
+  pr.player({ x: 0, y: 0, dir: 2, walk: null, stamina: 1, hat: id, plain: true }, 0);
   pr.ctx.restore();
 }
 import { roomThumb } from './menuScene.js';

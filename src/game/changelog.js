@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.116', items: ['Räume oben ein Feld niedriger, Türen passend', 'Neue Fenster, nachts dunkel', 'Hut-Vorschau auf neutraler Figur'] },
   { v: '3.23.115', items: ['Neue Spiegelblöcke', '8 kaufbare Auren', 'Neue Tutorial-Pfeile und Rahmen', 'HUD im Fass-Design je Welt'] },
   { v: '3.23.114', items: ['Kraftbrot und Wegrolle entfernt', '12 neue Hüte', 'Teppich rollt beim Betreten aus'] },
   { v: '3.23.113', items: ['Held und alle Skins feiner', 'Alle Items neu', 'Neue Schalter und Kraftbalken'] },
