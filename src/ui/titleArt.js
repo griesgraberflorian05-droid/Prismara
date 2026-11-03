@@ -291,6 +291,32 @@ export function titleThumb(canvas, id) {
 }
 
 /** Startet das Titelbild in canvas, im Stil der Welt worldId. Liefert { stop, setWorld }. */
+// Wolken nach Pixel-Regeln: flache Unterseite, gestapelte runde Puffs verschiedener Größe mit Lücken,
+// Licht von oben links, Schatten unten, gedithertem Rand. Hintere Ebene klein und blass, vordere groß und kräftig.
+export function makeCloud(seed, w, [shadow, light, mid], far) {
+  const h = Math.round(w * 0.42), c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'), n = 4 + (seed % 3), puffs = [];
+  for (let i = 0; i < n; i++) { const r = (0.12 + hash(i, seed) * 0.13) * w * (i === 1 || i === 2 ? 1.25 : 1); puffs.push({ x: (w * (i + 0.7)) / (n + 0.4), y: h - r * 0.75 - hash(seed, i) * 2, r: Math.min(r, h * 0.48) }); }
+  const base = h - 3;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const p = puffs.find((q) => Math.hypot(x - q.x, y - q.y) < q.r);
+    const flat = y >= base - 2 && y < base && x > w * 0.16 && x < w * 0.84;
+    if (!p && !flat) continue;
+    if (y > base) continue;
+    const lit = p ? ((p.x - x) + (p.y - y) * 1.5) / p.r : -1, low = y > base - 4;
+    let tone = lit > 0.55 ? light : lit > -0.3 ? mid : shadow;
+    if (low) tone = (x + y) % 2 ? shadow : mid; // Dither an der Unterkante
+    if (far && tone === light) tone = mid;
+    if (p && Math.hypot(x - p.x, y - p.y) > p.r - 1 && (x + y) % 2) continue; // weicher Rand
+    g.fillStyle = tone; g.fillRect(x, y, 1, 1);
+  }
+  return c;
+}
+const cloudSets = {};
+function cloudsFor(id, S) {
+  return (cloudSets[id] ||= [0, 1, 2, 3, 4].map((i) => ({ far: i < 3, img: makeCloud(i * 7 + 3, i < 3 ? 22 + i * 4 : 40 + (i - 3) * 8, S.clouds, i < 3), y: i < 3 ? 26 + i * 14 : 8 + (i - 3) * 22, x: hash(i, 44) * W, v: i < 3 ? 0.0016 : 0.0034 })));
+}
+
 // Gemalte Hintergründe je Welt; bis sie geladen sind, läuft das gezeichnete Bild
 const PAINTED = {};
 for (const id of ['aurora', 'beach', 'night', 'castle', 'cherry', 'jungle', 'moor', 'reef', 'shadow', 'temple', 'volcano']) {
@@ -406,6 +432,10 @@ export function mountTitleArt(canvas, worldId = 'default') {
     const art = PAINTED[curId], painted = art?.complete && art.naturalWidth > 0;
     if (painted) { back = art; front = blank; }
     g.drawImage(back, 0, 0);
+    if (painted && S.clouds) for (const cl of cloudsFor(curId, S)) { // ziehende Wolken, hinten langsam und blass
+      const span = W + cl.img.width, x = ((cl.x + t * cl.v) % span) - cl.img.width;
+      g.globalAlpha = cl.far ? 0.55 : 0.9; g.drawImage(cl.img, Math.round(x), cl.y); g.globalAlpha = 1;
+    }
     // Sterne
     if (S.stars) for (let i = 0; i < 90; i++) {
       const x = Math.floor(hash(i, 21) * W), y = Math.floor(hash(i, 22) * 90);
