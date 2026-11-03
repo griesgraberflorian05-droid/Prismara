@@ -11,8 +11,12 @@ export function drawSwordIcon(g, x0, y0, { blade, edge, dark = blade, guard = '#
 const EYE = '#fff4d0', PUPIL = '#120a1c';
 
 /** Kleines Wesen auf Feld-Pixel (px, py). flash = weiß aufblitzen, warn = holt zum Schlag aus. */
-export function drawMinion(r, kind, [body, dark], px0, py0, t, { flash = false, warn = false, lunge = [0, 0], bite = false } = {}) {
+export function drawMinion(raw, kind, [body, dark], px0, py0, t, { flash = false, warn = false, lunge = [0, 0], bite = false } = {}) {
   const px = px0 + lunge[0], py = py0 + lunge[1];
+  // Laufzyklus in 4 Bildern: stauchen, abheben, strecken, landen; Warnen zittert, Beißen streckt nach vorn
+  const f = Math.floor(t / 150 + px0 / 16 + py0 / 16) % 4, hop = [0, 1, 1.5, 0.5][f], sq = bite ? 1.15 : [0.9, 1, 1.08, 0.96][f];
+  const shake = warn ? (f % 2 ? 0.5 : -0.5) : 0, feet = py + 15;
+  const r = (x, y, w, h, c) => raw(x + shake, feet + (y - feet) * sq - hop, w, h * sq, c);
   const b = flash ? '#ffffff' : warn ? '#ff4a3a' : body, d = flash ? '#ffffff' : dark;
   // Magische Aura: weicher Schein und kreisende Funken in der Farbe des Wesens
   r(px - 1, py + 1, 18, 14, `${body}26`); r(px + 1, py - 1, 14, 18, `${body}26`); r(px + 3, py + 2, 10, 12, `${body}33`);

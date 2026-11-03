@@ -404,7 +404,16 @@ function rug(p, level, cfg, out) {
     return;
   }
   p.r(x0 + 1, y0 + 2, W, H, 'rgba(0,0,0,0.25)');
-  if (kind === 'stripes') { for (let x = x0; x < x1; x += 3) p.r(x, y0, Math.min(3, x1 - x), H, (Math.floor((x - x0) / 3) % 2) ? b : a); return; }
+  // Webstoff: feines Halbpixel-Karo, helle Oberkante, dunkle Unterkante, Fransen an den Enden
+  const weave = () => {
+    for (let y = y0; y < y1; y += 1) for (let x = x0 + (y % 2); x < x1; x += 2) p.r(x, y, 0.5, 0.5, 'rgba(0,0,0,0.14)');
+    p.r(x0, y0, W, 1, 'rgba(255,255,255,0.28)'); p.r(x0, y1 - 1, W, 1, 'rgba(0,0,0,0.3)');
+    for (let y = y0 + 1; y < y1; y += 2) { p.r(x0 - 2, y, 2, 1, b); p.r(x1, y, 2, 1, b); }
+  };
+  if (kind === 'stripes') {
+    for (let x = x0; x < x1; x += 6) p.r(x, y0, Math.min(6, x1 - x), H, (Math.floor((x - x0) / 6) % 2) ? b : a);
+    p.r(x0, y0 + 3, W, 1, a); p.r(x0, y1 - 4, W, 1, a); weave(); return;
+  }
   if (kind === 'grate') {
     p.r(x0, y0, W, H, a); p.r(x0, y0, W, 1, b); p.r(x0, y1 - 1, W, 1, b); p.r(x0, y0, 1, H, b); p.r(x1 - 1, y0, 1, H, b);
     for (let x = x0 + 4; x < x1 - 1; x += 4) p.r(x, y0 + 1, 1, H - 2, b);
@@ -428,7 +437,7 @@ function rug(p, level, cfg, out) {
   const cx = Math.floor((x0 + x1) / 2), cy = Math.floor((y0 + y1) / 2), rr = Math.min(W, H) / 3;
   for (let k = 0; k <= rr; k++) { p.r(cx - k, cy - (rr - k) * 0.7, 1, 1, b); p.r(cx + k, cy - (rr - k) * 0.7, 1, 1, b); p.r(cx - k, cy + (rr - k) * 0.7, 1, 1, b); p.r(cx + k, cy + (rr - k) * 0.7, 1, 1, b); }
   p.r(cx - 1, cy - 1, 3, 3, b);
-  for (let y = y0 + 1; y < y1; y += 2) { p.r(x0 - 2, y, 2, 1, b); p.r(x1, y, 2, 1, b); }
+  weave();
   ctx.globalAlpha = 1;
 }
 
@@ -474,15 +483,26 @@ function outside(p, level, cfg, out) {
   for (let y = -M.top; y < h + M.bottom; y++) for (let x = -M.x; x < w + M.x; x++) {
     if (x >= 0 && x < w && y >= -BACK && y < h) continue;
     const px = x * T, py = y * T;
+    // Boden in großen Flecken statt Einzelkrümeln, dazu feine Halbpixel-Körnung
     p.r(px, py, T, T, g0);
-    for (let k = 0; k < 5; k++) p.r(px + Math.floor(hash(x, y, k + 100) * 15), py + Math.floor(hash(y, x, k + 100) * 15), 2, 1, k % 2 ? g1 : g2);
+    for (let k = 0; k < 14; k++) p.r(px + hash(x, y, k + 100) * 15, py + hash(y, x, k + 100) * 15, k % 3 ? 1 : 2, 0.5, k % 2 ? g1 : g2);
+    // Pflasterweg rund ums Haus
+    if (x >= -1 && x <= w && y >= -BACK - 1 && y <= h) {
+      p.r(px, py, T, T, '#2a2430');
+      for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
+        const sx = px + 0.5 + i * 8, sy = py + 0.5 + j * 8, v = hash(x * 2 + i, y * 2 + j, 105);
+        p.r(sx, sy, 7, 7, v > 0.6 ? '#9a938c' : v > 0.3 ? '#837c78' : '#6e6a6c'); p.r(sx, sy, 7, 0.5, '#bdb6aa'); p.r(sx, sy + 6.5, 7, 0.5, '#544f54');
+      }
+    }
     if (cfg.motes === 'bubbles' && hash(x, y, 107) > 0.7) p.r(px + 2, py + 6, 8, 1, g1);
     if (cfg.scatter === 'cracks' && hash(x, y, 108) > 0.85) { p.r(px + 3, py + 8, 6, 1, '#ff6a1a'); out.glows.push({ x: px + 6, y: py + 8, r: 8, c: '#ff6a1a', a: 0.35, pulse: true }); }
   }
-  // Pfad vom Ausgang? – stattdessen ein Schatten rund um das Gebäude
-  p.r(-4, -BACK * T - 3, w * T + 8, 3, 'rgba(0,0,0,0.25)');
-  p.r(-4, -BACK * T, 4, (h + BACK) * T + 4, 'rgba(0,0,0,0.3)'); p.r(w * T, -BACK * T, 4, (h + BACK) * T + 4, 'rgba(0,0,0,0.3)');
-  p.r(0, h * T, w * T, 5, 'rgba(0,0,0,0.35)');
+  // Sockel aus Bruchstein rund ums Gebäude, Schlagschatten fällt nach rechts unten
+  for (const [x0, y0, ww, hh] of [[-5, -BACK * T - 5, w * T + 10, 5], [-5, -BACK * T, 5, (h + BACK) * T + 5], [w * T, -BACK * T, 5, (h + BACK) * T + 5], [0, h * T, w * T, 5]]) {
+    p.r(x0, y0, ww, hh, '#3a3440');
+    for (let k = 0; k < ww; k += 6) for (let l = 0; l < hh; l += 3) p.r(x0 + k + (l % 2) * 3, y0 + l, Math.min(5, ww - k), Math.min(2.5, hh - l), hash(k, l, x0 + y0) > 0.5 ? '#6e6a78' : '#57525e');
+  }
+  p.r(w * T + 5, -BACK * T, 3, (h + BACK) * T + 8, 'rgba(0,0,0,0.3)'); p.r(-5, h * T + 5, w * T + 10, 3, 'rgba(0,0,0,0.3)');
 }
 
 function outsideProps(p, level, cfg, out) {

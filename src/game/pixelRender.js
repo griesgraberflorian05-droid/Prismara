@@ -178,13 +178,19 @@ export class PixelRenderer {
   }
 
   crate(px, py, inner) {
-    this.r(px + 1, py + 2, 14, 13, '#3a2416');
-    this.r(px + 2, py + 2, 12, 11, '#9b6a3e');
-    this.r(px + 2, py + 2, 12, 1, '#c99766');
-    this.r(px + 2, py + 12, 12, 1, '#6b4426');
-    this.r(px + 2, py + 2, 1, 11, '#6b4426'); this.r(px + 13, py + 2, 1, 11, '#6b4426');
-    if (inner) inner(); else { this.r(px + 3, py + 7, 10, 1, '#6b4426'); this.r(px + 7, py + 3, 1, 9, '#6b4426'); }
-    this.r(px + 1, py + 15, 14, 1, 'rgba(0,0,0,0.4)');
+    this.r(px + 1, py + 1, 14, 14, '#17121f'); this.r(px + 1, py + 15, 14, 1, 'rgba(0,0,0,0.4)');
+    if (inner) { // Lichtblock: Messinggehäuse mit Nieten und dunkler Fassung, darin das Bauteil
+      this.r(px + 2, py + 2, 12, 12, '#a87a34'); this.r(px + 2, py + 2, 12, 0.5, '#f0cf7a'); this.r(px + 2, py + 2, 0.5, 12, '#d8aa52'); this.r(px + 2, py + 13, 12, 1, '#6a4a1e');
+      this.r(px + 3, py + 3, 10, 10, '#1c1524');
+      for (const [a, c] of [[2.5, 2.5], [12.5, 2.5], [2.5, 12.5], [12.5, 12.5]]) this.r(px + a, py + c, 1, 1, '#fff0b0');
+      inner();
+      return;
+    }
+    // Schiebekiste: Latten, Eckbeschläge, Querstrebe
+    this.r(px + 2, py + 2, 12, 12, '#9b6a3e'); this.r(px + 2, py + 2, 12, 0.5, '#d09a64'); this.r(px + 2, py + 13, 12, 1, '#5a3a22');
+    for (let k = 1; k < 3; k++) this.r(px + 2, py + 2 + k * 4, 12, 0.5, '#6b4426');
+    for (let k = 0; k < 20; k++) this.r(px + 3 + k / 2, py + 3 + k / 2, 1, 1, '#c08a54');
+    for (const [a, c] of [[2, 2], [12, 2], [2, 12], [12, 12]]) { this.r(px + a, py + c, 2, 2, '#6e6a78'); this.r(px + a, py + c, 1, 0.5, '#b0acb8'); }
   }
 
   diag(px, py, orient, color, dashed = false) {
@@ -237,15 +243,12 @@ export class PixelRenderer {
     const px = x * T, py = y * T, hex = COLOR_INFO[c.color]?.hex || '#fff';
     const [dx, dy] = DIRS[c.dir];
     this.r(px + 7 + dx * 6, py + 8 + dy * 6, 2, 2, hex); // Leitungsansatz
-    // Sockel aus behauenem Stein, Holzschaft, Eisenschale, mehrstufige Flamme in der Signalfarbe
-    this.r(px + 3, py + 12, 10, 3, '#17121f'); this.r(px + 4, py + 12, 8, 2, '#6e6a78'); this.r(px + 4, py + 12, 8, 0.5, '#b0acb8');
-    this.r(px + 6.5, py + 7, 3, 5, '#3a2414'); this.r(px + 7, py + 7, 1, 5, '#8a5a2a'); this.r(px + 8, py + 7, 0.5, 5, '#5a3a1a');
-    this.r(px + 5, py + 5.5, 6, 2, '#17121f'); this.r(px + 5.5, py + 6, 5, 1, '#8a8690');
-    const fl = Math.floor(t / 110) % 4, sway = [0, 0.5, 0, -0.5][fl];
-    this.r(px + 5 + sway, py + 2.5, 6, 3.5, shade(hex, -0.3)); this.r(px + 5.5 + sway, py + 1, 5, 2, hex);
-    this.r(px + 6 + sway, py - 0.5 + (fl % 2) * 0.5, 4, 2, hex); this.r(px + 6.5 + sway, py + 2, 3, 3.5, shade(hex, 0.4)); this.r(px + 7 + sway, py + 3, 2, 2.5, '#ffffff');
-    this.r(px + 7.5 - sway, py - 2 - fl * 0.5, 0.5, 0.5, shade(hex, 0.5));
-    if (fl === 0) this.r(px + 9, py, 1, 1, hex);
+    // Wie die Redstone-Fackel: schlichter Holzstab, kleiner glühender Kopf, Funken statt Flamme
+    this.r(px + 6.5, py + 6, 3, 9, '#17121f'); this.r(px + 7, py + 6, 2, 8.5, '#6b4426'); this.r(px + 7, py + 6, 1, 8.5, '#9b6a3e');
+    this.r(px + 6, py + 2, 4, 4.5, '#17121f'); this.r(px + 6.5, py + 2.5, 3, 3.5, shade(hex, -0.35)); this.r(px + 7, py + 3, 2, 2.5, hex); this.r(px + 7.5, py + 3.5, 1, 1, shade(hex, 0.6));
+    const on = Math.floor(t / 400) % 2;
+    this.r(px + 7.5, py + (on ? 0 : 0.5), 1, 1.5, shade(hex, 0.3)); this.r(px + 5 - on, py + 3.5, 0.5, 0.5, hex); this.r(px + 10.5 + on, py + 4, 0.5, 0.5, hex);
+    const f = Math.floor(t / 90) % 16; if (f < 6) this.r(px + 4 + (x * 3 + y) % 8, py + 5 - f, 0.5, 0.5, hex); // aufsteigender Funke
   }
 
   // Ziel = Glutlampe: Steinrahmen mit Glaskacheln. Aus: dunkles Glas, die Wunschfarbe als
@@ -694,10 +697,11 @@ export class PixelRenderer {
           const k = Math.round(dist);
           // Signalpuls: helle Welle läuft von der Quelle weg
           const wave = Math.sin((dist - t * 0.05) / 5);
-          // Schein außen, Farbe, heller Kern, der Puls läuft von der Quelle weg
-          this.r(px - 2.5, py - 2.5, 5, 5, `${hex}33`); this.r(px - 1.5, py - 1.5, 3, 3, mid);
-          this.r(px - 0.5, py - 0.5, 1, 1, wave > 0.55 ? hi : hex);
-          if (hash(k, i * 13 + beam.points[0][0]) > 0.93) this.r(px + nx * 3, py + ny * 3, 0.5, 0.5, '#ffffff'); // einzelne Funken
+          // Redstone-Staub: unregelmäßige dunkle Spur, leuchtende Körner, Puls hellt sie von der Quelle weg auf
+          const q = Math.floor(k / 2), w = 1 + Math.floor(hash(q, i, 71) * 2);
+          this.r(px - w, py - w, w * 2, w * 2, dark); this.r(px - 1, py - 1, 2, 2, wave > 0.3 ? hex : mid);
+          if (wave > 0.75) this.r(px - 0.5, py - 0.5, 1, 1, hi);
+          if (k % 2 === 0) { const g = hash(q, i, 73), e = (g > 0.5 ? 1 : -1) * (2 + Math.floor(g * 7) % 3); if (hash(q, i, 75) > 0.45) this.r(px + nx * e - 0.5, py + ny * e - 0.5, 1, 1, g > 0.75 ? mid : dark); }
           if (k % 15 === 9 && wave > 0) {                           // Farbsymbol, pulsiert mit
             comps.forEach((c, j) => this.glyph(px + nx * (j * 4 - (comps.length - 1) * 2) + nx * 4, py + ny * (j * 4 - (comps.length - 1) * 2) + ny * 4, c, hi));
           }

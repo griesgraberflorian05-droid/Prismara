@@ -104,7 +104,7 @@ export function mountMenu(root, params = []) {
   else if (page === 'echtshop') realShopPage(ui);
   else if (page === 'updates') updatesPage(ui);
   else if (page === 'galerie') galleryPage(ui);
-  else if (page === 'settings') settingsPage(ui);
+  else if (page === 'settings') settingsPage(ui, scene);
   else if (page === 'code') codePage(ui);
   else if (page === 'codes') myCodesPage(ui);
   else { ui.classList.add('tm-main', 'mm'); if (getSettings().menuStyle === 'b') ui.classList.add('mm2'); if (getSettings().menuStyle === 'c') ui.classList.add('mm3'); mainPage(ui); }
@@ -271,9 +271,11 @@ function myCodesPage(el) {
 }
 
 // ---------- Einstellungen: Ton, Bewegung, Tutorial nochmal ----------
-function settingsPage(el) {
+function settingsPage(el, scene) {
+  // Hintergrund: zuletzt betretene Welt oder jede bereits offene Welt
+  const bgOptions = () => ['', ...CHAPTERS.map((c, i) => (chapterInfo(i).open ? CHAPTER_WORLD[c.id] : null)).filter((id) => WORLDS[id])];
   const render = () => {
-    const rm = getSettings().reducedMotion;
+    const rm = getSettings().reducedMotion, bg = getSettings().menuBg || '';
     el.innerHTML = `
       ${head('#/menu', '⚙ Einstellungen')}
       <div class="parch settings">
@@ -282,6 +284,7 @@ function settingsPage(el) {
         <div class="set-row"><span>🌀 Bewegung reduzieren</span><button class="wbtn sm" id="motion" aria-pressed="${!!rm}">${rm === null ? 'SYSTEM' : rm ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>✨ Grafik: <b id="gfx-v">${getSettings().gfx ?? 100} %</b></span><input id="gfx" type="range" min="0" max="100" step="10" value="${getSettings().gfx ?? 100}" aria-label="Menge an Effekten und Partikeln"></div>
         <div class="set-row"><span>🏠 Hauptmenü</span><button class="wbtn sm" id="mstyle">${{ b: 'FREIE SICHT', c: 'MITTE' }[getSettings().menuStyle] || 'SPALTE'}</button></div>
+        <div class="set-row"><span>🖼 Hintergrund</span><button class="wbtn sm" id="mbg">${WORLDS[bg] ? esc(WORLDS[bg].name) : 'ZULETZT'}</button></div>
         <div class="set-row"><span>🛡 Boss-Hilfe</span><button class="wbtn sm" id="bh" aria-pressed="${!!getSettings().bossHelp}">${getSettings().bossHelp ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📳 Vibration</span><button class="wbtn sm" id="vib" aria-pressed="${getSettings().vibrate !== false}">${getSettings().vibrate !== false ? 'AN' : 'AUS'}</button></div>
         <div class="set-row"><span>📖 Tutorial (Lehrzimmer)</span><a class="wbtn sm" href="#/adv/tutorial">NOCHMAL SPIELEN</a></div>
@@ -289,6 +292,10 @@ function settingsPage(el) {
     el.querySelector('#snd').addEventListener('click', () => { toggleMute(); play('ui'); render(); el.querySelector('#snd').focus(); });
     bindVolume(el);
     el.querySelector('#gfx').addEventListener('input', (e) => { updateSettings({ gfx: +e.target.value }); el.querySelector('#gfx-v').textContent = `${e.target.value} %`; });
+    el.querySelector('#mbg').addEventListener('click', () => {
+      const o = bgOptions(), next = o[(o.indexOf(bg) + 1) % o.length];
+      updateSettings({ menuBg: next || null }); scene?.setWorld(menuBackground()); document.body.dataset.world = menuBackground(); play('ui'); render();
+    });
     el.querySelector('#mstyle').addEventListener('click', () => { updateSettings({ menuStyle: { a: 'b', b: 'c', c: 'a' }[getSettings().menuStyle || 'a'] }); play('ui'); render(); });
     el.querySelector('#bh').addEventListener('click', () => { updateSettings({ bossHelp: !getSettings().bossHelp }); play('ui'); render(); });
     el.querySelector('#vib').addEventListener('click', () => { updateSettings({ vibrate: getSettings().vibrate === false }); play('ui'); render(); });
@@ -737,9 +744,7 @@ function kitPage(el, scene) {
   let kitTab = 0;
   const { stars } = totals();
   const render = () => {
-    const skin = getSkin(), worn = hat(), look = getLook(), bg = getSettings().menuBg || '';
-    const allOpen = CHAPTERS.every((_, i) => chapterInfo(i).open);
-    const bgWorlds = CHAPTERS.map((c) => CHAPTER_WORLD[c.id]).filter((id) => WORLDS[id]);
+    const skin = getSkin(), worn = hat(), look = getLook();
     const owned = Object.entries(HATS).filter(([id]) => ownsHat(id));
     el.innerHTML = `
       ${head('#/menu/garderobe', 'Anpassen', `${icon('star')} ${stars}`)}
@@ -761,11 +766,6 @@ function kitPage(el, scene) {
           <div class="kit-row">${TRAILS.map((t) => { const locked = !isAdmin() && stars < t.stars, on = look.trail.id === t.id; return `<button class="kit-swatch${on ? ' active' : ''}" ${locked ? 'disabled' : `data-trail="${t.id}"`} aria-pressed="${on}"><span class="ks-dot" style="background:${t.color || 'transparent'}"></span><small>${locked ? `★${t.stars}` : esc(t.name)}</small></button>`; }).join('')}</div>
           <h3>Laterne</h3>
           <div class="kit-row">${LANTERNS.map((t) => `<button class="kit-swatch${look.lantern.id === t.id ? ' active' : ''}" data-lantern="${t.id}" aria-pressed="${look.lantern.id === t.id}"><span class="ks-dot" style="background:${t.color};box-shadow:0 0 0 3px ${t.glow}"></span><small>${esc(t.name)}</small></button>`).join('')}</div>
-          ${allOpen ? `<h3>Anpassung: Menü-Hintergrund</h3>
-          <div class="kit-row">
-            <button class="kit-swatch${bg ? '' : ' active'}" data-bg="" aria-pressed="${!bg}"><small>Zuletzt betreten</small></button>
-            ${bgWorlds.map((id) => `<button class="kit-swatch${bg === id ? ' active' : ''}" data-bg="${id}" aria-pressed="${bg === id}"><small>${WORLDS[id].icon} ${esc(WORLDS[id].name)}</small></button>`).join('')}
-          </div>` : ''}
           <p class="small">Neue Umhänge schaltest du mit Sternen frei, Hüte gibt es im Shop gegen Kristalle 💎.</p>
         </div>
       </div>`;
@@ -808,7 +808,6 @@ function kitPage(el, scene) {
     pick('lantern', (id) => setLook({ lantern: id }));
     pick('trail', (id) => setLook({ trail: id }));
     pick('goal', (id) => setLook({ goal: id }));
-    pick('bg', (id) => { updateSettings({ menuBg: id || null }); scene.setWorld(menuBackground()); document.body.dataset.world = menuBackground(); });
     el.querySelectorAll('button[data-hat]').forEach((b) => b.addEventListener('click', () => {
       wearHat(b.dataset.hat || null); play('ui'); render();
       el.querySelector(`button[data-hat="${b.dataset.hat}"]`)?.focus();

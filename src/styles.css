@@ -1650,3 +1650,20 @@ body.wood .inv-slot span .pxi { width: 20px; height: 20px; color: var(--gold); f
 body.wood .btn, .wbtn { box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.24), inset -2px -3px 0 rgba(0, 0, 0, 0.34); }
 .wbtn.mm-tile { clip-path: none; box-shadow: none; }
 .mm3 .wbtn.mm-tile { clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)); }
+
+/* Knöpfe neu: Holzbrett mit Maserung, Messingnägeln in den Ecken, harte Kanten statt Verlauf */
+body.wood .btn, .wbtn, body.wood .ibtn {
+  --nail: #ffd98a;
+  background-color: var(--wood-3);
+  background-image:
+    linear-gradient(var(--nail), var(--nail)), linear-gradient(var(--nail), var(--nail)), linear-gradient(var(--nail), var(--nail)), linear-gradient(var(--nail), var(--nail)),
+    repeating-linear-gradient(0deg, transparent 0 10px, rgba(0, 0, 0, 0.16) 10px 12px);
+  background-size: 4px 4px, 4px 4px, 4px 4px, 4px 4px, auto;
+  background-position: 6px 6px, calc(100% - 6px) 6px, 6px calc(100% - 6px), calc(100% - 6px) calc(100% - 6px), 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+  box-shadow: inset 3px 3px 0 rgba(255, 226, 170, 0.34), inset -3px -4px 0 rgba(0, 0, 0, 0.38);
+}
+body.wood .btn:hover:not(:disabled), .wbtn:hover:not(:disabled) { background-color: var(--wood-4); background-image: inherit; }
+body.wood .btn-primary, .wbtn.big { background-color: var(--leaf); }
+body.wood .btn-primary:hover:not(:disabled), .wbtn.big:hover { background-color: var(--leaf-2); }
+.wbtn.mm-tile { background-image: none; }
