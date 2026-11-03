@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.122', items: ['Admin-Debug: alle Welten automatisch durchspielen, Bosse übersprungen'] },
   { v: '3.23.121', items: ['Mobs und Items zittern nicht mehr, keine Lücken im Körper'] },
   { v: '3.23.120', items: ['Neue Menü- und Spielsounds: Holzklicks, Pergament, Metallrasten'] },
   { v: '3.23.119', items: ['Münzen, Items, Mobs und Bosse laufen stufenlos', 'Bewegungsunschärfe für den Spieler'] },

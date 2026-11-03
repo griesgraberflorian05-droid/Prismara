@@ -71,6 +71,11 @@ function ensurePixelFont() {
   document.head.appendChild(l);
 }
 
+// Admin-Durchlauf: spielt Raum für Raum selbst, bis er gestoppt wird
+const RUSH = 'prismara.rush';
+const rushOn = () => { try { return sessionStorage.getItem(RUSH) === '1'; } catch { return false; } };
+const setRush = (on) => { try { if (on) sessionStorage.setItem(RUSH, '1'); else sessionStorage.removeItem(RUSH); } catch { /* blockiert */ } };
+
 const seeded = (str) => { let h = 2166136261; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
 /** Ausgang: Randwand neben einem freien Bodenfeld, möglichst weit vom Start. */
@@ -197,7 +202,7 @@ export function mountAdventure(root, params, opts = {}) {
   const chIndex = CHAPTERS.findIndex((c) => c.levels.includes(def.id));
   const chapter = CHAPTERS[chIndex];
   // Boss nicht besiegt: Folgewelten bleiben zu, auch über direkte Links
-  const gate = custom || tutorial ? -1 : bossPending();
+  const gate = custom || tutorial || rushOn() ? -1 : bossPending(); // im Durchlauf werden Bosse übersprungen
   if (gate >= 0 && chIndex > gate) { location.replace(`#/arena/${gate}`); return () => {}; }
   const roomNo = chapter ? chapter.levels.indexOf(def.id) + 1 : 1;
   const themeId = opts.theme || (chapter ? CHAPTER_WORLD[chapter.id] : 'default');
@@ -278,6 +283,7 @@ export function mountAdventure(root, params, opts = {}) {
             <button class="btn" data-dbg="prev" ${index > 0 ? '' : 'disabled'}>◀ Raum</button><button class="btn" data-dbg="next" ${index >= 0 && index + 1 < PUSH_LEVELS.length ? '' : 'disabled'}>Raum ▶</button>
             <button class="btn" data-dbg="wprev" ${chIndex > 0 ? '' : 'disabled'}>◀ Welt</button><button class="btn" data-dbg="wnext" ${chIndex >= 0 && chIndex + 1 < CHAPTERS.length ? '' : 'disabled'}>Welt ▶</button>
             <button class="btn" data-dbg="boss" ${chIndex >= 0 ? '' : 'disabled'}>⚔ Weltboss</button>
+            <button class="btn" data-dbg="rush">${rushOn() ? '⏹ Durchlauf stoppen' : '⏩ Alle Welten durchspielen'}</button>
           </div></div>` : ''}
           <button class="btn btn-primary" id="p-resume">${icon('play')} Weiter</button>
           <button class="btn" id="p-reset">${icon('reset')} Raum neu</button>
@@ -657,12 +663,26 @@ export function mountAdventure(root, params, opts = {}) {
     const el = $('#dbg-info');
     if (el) el.textContent = `${def.id} · ${themeId} · Held ${state.player.x},${state.player.y} · Züge ${state.moves}/${def.par ?? '–'} · Blöcke ${state.blocks.length} · Tür ${exit.x},${exit.y}${exitOpen ? ' offen' : ' zu'}`;
   }
+  // Durchlauf: Lösung abspielen, dann direkt in den nächsten Raum; zu schwere Räume werden übersprungen
+  function rushNext() {
+    if (!rushOn()) return;
+    if (index < 0 || index + 1 >= PUSH_LEVELS.length) { setRush(false); toast('Durchlauf fertig'); location.hash = '#/menu'; return; }
+    location.hash = `#/adv/${index + 1}`;
+  }
+  function rushRoom() {
+    const res = solvePush(level, { from: state, limit: 150000 });
+    if (!res.solvable) { toast(`${def.id}: übersprungen`); devlog('SPIEL', `Durchlauf: ${def.id} ohne Lösung übersprungen`); later(rushNext, 400); return; }
+    res.path.forEach((p, i) => later(() => { if (!rushOn()) return; if (p === 'rot') rotate(); else stepDir(String(p).startsWith('turn') ? +String(p).slice(4) : p); }, i * 170));
+    later(rushNext, res.path.length * 170 + 700);
+  }
+  if (rushOn() && !tutorial) later(rushRoom, 500);
   function debug(a) {
     setPaused(false);
     if (a === 'open') { exitOpen = true; if (solveMoves == null) solveMoves = state.moves; play('exitopen'); updateHud(); }
     if (a === 'hint') { hintMark = null; showHint(); }
     if (a === 'next' || a === 'prev') location.hash = `#/adv/${index + (a === 'next' ? 1 : -1)}`;
     if (a === 'wnext' || a === 'wprev') location.hash = `#/adv/${PUSH_LEVELS.findIndex((l) => l.id === CHAPTERS[chIndex + (a === 'wnext' ? 1 : -1)].levels[0])}`; // erster Raum der Nachbarwelt
+    if (a === 'rush') { if (rushOn()) { setRush(false); toast('Durchlauf gestoppt'); } else { setRush(true); rushRoom(); } return; }
     if (a === 'boss') location.hash = `#/arena/${chIndex}`;
     if (a === 'curtain') transitionTo(location.hash, { from: themeId, to: themeId, label: 'Vorhang-Test' });
     if (a === 'solve') {
