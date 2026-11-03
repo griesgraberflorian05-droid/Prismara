@@ -1,13 +1,14 @@
 // Prismara-Logo in Pixel-Art: Wappen (Messing-Laterne mit leuchtendem Prisma, umrankt von einer
 // blühenden Ranke) und der Schriftzug PRISMARA in eigener Pixelschrift mit Goldverlauf und Kontur.
 // Wird einmal klein gezeichnet und ohne Glättung hochskaliert; das Wappen dient auch als Favicon.
+// Fette Buchstaben mit doppelter Strichstärke, damit der Schriftzug auch auf dem Handy trägt
 const GLYPHS = {
-  P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
-  R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
-  I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
-  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
-  M: ['10001', '11011', '10101', '10101', '10001', '10001', '10001'],
-  A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+  P: ['111110', '110011', '110011', '111110', '110000', '110000', '110000'],
+  R: ['111110', '110011', '110011', '111110', '110110', '110011', '110011'],
+  I: ['1111', '0110', '0110', '0110', '0110', '0110', '1111'],
+  S: ['011111', '110000', '110000', '011110', '000011', '000011', '111110'],
+  M: ['110011', '111111', '111111', '110011', '110011', '110011', '110011'],
+  A: ['011110', '110011', '110011', '111111', '110011', '110011', '110011'],
 };
 const GOLD = ['#fff6d8', '#ffe9a8', '#ffd166', '#f2b94a', '#e8a317', '#c98a00', '#a86f00'];
 
@@ -49,29 +50,29 @@ export function drawEmblem(g, ox = 0, oy = 0) {
 /** Ganzes Logo (Wappen + Schriftzug). Liefert eine Canvas in Pixelgröße 176×44. */
 export function logoCanvas() {
   const c = document.createElement('canvas');
-  c.width = 176; c.height = 44;
+  c.width = 186; c.height = 44;
   const g = c.getContext('2d');
   drawEmblem(g, 0, 2);
-  const S = 3, gap = 2, x0 = 36, y0 = 6;
-  // Kontur und Schatten zuerst, dann Gold mit Verlauf pro Pixelzeile
-  const letters = 'PRISMARA'.split('');
-  const pass = (dx, dy, color) => letters.forEach((ch, i) => GLYPHS[ch].forEach((row, y) => [...row].forEach((b, x) => {
-    if (b !== '1') return;
-    const lx = x0 + i * (5 * S + gap) - (i > 0 ? i : 0);
-    px(g, lx + x * S + dx, y0 + y * S + dy, S, S, typeof color === 'function' ? color(y) : color);
-  })));
-  pass(2, 3, '#120804');
-  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1], [-1, 1]]) pass(dx, dy, '#2a1408');
-  pass(0, 0, (y) => GOLD[y]);
-  // Glanzpunkte oben auf jedem Buchstaben
-  letters.forEach((_, i) => px(g, x0 + i * (5 * S + gap) - i + 1, y0 + 1, 2, 1, '#ffffff'));
-  // Ranke als Unterstrich mit Blüten
-  for (let x = x0; x < x0 + 8 * (5 * S + gap) - 10; x++) {
-    const y = 34 + Math.round(Math.sin(x / 6) * 1.5);
-    px(g, x, y, 1, 1, '#2f6b2a');
-    if (x % 9 === 3) { px(g, x, y - 1, 2, 1, '#5ab845'); }
-    if (x % 23 === 11) { const col = ['#ff9cc8', '#fff6b0', '#c9a7ff'][x % 3]; px(g, x - 1, y - 1, 3, 1, col); px(g, x, y - 2, 1, 3, col); px(g, x, y - 1, 1, 1, '#ffd166'); }
-  }
+  const S = 3, gap = 1, x0 = 35, y0 = 4;
+  const letters = [];
+  { let lx = x0; for (const ch of 'PRISMARA') { letters.push({ ch, lx }); lx += GLYPHS[ch][0].length * S + gap; } }
+  const pass = (fn) => letters.forEach(({ ch, lx }) => GLYPHS[ch].forEach((row, y) => [...row].forEach((b, x) => { if (b === '1') fn(lx + x * S, y0 + y * S, y, ch, x); })));
+  // Schlagschatten, dann Kontur, dann Metall mit Verlauf und Fase je Block
+  pass((X, Y) => px(g, X + 2, Y + 3, S, S, '#120804'));
+  pass((X, Y) => px(g, X - 1, Y - 1, S + 2, S + 2, '#2a1408'));
+  pass((X, Y, y, ch, x) => {
+    px(g, X, Y, S, S, GOLD[y]);
+    const above = GLYPHS[ch][y - 1]?.[x] === '1', below = GLYPHS[ch][y + 1]?.[x] === '1';
+    if (!above) px(g, X, Y, S, 1, '#ffffff');
+    if (!below) px(g, X, Y + S - 1, S, 1, '#7a4a00');
+  });
+  // Lichtstrahl aus der Laterne, das Prisma teilt ihn in Rot, Grün und Blau unter dem Namen
+  [['#ff4d6d', 30], ['#3ddc97', 33], ['#4da3ff', 36]].forEach(([c, y], k) => {
+    px(g, 30, 29, 6, 1, '#ffffff');
+    for (let x = 36; x < 170; x++) { const yy = Math.round(29 + (y - 29) * Math.min(1, (x - 36) / 40)); px(g, x, yy - 1, 1, 3, '#2a1408'); }
+    for (let x = 36; x < 170 - k * 8; x++) { const yy = Math.round(29 + (y - 29) * Math.min(1, (x - 36) / 40)); px(g, x, yy, 1, 1, c); if ((x + k * 5) % 17 === 0) px(g, x, yy, 2, 1, '#ffffff'); }
+  });
+  px(g, 160, 28, 1, 5, '#fff6d8'); px(g, 158, 30, 5, 1, '#fff6d8'); // Funkeln
   return c;
 }
 
