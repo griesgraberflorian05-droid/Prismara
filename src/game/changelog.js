@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.120', items: ['Neue Menü- und Spielsounds: Holzklicks, Pergament, Metallrasten'] },
   { v: '3.23.119', items: ['Münzen, Items, Mobs und Bosse laufen stufenlos', 'Bewegungsunschärfe für den Spieler'] },
   { v: '3.23.118', items: ['Moorgruben, Trittsteine und morsche Dielen neu'] },
   { v: '3.23.117', items: ['Raumführer im Spieldesign', 'Palmen im Blumentopf', 'Teppich läuft unter Möbeln durch'] },

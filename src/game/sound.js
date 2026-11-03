@@ -12,7 +12,10 @@ function audio() {
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain();
-    master.connect(ctx.destination);
+    // Kompressor hält alles gleich laut, ein sanfter Tiefpass nimmt die Schärfe
+    const comp = ctx.createDynamicsCompressor(), warm = ctx.createBiquadFilter();
+    warm.type = 'lowpass'; warm.frequency.value = 7000;
+    master.connect(warm).connect(comp).connect(ctx.destination);
   }
   if (ctx.state === 'suspended') ctx.resume();
   master.gain.value = getSettings().sfxVolume ?? 0.7;
@@ -122,11 +125,11 @@ export function scream(sec = 1.3) {
 
 export function play(name, arg) {
   switch (name) {
-    case 'step': tone(180 + Math.random() * 30, { type: 'triangle', dur: 0.06, vol: 0.08 }); break;
-    case 'bump': tone(110, { type: 'square', dur: 0.08, vol: 0.06, to: 80 }); break;
+    case 'step': noise({ dur: 0.04, vol: 0.05, freq: 500 + Math.random() * 200, q: 1.5 }); tone(130 + Math.random() * 25, { type: 'sine', dur: 0.05, vol: 0.05 }); break;
+    case 'bump': noise({ dur: 0.05, vol: 0.13, freq: 420, q: 2 }); tone(120, { type: 'triangle', dur: 0.1, vol: 0.13, to: 72 }); break;
     case 'push': noise({ dur: 0.12, vol: 0.18, freq: 300, q: 2 }); tone(140, { type: 'triangle', dur: 0.1, vol: 0.12, to: 100 }); break;
     case 'slide': noise({ dur: 0.35, vol: 0.12, freq: 2200, q: 0.7 }); break;
-    case 'rotate': tone(880, { type: 'square', dur: 0.05, vol: 0.06 }); tone(1320, { type: 'sine', dur: 0.08, vol: 0.08, delay: 0.04 }); break;
+    case 'rotate': noise({ dur: 0.03, vol: 0.12, freq: 3200, q: 5 }); tone(620, { type: 'triangle', dur: 0.05, vol: 0.08 }); tone(930, { type: 'triangle', dur: 0.07, vol: 0.06, delay: 0.05 }); break; // Metallrasten
     case 'undo': tone(600, { type: 'sine', dur: 0.1, vol: 0.08, to: 300 }); break;
     case 'lamp': { // tiefer warmer Ton, jede Lampe eine Stufe höher
       const f = 130.8 * [1, 1.125, 1.26, 1.5, 1.68, 2, 2.25][Math.min(6, arg || 0)];
@@ -148,7 +151,7 @@ export function play(name, arg) {
       noise({ dur: 0.07, vol: 0.14, freq: 260, q: 1.5, delay: 0.3 });
       break;
     case 'doorclose': tone(500, { type: 'sawtooth', dur: 0.25, vol: 0.05, to: 160 }); break;
-    case 'plate': tone(330, { type: 'triangle', dur: 0.12, vol: 0.12 }); tone(495, { type: 'triangle', dur: 0.12, vol: 0.1, delay: 0.06 }); break;
+    case 'plate': noise({ dur: 0.05, vol: 0.14, freq: 700, q: 2 }); tone(200, { type: 'triangle', dur: 0.1, vol: 0.14 }); tone(300, { type: 'triangle', dur: 0.12, vol: 0.1, delay: 0.07 }); break;
     case 'win':
       [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, { type: 'triangle', dur: 0.35, vol: 0.16, delay: i * 0.11 }));
       tone(1567.98, { type: 'sine', dur: 0.9, vol: 0.12, delay: 0.46 });
@@ -159,9 +162,9 @@ export function play(name, arg) {
     case 'dock': tone(1200, { type: 'sine', dur: 0.05, vol: 0.05 }); tone(1800, { type: 'sine', dur: 0.06, vol: 0.04, delay: 0.035 }); break;
     case 'dissolve': noise({ dur: 0.45, vol: 0.12, freq: 3000, q: 0.6 }); tone(900, { type: 'sine', dur: 0.4, vol: 0.08, to: 2400 }); break;
     case 'caught': tone(220, { type: 'sawtooth', dur: 0.5, vol: 0.12, to: 70 }); tone(233, { type: 'square', dur: 0.4, vol: 0.06, to: 60, delay: 0.05 }); break;
-    case 'ui': tone(700, { type: 'sine', dur: 0.06, vol: 0.07 }); break;
-    case 'swipe': noise({ dur: 0.18, vol: 0.08, freq: 1500, q: 0.8 }); tone(500, { type: 'sine', dur: 0.12, vol: 0.05, to: 900 }); break;
-    case 'play': [262, 392, 523.25].forEach((f, i) => tone(f, { type: 'square', dur: 0.12, vol: 0.06, delay: i * 0.06 })); break;
+    case 'ui': noise({ dur: 0.035, vol: 0.2, freq: 1700, q: 3 }); tone(320, { type: 'triangle', dur: 0.07, vol: 0.14, to: 210 }); tone(960, { type: 'sine', dur: 0.05, vol: 0.03, delay: 0.015 }); break; // Holzklick auf einem Brett
+    case 'swipe': noise({ dur: 0.16, vol: 0.09, freq: 900, q: 0.7 }); tone(240, { type: 'triangle', dur: 0.1, vol: 0.06, to: 420 }); break; // Pergament wird umgeblättert
+    case 'play': noise({ dur: 0.04, vol: 0.2, freq: 1500, q: 3 }); [196, 293.66, 392, 587.33].forEach((f, i) => { tone(f, { type: 'triangle', dur: 0.26, vol: 0.13, delay: 0.03 + i * 0.07 }); tone(f / 2, { type: 'sine', dur: 0.3, vol: 0.07, delay: 0.03 + i * 0.07 }); }); break;
     default: break;
   }
 }
