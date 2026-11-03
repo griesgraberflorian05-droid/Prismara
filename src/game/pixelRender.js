@@ -373,6 +373,15 @@ export class PixelRenderer {
     if (gone) { const k = 1 - gone * 0.7; ctx.translate(fx, fy); ctx.scale(k, k); ctx.translate(-fx, -fy); ctx.globalAlpha = 1 - gone * gone; }
     if (sq) { ctx.translate(fx, fy); ctx.scale(sq[0], sq[1]); ctx.translate(-fx, -fy); }
     if (isDinnerbone()) { ctx.translate(0, fy * 2 - T); ctx.scale(1, -1); }
+    // Bewegungsunschärfe: die letzten Positionen laufen als blasse Nachbilder hinterher
+    const tr = (this.heroTrail ||= []);
+    tr.unshift({ x: p.x, y: p.y });
+    if (tr.length > 7) tr.pop();
+    for (let k = tr.length - 1; k > 0; k -= 2) {
+      if (Math.hypot(tr[k].x - p.x, tr[k].y - p.y) < 0.04) continue;
+      ctx.globalAlpha = 0.34 * (1 - k / 8); this.hero({ ...p, x: tr[k].x, y: tr[k].y, stamina: null, caught: false, exhausted: false }, t);
+    }
+    ctx.globalAlpha = 1;
     this.hero(p, t);
     ctx.restore();
   }
@@ -694,11 +703,11 @@ export class PixelRenderer {
   loot(it, t) {
     if (it.got) return;
     if (it.kind === 'critter') { drawMinion((x, y, w, h, c) => this.r(x, y, w, h, c), it.foe.minion, it.foe.colors, it.x * T, it.y * T, t); return; }
-    const px = it.x * T, py = it.y * T + Math.round(Math.sin(t / 260 + it.x * 2) * 1.5);
+    const px = it.x * T, py = it.y * T + Math.sin(t / 420 + it.x * 2) * 1.5; // gleitet weich, nicht in Stufen
     this.r(px + 5, py + 12, 7, 2, 'rgba(0,0,0,0.25)');
     const O = '#17121f';
     if (it.kind === 'coin') {
-      const w = [7, 5, 2, 5][Math.floor(t / 140 + it.x) % 4], x = px + 8 - w / 2;
+      const w = Math.max(1, Math.abs(Math.cos(t / 300 + it.x)) * 7), x = px + 8 - w / 2; // dreht sich stufenlos
       this.r(x - 0.5, py + 4.5, w + 1, 7, O); this.r(x, py + 5, w, 6, '#c98a00'); this.r(x + 0.5, py + 5.5, Math.max(1, w - 1), 5, '#ffd166'); this.r(x + 0.5, py + 5.5, Math.max(1, w - 1), 0.5, '#fff6d8');
       if (w > 4) this.r(px + 7.5, py + 6.5, 1, 3, '#c98a00');
     } else if (it.kind === 'pick') { // Dietrich
@@ -740,7 +749,7 @@ export class PixelRenderer {
   }
 
   fragment(f, t) {
-    const px = f.x * T, py = f.y * T - (Math.floor(t / 250) % 2);
+    const px = f.x * T, py = f.y * T - (Math.sin(t / 400 + f.x) + 1) * 0.75;
     this.r(px + 7, py + 3, 2, 1, '#ffffff'); this.r(px + 6, py + 4, 4, 5, '#9ff6ff'); this.r(px + 7, py + 9, 2, 2, '#4fc3d8'); this.r(px + 7, py + 5, 1, 2, '#ffffff');
   }
 
