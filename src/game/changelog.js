@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.112', items: ['Logo passt zum Spiel: Fackel, Redstone-Spur, Lampe'] },
   { v: '3.23.111', items: ['Bäume, Tannen, Büsche und Felsen in 32 × 32'] },
   { v: '3.23.110', items: ['Neues Prismara-Logo mit fetter Schrift und Lichtstrahlen'] },
   { v: '3.23.109', items: ['Türen nur noch oben oder unten'] },

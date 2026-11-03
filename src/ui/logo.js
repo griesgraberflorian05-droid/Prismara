@@ -1,5 +1,5 @@
-// Prismara-Logo in Pixel-Art: Wappen (Messing-Laterne mit leuchtendem Prisma, umrankt von einer
-// blühenden Ranke) und der Schriftzug PRISMARA in eigener Pixelschrift mit Goldverlauf und Kontur.
+// Prismara-Logo in Pixel-Art: Wappen (Redstone-Fackel vor einer Mauer) und der Schriftzug PRISMARA
+// in eigener Pixelschrift, darunter läuft die Spur von der Fackel zur leuchtenden Lampe.
 // Wird einmal klein gezeichnet und ohne Glättung hochskaliert; das Wappen dient auch als Favicon.
 // Fette Buchstaben mit doppelter Strichstärke, damit der Schriftzug auch auf dem Handy trägt
 const GLYPHS = {
@@ -17,34 +17,14 @@ function px(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); }
 /** Wappen in ein 32×40-Feld ab (ox, oy). */
 export function drawEmblem(g, ox = 0, oy = 0) {
   const R = (x, y, w, h, c) => px(g, ox + x, oy + y, w, h, c);
-  // Schein hinter der Laterne
-  for (let r = 15; r > 0; r -= 3) { g.globalAlpha = 0.07; R(16 - r, 20 - r, r * 2, r * 2, '#ffd27a'); }
-  g.globalAlpha = 1;
-  // Bügel und Kappe
-  R(13, 1, 6, 1, '#2a1408'); R(12, 2, 1, 3, '#2a1408'); R(19, 2, 1, 3, '#2a1408'); R(13, 2, 6, 1, '#c9963f');
-  R(9, 5, 14, 4, '#2a1408'); R(10, 5, 12, 3, '#c9963f'); R(10, 5, 12, 1, '#ffe9a8'); R(11, 8, 10, 1, '#8a5a1a');
-  // Glaskasten mit Rahmen
-  R(8, 9, 16, 21, '#2a1408'); R(9, 10, 14, 19, '#3a2a40');
-  R(9, 10, 1, 19, '#c9963f'); R(22, 10, 1, 19, '#c9963f'); R(15, 10, 2, 19, '#8a5a1a');
-  // Prisma im Glas: Dreieck mit Facetten in Rot, Grün, Blau – leuchtet
-  for (let k = 0; k < 13; k++) {
-    const w = 1 + Math.floor(k * 0.9);
-    R(16 - w, 13 + k, w, 1, k < 4 ? '#ffffff' : k < 8 ? '#bff8ff' : '#9fd8ff');
-    R(16, 13 + k, w, 1, k < 4 ? '#f4eaff' : k < 8 ? '#c9a7ff' : '#9a7aff');
-  }
-  R(11, 25, 10, 1, '#6a4aa8');
-  R(12, 26, 3, 1, '#ff4d6d'); R(15, 26, 3, 1, '#3ddc97'); R(18, 26, 3, 1, '#4da3ff');
-  R(15, 14, 1, 3, '#ffffff'); R(13, 20, 1, 1, '#ffffff');
-  // Boden der Laterne
-  R(8, 30, 16, 3, '#2a1408'); R(9, 30, 14, 2, '#c9963f'); R(9, 30, 14, 1, '#ffe9a8'); R(11, 33, 10, 2, '#2a1408'); R(12, 33, 8, 1, '#8a5a1a');
-  // Ranke windet sich um die Laterne, mit Blättern und Blüten
-  const vine = [[5, 38], [5, 36], [6, 34], [7, 32], [7, 30], [6, 28], [6, 26], [7, 24], [7, 22], [6, 20], [7, 18], [8, 16]];
-  vine.forEach(([x, y], i) => { R(x, y, 1, 2, '#2f6b2a'); if (i % 3 === 1) { R(x - 2, y, 2, 1, '#5ab845'); R(x - 3, y + 1, 2, 1, '#3f8a3a'); } });
-  const vine2 = [[26, 38], [26, 36], [25, 34], [24, 32], [25, 30], [26, 28], [26, 26], [25, 24]];
-  vine2.forEach(([x, y], i) => { R(x, y, 1, 2, '#2f6b2a'); if (i % 3 === 0) { R(x + 1, y, 2, 1, '#5ab845'); R(x + 2, y + 1, 2, 1, '#3f8a3a'); } });
-  const bloom = (x, y, c) => { R(x - 1, y, 3, 1, c); R(x, y - 1, 1, 3, c); R(x, y, 1, 1, '#ffd166'); };
-  bloom(8, 16, '#ff9cc8'); bloom(4, 27, '#fff6b0'); bloom(25, 24, '#ff9cc8'); bloom(27, 33, '#c9a7ff');
-  R(3, 38, 26, 2, '#2f6b2a'); R(5, 37, 3, 1, '#5ab845'); R(23, 37, 4, 1, '#5ab845');
+  // Mauerstück aus Ziegeln mit Holzrahmen
+  R(3, 6, 26, 32, '#2a1408'); R(4, 7, 24, 30, '#6b6470');
+  for (let y = 0; y < 5; y++) { R(4, 12 + y * 6, 24, 1, '#3a3440'); for (let x = 0; x < 3; x++) R(8 + x * 8 + (y % 2) * 4, 7 + y * 6, 1, 5, '#3a3440'); R(4, 7 + y * 6, 24, 1, '#8e8894'); }
+  R(3, 34, 26, 4, '#8f5f36'); R(3, 34, 26, 1, '#c99766'); R(3, 37, 26, 1, '#2a1408');
+  // Fackel: Holzstab, glühender Kopf, Funken
+  R(13, 16, 6, 18, '#2a1408'); R(14, 16, 4, 18, '#8a5a2a'); R(14, 16, 2, 18, '#b07f4a');
+  R(11, 7, 10, 10, '#2a1408'); R(12, 8, 8, 8, '#a8141e'); R(13, 9, 6, 6, '#ff3a3a'); R(14, 10, 3, 3, '#ffb0a0'); R(15, 10, 1, 1, '#ffffff');
+  R(15, 2, 2, 3, '#ff5a4a'); R(7, 9, 2, 2, '#ff5a4a'); R(23, 11, 2, 2, '#ff5a4a'); R(9, 4, 1, 1, '#ffb0a0'); R(22, 5, 1, 1, '#ffb0a0');
 }
 
 /** Ganzes Logo (Wappen + Schriftzug). Liefert eine Canvas in Pixelgröße 176×44. */
@@ -66,13 +46,12 @@ export function logoCanvas() {
     if (!above) px(g, X, Y, S, 1, '#ffffff');
     if (!below) px(g, X, Y + S - 1, S, 1, '#7a4a00');
   });
-  // Lichtstrahl aus der Laterne, das Prisma teilt ihn in Rot, Grün und Blau unter dem Namen
-  [['#ff4d6d', 30], ['#3ddc97', 33], ['#4da3ff', 36]].forEach(([c, y], k) => {
-    px(g, 30, 29, 6, 1, '#ffffff');
-    for (let x = 36; x < 170; x++) { const yy = Math.round(29 + (y - 29) * Math.min(1, (x - 36) / 40)); px(g, x, yy - 1, 1, 3, '#2a1408'); }
-    for (let x = 36; x < 170 - k * 8; x++) { const yy = Math.round(29 + (y - 29) * Math.min(1, (x - 36) / 40)); px(g, x, yy, 1, 1, c); if ((x + k * 5) % 17 === 0) px(g, x, yy, 2, 1, '#ffffff'); }
-  });
-  px(g, 160, 28, 1, 5, '#fff6d8'); px(g, 158, 30, 5, 1, '#fff6d8'); // Funkeln
+  // Redstone-Spur von der Fackel zur Lampe: gleich breit, mit Knoten
+  px(g, 32, 31, 136, 6, '#2a1408'); px(g, 32, 32, 136, 4, '#7a1018'); px(g, 32, 33, 136, 2, '#e8303a');
+  for (let x = 40; x < 165; x += 12) { px(g, x, 30, 4, 8, '#2a1408'); px(g, x + 1, 31, 2, 6, '#ff5a4a'); }
+  // Lampe am Ende leuchtet in vier Kacheln
+  px(g, 168, 26, 16, 16, '#2a1408'); px(g, 169, 27, 14, 14, '#7a3a10');
+  for (const [x, y] of [[170, 28], [177, 28], [170, 35], [177, 35]]) { px(g, x, y, 5, 5, '#ffd166'); px(g, x, y, 2, 2, '#fff6d8'); }
   return c;
 }
 
