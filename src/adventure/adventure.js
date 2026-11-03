@@ -100,11 +100,11 @@ export function findExit(level) {
   }
   let best = null;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (x > 0 && y > 0 && x < w - 1 && y < h - 1) continue;
+    if ((y > 0 && y < h - 1) || x === 0 || x === w - 1) continue; // Türen nur oben oder unten, nie seitlich oder in Ecken
     if (cells[y * w + x].type !== 'wall') continue;
     DIRS.forEach(([dx, dy], dir) => {
       const nx = x + dx, ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= w || ny >= h) return;
+      if (dx !== 0 || ny < 0 || ny >= h) return;
       const c = cells[ny * w + nx];
       if (c.type !== 'empty' || c.flow != null || c.ice || c.plate || c.hole || c.crumble || !dist.has(ny * w + nx)) return;
       // Ecken meiden: dort landen gern geschobene Kisten und versperren die Tür (Live-Test: w5)
@@ -202,7 +202,8 @@ export function mountAdventure(root, params, opts = {}) {
   const roomNo = chapter ? chapter.levels.indexOf(def.id) + 1 : 1;
   const themeId = opts.theme || (chapter ? CHAPTER_WORLD[chapter.id] : 'default');
   const theme = PIXEL_THEMES[themeId] || PIXEL_THEMES.default;
-  const exit0 = def.exit ? exitAt(level, def.exit) : findExit(level);
+  const fixed = def.exit && (def.exit[1] === 0 || def.exit[1] === level.h - 1);
+  const exit0 = fixed ? exitAt(level, def.exit) : findExit(level);
   let exit = exit0; // die Tür kann umziehen, wenn sie zugestellt ist (relocateDoor)
   // Handy-Steuerung nur, wenn der Finger das Hauptzeigegerät ist (Handy/Tablet). Laptops mit
   // Touchscreen haben eine Maus als Hauptzeiger und behalten die Tastatur-Ansicht.
@@ -374,7 +375,7 @@ export function mountAdventure(root, params, opts = {}) {
     };
     if (usable(exit.x, exit.y)) return;
     let best = null;
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    for (const y of [0, h - 1]) for (let x = 1; x < w - 1; x++) {
       const e = usable(x, y);
       if (!e) continue;
       const d = Math.abs(x - exit0.x) + Math.abs(y - exit0.y);
