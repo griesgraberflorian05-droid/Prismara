@@ -75,13 +75,13 @@ export function drawFx(g, T, now) {
     const r = rings[i], k = (now - r.t0) / 500;
     if (k >= 1) { rings.splice(i, 1); continue; }
     if (k < 0) continue; // Lichtwelle: Ring startet später
-    g.globalAlpha = 1 - k; g.strokeStyle = r.color; g.lineWidth = 2;
+    g.globalAlpha = 1 - k; g.strokeStyle = r.color; g.lineWidth = 1;
     g.beginPath(); g.arc((r.x + 0.5) * T, (r.y + 0.5) * T, 4 + k * T * (r.small ? 0.5 : 3), 0, Math.PI * 2); g.stroke();
   }
   for (let i = bolts.length - 1; i >= 0; i--) {
     const b = bolts[i];
     if (now - b.t0 > 180) { bolts.splice(i, 1); continue; }
-    g.strokeStyle = b.color; g.lineWidth = 2; g.beginPath();
+    g.strokeStyle = b.color; g.lineWidth = 1; g.beginPath();
     let px = (b.x + 0.5) * T, py = (b.y + 0.5) * T; g.moveTo(px, py);
     for (let k = 0; k < 7; k++) { px += (k % 2 ? 5 : -5); py -= 9; g.lineTo(px, py); }
     g.stroke();
@@ -92,7 +92,7 @@ export function drawFx(g, T, now) {
     if (k >= 1) { p.on = false; continue; }
     const s = (now - p.t0) / 1000;
     g.globalAlpha = 1 - k; g.fillStyle = p.color;
-    g.fillRect(Math.round((p.x + 0.5 + p.vx * s) * T), Math.round((p.y + 0.5 + p.vy * s + 3 * s * s) * T), 2, 2);
+    g.fillRect(Math.round((p.x + 0.5 + p.vx * s) * T * 2) / 2, Math.round((p.y + 0.5 + p.vy * s + 3 * s * s) * T * 2) / 2, k < 0.5 ? 1.5 : 1, k < 0.5 ? 1.5 : 1); // feine Funken
   }
   g.globalAlpha = 1;
   if (now < flashUntil) { g.fillStyle = 'rgba(255,255,255,0.85)'; g.fillRect(-2000, -2000, 4000, 4000); }

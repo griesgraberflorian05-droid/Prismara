@@ -338,7 +338,7 @@ export class PixelRenderer {
     const dark = shade(body, -0.35);
     const [dx, dy] = DIRS[p.dir];
     const side = dx !== 0, back = dy === -1;
-    let px = Math.round(p.x * T), py = Math.round(p.y * T);
+    let px = Math.round(p.x * T * 2) / 2, py = Math.round(p.y * T * 2) / 2; // gleitet in halben Pixeln
     const walking = p.walk != null;
     const phase = walking ? Math.floor(p.walk * 4) % 4 : 0;
     const breath = !walking && !p.push ? (Math.floor(t / 700) % 2) : 0;
