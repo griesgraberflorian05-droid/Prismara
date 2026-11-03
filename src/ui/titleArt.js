@@ -291,7 +291,15 @@ export function titleThumb(canvas, id) {
 }
 
 /** Startet das Titelbild in canvas, im Stil der Welt worldId. Liefert { stop, setWorld }. */
+// Gemalte Hintergründe je Welt; bis sie geladen sind, läuft das gezeichnete Bild
+const PAINTED = {};
+for (const id of ['aurora', 'beach', 'night', 'castle', 'cherry', 'jungle', 'moor', 'reef', 'shadow', 'temple', 'volcano']) {
+  const im = new Image(); im.src = new URL(`../backgrounds/${id}.png`, import.meta.url).href; PAINTED[id] = im;
+}
+const blank = document.createElement('canvas'); blank.width = W; blank.height = H;
+
 export function mountTitleArt(canvas, worldId = 'default') {
+  let curId = worldId;
   let S = TITLE_STYLES[worldId] || TITLE_STYLES.default;
   let { back, front } = layers(worldId);
   const [buf, g] = layer();
@@ -395,6 +403,8 @@ export function mountTitleArt(canvas, worldId = 'default') {
   function frame(tms) {
     if (!run) return;
     const t = prefersReducedMotion() ? 0 : tms;
+    const art = PAINTED[curId], painted = art?.complete && art.naturalWidth > 0;
+    if (painted) { back = art; front = blank; }
     g.drawImage(back, 0, 0);
     // Sterne
     if (S.stars) for (let i = 0; i < 90; i++) {
@@ -515,7 +525,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
     }
     g.globalAlpha = 1;
     // Blumen im Vordergrund wiegen sich
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < (painted ? 0 : 26); i++) {
       const x = Math.floor(hash(i, 91) * W);
       if (Math.abs(x - fx) < 14 || (x > 200 && x < 232)) continue;
       const base = groundY(x) + 3 + Math.floor(hash(i, 92) * 14);
@@ -564,7 +574,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
       if (next === S) return;
       const [img, ig] = layer(); ig.drawImage(buf, 0, 0); // aktuelles Bild festhalten
       fade = { img, dir, ms, t0: performance.now() };
-      S = next; ({ back, front } = layers(id));
+      S = next; curId = id; ({ back, front } = layers(id));
     },
   };
 }
