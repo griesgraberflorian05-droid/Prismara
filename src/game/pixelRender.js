@@ -75,6 +75,13 @@ export class PixelRenderer {
     }
     DecorSteps.rug(this, level, cfg, out);
     DecorSteps.scatter(this, level, cfg, out);
+    // Licht von oben links: Wände werfen einen gedithert auslaufenden Schatten auf den Boden
+    for (let y = 0; y < level.h; y++) for (let x = 0; x < level.w; x++) {
+      if (level.cells[y * level.w + x].type === 'wall') continue;
+      const up = y > 0 && level.cells[(y - 1) * level.w + x].type === 'wall', lf = x > 0 && level.cells[y * level.w + x - 1].type === 'wall';
+      if (up) for (let j = 0; j < 8; j++) for (let i = (j % 2); i < T; i += 1 + (j >> 1)) this.r(x * T + i, y * T + j, 1, 1, `rgba(10,6,16,${0.34 - j * 0.035})`);
+      if (lf) for (let i = 0; i < 6; i++) for (let j = (i % 2); j < T; j += 1 + (i >> 1)) this.r(x * T + i, y * T + j, 1, 1, `rgba(10,6,16,${0.26 - i * 0.035})`);
+    }
     DecorSteps.backWall(this, level, theme, cfg, exit, out);
     for (let y = 0; y < level.h; y++) for (let x = 0; x < level.w; x++) {
       const i = y * level.w + x;

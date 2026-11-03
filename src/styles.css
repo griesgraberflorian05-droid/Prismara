@@ -1642,3 +1642,11 @@ body.wood .kit-stage { background: var(--panel-2); border-color: var(--edge); }
 /* Eigene Pixel-Symbole in Shop und Inventar */
 .si-icon .pxi, .shop-face .pxi { width: 34px; height: 34px; color: var(--wood-2); filter: none; }
 body.wood .inv-slot span .pxi { width: 20px; height: 20px; color: var(--gold); filter: none; }
+
+/* Knöpfe nach denselben Regeln: abgestufte Pixel-Ecken, drei Töne, Licht oben links */
+.wbtn, body.wood .btn, body.wood .ibtn, .sg-tile, .kit-swatch, .mm-stats li, .mg-slot, .mg-spell {
+  clip-path: polygon(0 4px, 2px 4px, 2px 2px, 4px 2px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px), calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px));
+}
+body.wood .btn, .wbtn { box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.24), inset -2px -3px 0 rgba(0, 0, 0, 0.34); }
+.wbtn.mm-tile { clip-path: none; box-shadow: none; }
+.mm3 .wbtn.mm-tile { clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)); }
