@@ -40,23 +40,23 @@ export const PIXEL_THEMES = {
 };
 
 export class PixelRenderer {
-  constructor(level) {
-    this.level = level;
+  constructor(level, { rs = 1 } = {}) {
+    this.level = level; this.rs = rs; // rs: Feinauflösung, 2 = jedes Feld hat 32 × 32 echte Pixel
     // Raum + Rand für Außenwelt und hohe Rückwand; gezeichnet wird in Raumkoordinaten (verschoben um ox/oy)
     this.ox = MARGIN.x * T; this.oy = MARGIN.top * T;
     this.canvas = document.createElement('canvas');
-    this.canvas.width = (level.w + 2 * MARGIN.x) * T; this.canvas.height = (level.h + MARGIN.top + MARGIN.bottom) * T;
+    this.canvas.width = (level.w + 2 * MARGIN.x) * T * rs; this.canvas.height = (level.h + MARGIN.top + MARGIN.bottom) * T * rs;
     this.ctx = this.canvas.getContext('2d');
     /** Bildausschnitt, der auf den Bildschirm passen soll: Raum samt Rückwand (2 Felder). */
     this.view = { x: this.ox, y: this.oy - 2 * T, w: level.w * T, h: (level.h + 2) * T };
     // Lichtkarte in 1/4 Auflösung → grobe, „blockige“ Lichtstufen wie bei Minecraft-Shadern
     this.light = document.createElement('canvas');
-    this.light.width = Math.ceil(this.canvas.width / 4); this.light.height = Math.ceil(this.canvas.height / 4);
+    this.light.width = Math.ceil(this.canvas.width / (4 * rs)); this.light.height = Math.ceil(this.canvas.height / (4 * rs));
     this.lctx = this.light.getContext('2d');
     this.static = null; // vorgezeichnete Wände/Böden
   }
 
-  r(x, y, w, h, c) { this.ctx.fillStyle = c; this.ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+  r(x, y, w, h, c) { const k = this.rs || 1; this.ctx.fillStyle = c; this.ctx.fillRect(Math.round(x * k) / k, Math.round(y * k) / k, Math.round(w * k) / k, Math.round(h * k) / k); }
 
   // ---------- statische Ebene: Boden und Wände (einmal je Welt) ----------
   buildStatic(theme, exit) {
@@ -66,7 +66,7 @@ export class PixelRenderer {
     const c = document.createElement('canvas');
     c.width = this.canvas.width; c.height = this.canvas.height;
     const save = this.ctx; this.ctx = c.getContext('2d');
-    this.ctx.translate(this.ox, this.oy);
+    this.ctx.setTransform(this.rs, 0, 0, this.rs, this.ox * this.rs, this.oy * this.rs); this.ctx.imageSmoothingEnabled = false;
     DecorSteps.outside(this, level, cfg, out);
     for (let y = 0; y < level.h; y++) for (let x = 0; x < level.w; x++) {
       const cell = level.cells[y * level.w + x];
@@ -94,7 +94,11 @@ export class PixelRenderer {
 
   floorTile(x, y, th) {
     const px = x * T, py = y * T;
-    if (th.tex) { texture(th.tex).forEach((row, j) => row.forEach((c, i) => this.r(px + i, py + j, 1, 1, c))); return; }
+    if (th.tex) {
+      texture(th.tex).forEach((row, j) => row.forEach((c, i) => this.r(px + i, py + j, 1, 1, c)));
+      if (this.rs > 1) for (let k = 0; k < 14; k++) { const a = hash(x, y, 90 + k), b = hash(y, x, 120 + k); this.r(px + Math.floor(a * 32) / 2, py + Math.floor(b * 32) / 2, 0.5, 0.5, k % 2 ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.2)'); } // feines Korn
+      return;
+    }
     const [a, b, d] = th.floor;
     this.r(px, py, T, T, a);
     if (th.pattern === 'planks') {
@@ -813,7 +817,7 @@ export class PixelRenderer {
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(this.static, 0, 0);
-    ctx.translate(this.ox, this.oy);
+    ctx.setTransform(this.rs, 0, 0, this.rs, this.ox * this.rs, this.oy * this.rs);
     const tr = opts.tr;
     const sensorInfo = new Map((tr.sensors || []).map((s) => [s.y * level.w + s.x, s]));
     const targetInfo = new Map(tr.targets.map((s) => [s.y * level.w + s.x, s]));
@@ -925,7 +929,7 @@ export class PixelRenderer {
     drawShafts(this, this.decor.shafts, level, t);
     drawGlows(this, this.decor.glows, t);
     drawFlames(this, this.decor.flames, t);
-    drawMotes(this, this.decor.motes, t, { x0: -this.ox, y0: -this.oy, x1: this.canvas.width - this.ox, y1: this.canvas.height - this.oy });
+    drawMotes(this, this.decor.motes, t, { x0: -this.ox, y0: -this.oy, x1: this.canvas.width / this.rs - this.ox, y1: this.canvas.height / this.rs - this.oy });
     if (opts.marker) this.marker(opts.marker, t);
     for (const m of opts.markers || []) this.marker(m, t + m.x * 97);
     ctx.setTransform(1, 0, 0, 1, 0, 0);

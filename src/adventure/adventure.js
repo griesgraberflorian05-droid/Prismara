@@ -26,6 +26,7 @@ import { stopCelebration } from '../ui/celebrate.js';
 import { devlog } from '../devlog.js';
 import { isUnlocked, solvedCount, unlockedBetween } from '../game/unlocks.js';
 
+const RS = 2; // Räume werden mit doppelter Feinheit gezeichnet
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KEYS = { ArrowUp: 0, w: 0, W: 0, ArrowRight: 1, d: 1, D: 1, ArrowDown: 2, s: 2, S: 2, ArrowLeft: 3, a: 3, A: 3 };
 const STEP_MS = 130;   // Gleitdauer eines Schritts
@@ -290,7 +291,7 @@ export function mountAdventure(root, params, opts = {}) {
   const $ = (s) => root.querySelector(s);
   const canvas = $('#board');
   const ctx = canvas.getContext('2d');
-  const pix = new PixelRenderer(level);
+  const pix = new PixelRenderer(level, { rs: RS });
 
   let state, tr, history, anim, exitOpen, done, caught, dissolving, dock, squash, held, lastStep, timers = [];
   let solveMoves = null; // Züge bis zum Öffnen der Tür – nur sie zählen für die Sterne
@@ -850,14 +851,14 @@ export function mountAdventure(root, params, opts = {}) {
     if (trail.length) { // Spur auf den Boden, verblasst in zwei Sekunden
       const g = img.getContext('2d');
       trail = trail.filter((p) => t - p.t0 < 2000);
-      g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy); g.fillStyle = trailColor;
+      g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS); g.fillStyle = trailColor;
       for (const p of trail) { g.globalAlpha = 0.7 * (1 - (t - p.t0) / 2000); g.fillRect(p.x * T + (p.side ? 4 : 9), p.y * T + 11, 3, 3); }
       g.restore();
     }
-    { const g = img.getContext('2d'); g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy); drawFx(g, T, t); g.restore(); }
+    { const g = img.getContext('2d'); g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS); drawFx(g, T, t); g.restore(); }
     const [qx, qy] = shake(scale, t);
     ctx.globalAlpha = blur ? 0.72 : 1;
-    ctx.drawImage(img, dx + qx, dy + qy, img.width * scale, img.height * scale);
+    ctx.drawImage(img, dx + qx, dy + qy, (img.width / RS) * scale, (img.height / RS) * scale);
     ctx.globalAlpha = 1;
     requestAnimationFrame(frame);
   }

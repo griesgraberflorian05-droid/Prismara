@@ -21,6 +21,7 @@ import { icon } from '../ui/icons.js';
 let ROWS = [],
   BASE = ['###################', '#.................#', '#.................#', '#...#.........#...#', '#.................#', '#.................#', '#.................#', '#.................#', '#.................#', '#...#.........#...#', '#.................#', '#.................#', '###################'];
 ROWS = BASE;
+const RS = 2; // Räume werden mit doppelter Feinheit gezeichnet
 const W = 19, H = 13;
 // Endlos-Modus: jeder Raum ein neuer Grundriss mit Möbeln als Deckung; Trupp und Herzen laufen mit
 const RUN = { hp: 0, army: 0 };
@@ -45,7 +46,7 @@ export function mountArena(root, params) {
   const touch = matchMedia('(pointer: coarse)').matches;
   const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: {}, rows: ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)) });
   const room = createPushState(level), tr = pushTrace(room);
-  const pix = new PixelRenderer(level);
+  const pix = new PixelRenderer(level, { rs: RS });
   const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), slots = spellSlots(), modes = [...MODES.slice(0, 2), ...(hasMagic() ? slots.map((id) => spellOf(id).name) : [])], ready = {}, help = !!getSettings().bossHelp, maxHp = stat('armor') + (help ? 2 : 0), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
   const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(340, 620 - ci * 26) * (touch ? 1.3 : 1)), windMs = touch ? 700 : 430;
@@ -400,7 +401,7 @@ export function mountArena(root, params) {
   const mirror = (g) => (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x + pix.ox, y + pix.oy, w, h); };
   function drawHero(g, now) {
     const r = mirror(g), x = hero.x * T, y = hero.y * T;
-    g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy); pix.player({ x: hero.x, y: hero.y, dir: hero.dir, walk: null, stamina: 1, hat: hat() }, now); drawSword(g, now);
+    g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS); pix.player({ x: hero.x, y: hero.y, dir: hero.dir, walk: null, stamina: 1, hat: hat() }, now); drawSword(g, now);
     for (const q of tele) for (const [a, b] of q.cells) { r(a * T - pix.ox + 1, b * T - pix.oy + 1, T - 2, 1, '#ff3a2a'); }
     for (const p of shots) if (now >= p.at) { const sx = Math.round(p.x * T) + 4, sy = Math.round(p.y * T) + 4; g.fillStyle = '#1a0208'; g.fillRect(sx, sy, 8, 8); g.fillStyle = '#ff3a2a'; g.fillRect(sx + 2, sy + 2, 4, 4); }
     g.restore(); void x; void y;
@@ -416,7 +417,7 @@ export function mountArena(root, params) {
     const blink = now < hero.safe && Math.floor(now / 90) % 2;
     const img = pix.draw(t, { tr, blocks: [], got: [], loot: [], fragments: [], enemies: [], dust: [], theme, grow: Infinity, player: blink ? null : { x: rx, y: ry, dir: hero.dir, walk: held != null || walking ? (now / 300) % 1 : null, stamina: 1, hat: hat() } });
     const g = img.getContext('2d');
-    g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy);
+    g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS);
     const r = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
     for (const z of tele) {
       const left = (z.at - now) / 900, on = left < 0.4 ? Math.floor(now / 70) % 2 : 1;
@@ -433,6 +434,7 @@ export function mountArena(root, params) {
     sparks = sparks.filter((s) => now - s.t0 < 300);
     for (const s of sparks) { const k = (now - s.t0) / 300, a = Math.round(k * 9); for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) r(s.x * T + 7 + dx * a, s.y * T + 7 + dy * a, 3, 3, foe.colors[0]); }
     g.restore();
+    g.setTransform(RS, 0, 0, RS, 0, 0); // ab hier in Raum-Pixeln ohne Verschiebung
     if (boss && dying) { const k = (now - dying) / 1400; drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T - k * 24, t, { state: 'ghost' }); for (let i = 0; i < 90; i++) { const a = i * 2.4, d = k * (10 + (i % 17) * 3); g.fillStyle = foe.colors[i % 2]; g.fillRect(pix.ox + boss.x * T + 16 + Math.cos(a) * d, pix.oy + boss.y * T + 16 + Math.sin(a) * d - k * 14, 3, 3); } }
     if (boss && !dying) { // Bosskampf: Raum wird düster, die Ränder pulsieren blutrot
       const p = img.width, q = img.height, beat = reduced ? 0.5 : (Math.sin(now / 420) + 1) / 2;
@@ -442,7 +444,7 @@ export function mountArena(root, params) {
       drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, state: mini ? 'normal' : boss.stage === 3 ? 'aggro' : boss.stage === 2 ? 'hurt' : 'normal' });
       if (!blink) pix.ctx && drawHero(g, now);
     }
-    g.save(); g.setTransform(1, 0, 0, 1, pix.ox, pix.oy); drawFx(g, T, now); g.restore();
+    g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS); drawFx(g, T, now); g.restore();
     const dpr = devicePixelRatio || 1, rect = canvas.getBoundingClientRect();
     const cw = Math.max(1, Math.round(rect.width * dpr)), ch = Math.max(1, Math.round(rect.height * dpr));
     if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
@@ -450,7 +452,7 @@ export function mountArena(root, params) {
     const v = pix.view, scale = Math.max(1, Math.floor(Math.min(cw / v.w, ch / v.h)));
     const quake = !reduced && now < shake ? (Math.floor(now / 30) % 2 ? scale : -scale) : 0;
     view = { dx: Math.floor((cw - v.w * scale) / 2) - v.x * scale + quake, dy: Math.floor((ch - v.h * scale) / 2) - v.y * scale };
-    ctx.drawImage(img, view.dx, view.dy, img.width * scale, img.height * scale);
+    ctx.drawImage(img, view.dx, view.dy, (img.width / RS) * scale, (img.height / RS) * scale);
     requestAnimationFrame(frame);
   }
 

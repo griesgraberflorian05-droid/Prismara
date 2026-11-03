@@ -297,6 +297,7 @@ function backWall(p, level, th, cfg, exit, out) {
         p.r(px + a, yy, b, 5, v > 0.66 ? 'rgba(255,255,255,0.1)' : v < 0.33 ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0)');
         p.r(px + a, yy, b, 1, 'rgba(255,255,255,0.14)');
         p.r(px + a, yy + 4, b, 1, 'rgba(0,0,0,0.14)');
+        for (let q = 0; q < 4; q++) p.r(px + a + hash(x + q, k, 64) * b, yy + hash(k, x + q, 65) * 4, 0.5, 0.5, q % 2 ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)'); // feines Korn
         if (hash(x + id, k, 63) > 0.86 && cfg.ivy) p.r(px + a + 1, yy + 4, 3, 2, cfg.ivy[0]);
       }
       p.r(px, yy + 5, T, 1, th.dark);
