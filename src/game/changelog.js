@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.111', items: ['Bäume, Tannen, Büsche und Felsen in 32 × 32'] },
   { v: '3.23.110', items: ['Neues Prismara-Logo mit fetter Schrift und Lichtstrahlen'] },
   { v: '3.23.109', items: ['Türen nur noch oben oder unten'] },
   { v: '3.23.108', items: ['Neue Türen, Gittertore und Bücher', 'Deko mit Kontur', 'Lichtziele mit Kristalllinse', 'Alle Spieler mit Stoffmuster, Gürtel und Goldsaum'] },

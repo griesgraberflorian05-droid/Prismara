@@ -74,14 +74,24 @@ function planFurniture(level, cfg) {
 
 // ---------- Außen-Requisiten (Fußpunkt = Feld px,py) ----------
 function shadow(p, px, py, w = 14) { p.r(px + 8 - w / 2, py + 13, w, 3, 'rgba(0,0,0,0.22)'); }
+// Laubkrone aus einzelnen Blättern: Kontur, Grundton, dunkle Unterseite, Licht oben links (halbe Pixel)
+function foliage(p, cx, cy, rx, ry, [mid, dark, light]) {
+  p.r(cx - rx * 0.75, cy - ry - 0.5, rx * 1.5, ry * 2 + 1, '#17121f'); p.r(cx - rx - 0.5, cy - ry * 0.7, rx * 2 + 1, ry * 1.4, '#17121f');
+  p.r(cx - rx * 0.75, cy - ry, rx * 1.5, ry * 2, mid); p.r(cx - rx, cy - ry * 0.7, rx * 2, ry * 1.4, mid);
+  const n = Math.round(rx * ry * 3);
+  for (let k = 0; k < n; k++) {
+    const a = hash(cx, k, 201) * 6.283, d = Math.sqrt(hash(cy, k, 202)), x = cx + Math.cos(a) * rx * d * 0.9, y = cy + Math.sin(a) * ry * d * 0.9;
+    const lit = (cx - x) / rx + (cy - y) / ry + hash(k, cx, 203) - 0.5;
+    p.r(x, y, 1.5, 1, lit > 0.45 ? light : lit < -0.35 ? dark : mid);
+  }
+}
+
 const PROPS = {
   tree(p, px, py, leaf = ['#4a8a3a', '#2f6428', '#6cb455'], trunk = '#5a3a22') {
     shadow(p, px, py, 18);
-    p.r(px + 6, py + 4, 4, 11, trunk); p.r(px + 6, py + 4, 1, 11, '#3a2414');
-    p.r(px - 1, py - 10, 18, 13, '#1f3a18'); p.r(px + 1, py - 13, 14, 2, '#1f3a18');
-    p.r(px, py - 9, 16, 11, leaf[0]); p.r(px + 2, py - 12, 12, 3, leaf[0]);
-    p.r(px, py - 1, 16, 3, leaf[1]); p.r(px + 3, py - 11, 5, 3, leaf[2]); p.r(px + 2, py - 8, 3, 2, leaf[2]);
-    p.r(px + 11, py - 6, 2, 2, leaf[2]);
+    p.r(px + 5.5, py + 3, 5, 12, '#17121f'); p.r(px + 6, py + 3, 4, 11.5, trunk); p.r(px + 6, py + 3, 1, 11.5, '#8a5a32');
+    for (let k = 0; k < 6; k++) p.r(px + 7 + (k % 2), py + 4 + k * 2, 1, 1, '#3a2414'); // Rinde
+    foliage(p, px + 8, py - 4, 10, 9, leaf); foliage(p, px + 3, py + 0, 5, 4, leaf); foliage(p, px + 13, py + 0, 5, 4, leaf);
   },
   cherry(p, px, py) { PROPS.tree(p, px, py, ['#f2a7c8', '#c9708f', '#ffd6e8'], '#4a2c22'); p.r(px + 4, py - 5, 1, 1, '#ffffff'); p.r(px + 10, py - 9, 1, 1, '#ffffff'); },
   jtree(p, px, py) {
@@ -90,12 +100,15 @@ const PROPS = {
   },
   pine(p, px, py, snow = false) {
     shadow(p, px, py, 14);
-    p.r(px + 7, py + 9, 2, 6, '#3a2414');
-    const g = ['#1f4a3a', '#2a5e48', '#173a2e'];
-    p.r(px + 6, py - 12, 4, 4, g[0]); p.r(px + 4, py - 8, 8, 5, g[0]); p.r(px + 2, py - 3, 12, 6, g[0]); p.r(px, py + 3, 16, 6, g[0]);
-    p.r(px + 4, py - 4, 8, 1, g[2]); p.r(px + 2, py + 2, 12, 1, g[2]); p.r(px, py + 8, 16, 1, g[2]);
-    p.r(px + 6, py - 11, 1, 2, g[1]); p.r(px + 4, py - 7, 2, 1, g[1]); p.r(px + 3, py - 2, 2, 1, g[1]);
-    if (snow) { p.r(px + 6, py - 12, 4, 1, '#ffffff'); p.r(px + 4, py - 8, 8, 1, '#f2f7ff'); p.r(px + 2, py - 3, 12, 1, '#f2f7ff'); p.r(px, py + 3, 16, 1, '#ffffff'); }
+    p.r(px + 6.5, py + 9, 3, 6, '#17121f'); p.r(px + 7, py + 9, 2, 5.5, '#5a3a22'); p.r(px + 7, py + 9, 0.5, 5.5, '#8a5a32');
+    const g = ['#2a5e48', '#173a2e', '#4a8a6a'];
+    for (let row = 0; row < 5; row++) { // Äste von unten nach oben, jede Reihe mit gezackter Kante
+      const y0 = py + 8 - row * 4.5, w = 16 - row * 3;
+      for (let k = 0; k < 11; k += 0.5) { const q = (k + 1) / 11, half = (w / 2) * q + (hash(row, k * 2, px) - 0.5);
+        p.r(px + 8 - half - 0.5, y0 - 10 + k, half * 2 + 1, 0.5, '#17121f'); p.r(px + 8 - half, y0 - 10 + k, half * 2, 0.5, q > 0.8 ? g[1] : g[0]);
+        if (hash(row, k * 2, py) > 0.55) p.r(px + 8 - half * 0.7, y0 - 10 + k, 1.5, 0.5, snow && q < 0.8 ? '#ffffff' : g[2]); }
+      if (snow) p.r(px + 8 - w / 3, y0 - 0.5, w * 0.66, 1, '#f2f7ff');
+    }
   },
   snowpine(p, px, py) { PROPS.pine(p, px, py, true); },
   palm(p, px, py) {
@@ -110,16 +123,17 @@ const PROPS = {
   },
   bush(p, px, py, c = ['#3f7d34', '#2a5a24', '#6cb455']) {
     shadow(p, px, py, 14);
-    p.r(px + 1, py + 6, 14, 9, '#1f3a18'); p.r(px + 2, py + 6, 12, 8, c[0]); p.r(px + 4, py + 4, 8, 2, c[0]);
-    p.r(px + 2, py + 12, 12, 2, c[1]); p.r(px + 4, py + 6, 3, 2, c[2]);
-    if (hash(px, py, 3) > 0.5) { p.r(px + 9, py + 8, 1, 1, '#e8475d'); p.r(px + 6, py + 10, 1, 1, '#e8475d'); }
+    foliage(p, px + 8, py + 9, 7, 5.5, c);
+    if (hash(px, py, 3) > 0.5) for (const [a, b] of [[9, 8], [6, 10], [11, 11]]) { p.r(px + a, py + b, 1, 1, '#e8475d'); p.r(px + a, py + b, 0.5, 0.5, '#ffb0b8'); }
   },
   fern(p, px, py) {
     for (let k = 0; k < 6; k++) { const a = -1.2 + k * 0.48; for (let s = 1; s < 7; s++) p.r(px + 8 + Math.round(Math.cos(a) * s * 1.2), py + 12 - Math.round(Math.abs(Math.sin(a)) * s * 1.1 + s * 0.6), 2, 1, s % 2 ? '#2f7a2a' : '#4fa83d'); }
   },
   rock(p, px, py) {
     shadow(p, px, py, 12);
-    p.r(px + 3, py + 8, 10, 7, '#4a4a52'); p.r(px + 4, py + 7, 8, 7, '#7a7a84'); p.r(px + 5, py + 7, 4, 1, '#a0a0aa'); p.r(px + 4, py + 13, 8, 1, '#5a5a62');
+    p.r(px + 2.5, py + 8.5, 11, 6, '#17121f'); p.r(px + 4, py + 6.5, 7, 2, '#17121f'); p.r(px + 3, py + 9, 10, 5, '#6a6a74'); p.r(px + 4.5, py + 7, 6, 3, '#84848e');
+    p.r(px + 5, py + 7, 3, 0.5, '#c0c0ca'); p.r(px + 3, py + 9, 1.5, 0.5, '#a0a0aa'); p.r(px + 3, py + 13, 10, 1, '#4a4a54'); p.r(px + 9, py + 8, 0.5, 3, '#4a4a54');
+    for (let k = 0; k < 8; k++) p.r(px + 3 + hash(px, k, 5) * 9, py + 9 + hash(py, k, 6) * 4, 0.5, 0.5, k % 2 ? '#a0a0aa' : '#4a4a54');
   },
   flowers(p, px, py) {
     for (let k = 0; k < 4; k++) {
