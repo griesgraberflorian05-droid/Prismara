@@ -697,11 +697,9 @@ export class PixelRenderer {
           const k = Math.round(dist);
           // Signalpuls: helle Welle läuft von der Quelle weg
           const wave = Math.sin((dist - t * 0.05) / 5);
-          // Redstone-Staub: unregelmäßige dunkle Spur, leuchtende Körner, Puls hellt sie von der Quelle weg auf
-          const q = Math.floor(k / 2), w = 1 + Math.floor(hash(q, i, 71) * 2);
-          this.r(px - w, py - w, w * 2, w * 2, dark); this.r(px - 1, py - 1, 2, 2, wave > 0.3 ? hex : mid);
+          // Redstone-Spur: überall gleich breit, Puls hellt sie von der Quelle weg auf
+          this.r(px - 2, py - 2, 4, 4, dark); this.r(px - 1, py - 1, 2, 2, wave > 0.3 ? hex : mid);
           if (wave > 0.75) this.r(px - 0.5, py - 0.5, 1, 1, hi);
-          if (k % 2 === 0) { const g = hash(q, i, 73), e = (g > 0.5 ? 1 : -1) * (2 + Math.floor(g * 7) % 3); if (hash(q, i, 75) > 0.45) this.r(px + nx * e - 0.5, py + ny * e - 0.5, 1, 1, g > 0.75 ? mid : dark); }
           if (k % 15 === 9 && wave > 0) {                           // Farbsymbol, pulsiert mit
             comps.forEach((c, j) => this.glyph(px + nx * (j * 4 - (comps.length - 1) * 2) + nx * 4, py + ny * (j * 4 - (comps.length - 1) * 2) + ny * 4, c, hi));
           }
