@@ -22,7 +22,7 @@ const DECO_Y = 11; // Wanddeko ist für die alte, höhere Wand gezeichnet und r�
 // Fackeln, Himmel im Fenster, Wanddeko, schwebende Teilchen und Ersatz-Möbel.
 export const DECOR = {
   default: { ground: ['#3f6b34', '#4a7a3c', '#2f5528'], props: [['tree', 0.16], ['bush', 0.12], ['rock', 0.07], ['flowers', 0.2]], scatter: 'leaves', rug: ['rug', '#7a2e2e', '#c9963f'], torch: '#ffb060', sky: ['#7fb8e8', '#d8eefa'], wall: ['window', 'painting', 'shelf', 'banner'], motes: 'dust', furn: {} },
-  beach: { ground: ['#e8cf96', '#f2dcaa', '#cfb27a'], props: [['palm', 0.12], ['shell', 0.18], ['rock', 0.06], ['grass', 0.16]], scatter: 'shells', rug: ['stripes', '#e85d5d', '#fff1d6'], torch: '#ffc070', sky: ['#58c4f0', '#c9f0ff'], wall: ['window', 'window', 'painting', 'shelf'], motes: 'butterflies', furn: { bigplant: 'palm' } },
+  beach: { ground: ['#e8cf96', '#f2dcaa', '#cfb27a'], props: [['palm', 0.12], ['shell', 0.18], ['rock', 0.06], ['grass', 0.16]], scatter: 'shells', rug: ['stripes', '#e85d5d', '#fff1d6'], torch: '#ffc070', sky: ['#58c4f0', '#c9f0ff'], wall: ['window', 'window', 'painting', 'shelf'], motes: 'butterflies', furn: { bigplant: 'pottedpalm' } },
   cherry: { ground: ['#4d7a3a', '#5a8a44', '#3a6230'], props: [['cherry', 0.15], ['bush', 0.1], ['stonelantern', 0.05], ['flowers', 0.22]], scatter: 'petals', rug: ['rug', '#8c3a5c', '#f2b7cf'], torch: '#ffb878', sky: ['#f7b7d2', '#ffe8f1'], wall: ['window', 'painting', 'banner', 'ivy'], ivy: ['#4f8a3a', '#ff9cc8'], motes: 'petals', furn: { bigplant: 'cherry' } },
   jungle: { ground: ['#2f5a24', '#3a6a2c', '#244a1c'], props: [['jtree', 0.17], ['fern', 0.16], ['flowers', 0.12], ['rock', 0.05]], scatter: 'leaves', leaf: ['#5aa047', '#3f7d34'], rug: ['mat', '#8a6b3a', '#c9a35a'], torch: '#ffb060', sky: ['#9fd8a0', '#e0f7d0'], wall: ['ivy', 'window', 'mask', 'ivy', 'shelf'], ivy: ['#3f8a2e', '#ffd166'], motes: 'fireflies', furn: { statue: 'idol', bigplant: 'fern' } },
   night: { ground: ['#1f3a34', '#284840', '#17302a'], props: [['pine', 0.15], ['mushroom', 0.09], ['rock', 0.07], ['grass', 0.14]], scatter: 'mushrooms', rug: ['rug', '#22323a', '#6fa58a'], torch: '#ffcf8a', sky: ['#14204a', '#34467e'], moon: true, wall: ['window', 'ivy', 'painting', 'shelf'], ivy: ['#2f6a4a', '#9ad1ff'], motes: 'fireflies', furn: { bigplant: 'pine' } },
@@ -209,6 +209,13 @@ const PROPS = {
 
 // ---------- Möbel (Feld px,py; dürfen bis 8 px ins Feld darüber ragen) ----------
 const FURN = {
+  pottedpalm(p, px, py) { // Palme im Terrakotta-Topf
+    PROPS.palm(p, px, py);
+    p.r(px + 3.5, py + 7.5, 9, 7, '#17121f'); p.r(px + 2.5, py + 6.5, 11, 3, '#17121f');
+    p.r(px + 4, py + 8, 8, 6, '#b0623a'); p.r(px + 4, py + 8, 1.5, 6, '#d8884f'); p.r(px + 10.5, py + 8, 1.5, 6, '#7a3f22');
+    p.r(px + 3, py + 7, 10, 2, '#c9783f'); p.r(px + 3, py + 7, 10, 0.5, '#f0b080'); p.r(px + 3, py + 8.5, 10, 0.5, '#7a3f22');
+    p.r(px + 5, py + 7, 6, 0.5, '#3a2414'); for (const a of [6, 9]) p.r(px + a, py + 10.5, 1, 1, '#ffd166');
+  },
   bookshelf(p, px, py, seg) {
     p.r(px, py - 8, T, 22, '#4a2f1c'); p.r(px, py - 8, T, 2, '#7a5233');
     if (seg === 'l' || seg === 's') p.r(px, py - 8, 2, 22, '#3a2414');

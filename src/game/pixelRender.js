@@ -86,7 +86,7 @@ export class PixelRenderer {
     DecorSteps.outside(this, level, cfg, out);
     for (let y = 0; y < level.h; y++) for (let x = 0; x < level.w; x++) {
       const cell = level.cells[y * level.w + x];
-      if (cell.type === 'wall') continue;
+      if (cell.type === 'wall' && !out.furn.has(y * level.w + x)) continue; // unter Möbeln liegt derselbe Boden samt Teppich
       this.floorTile(x, y, theme);
     }
     if (!this.skipRug) DecorSteps.rug(this, level, cfg, out);
@@ -105,7 +105,7 @@ export class PixelRenderer {
       const backFace = y === 0 && x > 0 && x < level.w - 1 && level.cells[level.w + x].type !== 'wall';
       if (backFace) continue; // gehört zur hohen Rückwand
       const furn = out.furn.get(i);
-      if (furn) { this.floorTile(x, y, theme); DecorSteps.furniture(this, level, x, y, furn, out); continue; }
+      if (furn) { DecorSteps.furniture(this, level, x, y, furn, out); continue; }
       this.wallTile(x, y, theme);
       if ((x === 0 || x === level.w - 1) && y > 0 && y < level.h - 1) DecorSteps.sideCandle(this, level, x, y, out);
     }

@@ -254,10 +254,10 @@ export function mountAdventure(root, params, opts = {}) {
         <div class="inv" id="inv" aria-label="Inventar">${SLOTS.map((id, k) => `<button class="inv-slot" data-item="${id}" title="${ITEMS[id].name} (${k + 1}): ${ITEMS[id].info}"><span>${icon(id)}</span><b>0</b><i>${k + 1}</i></button>`).join('')}</div>
       </div>
       <div class="sign-dlg" id="signdlg" hidden role="dialog" aria-labelledby="sign-title"><div class="parch sign-card">
-        <h2 id="sign-title" class="pixel">📜 RAUMFÜHRER</h2>
+        <h2 id="sign-title" class="pixel">RAUMFÜHRER</h2>
         <p class="sign-hint">${esc(def.hint)}</p>
         <ul>${guide.map((g) => `<li>${esc(g)}</li>`).join('')}</ul>
-        <p class="sign-extra">🪙 Münzen und Fundstücke liegen im Raum herum.${chest ? ' 🧰 In der Wand steckt eine Truhe – öffnen mit einem Dietrich 🔧.' : ''} Tasten 1–4 benutzen dein Inventar. Tipp: Ist die Tür offen, zählen Züge nicht mehr für die Sterne – dann in Ruhe sammeln!</p>
+        <p class="sign-extra">🪙 Münzen und Fundstücke liegen im Raum herum.${chest ? ' 🧰 In der Wand steckt eine Truhe – öffnen mit einem Dietrich 🔧.' : ''} Tasten 1–2 benutzen dein Inventar. Tipp: Ist die Tür offen, zählen Züge nicht mehr für die Sterne – dann in Ruhe sammeln!</p>
         <button class="btn btn-primary" id="sign-close">Verstanden</button>
       </div></div>
       <div class="ihud ihud-br">
