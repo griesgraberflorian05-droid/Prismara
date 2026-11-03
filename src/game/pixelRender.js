@@ -143,6 +143,10 @@ export class PixelRenderer {
     const faceH = below === 'wall' ? 0 : 7;
     // Oberseite
     this.r(px, py, T, T - faceH, th.top);
+    // Mauerkrone aus versetzten Steinen, jeder mit Lichtkante und Fuge
+    for (let k = 0; k * 5 < T - faceH; k++) { const yy = py + k * 5, cut = (y + k) % 2 ? 5 : 11;
+      this.r(px, yy + 4.5, T, 0.5, th.dark); this.r(px + cut, yy, 0.5, 4.5, th.dark); this.r(px, yy, T, 0.5, 'rgba(255,255,255,0.18)');
+      if (hash(x, y, k + 40) > 0.6) this.r(px + (cut > 8 ? 1 : 6), yy + 0.5, 4, 4, 'rgba(0,0,0,0.1)'); }
     this.r(px, py, T, 1, th.trim);
     const left = x > 0 && level.cells[y * level.w + x - 1].type !== 'wall';
     const right = x + 1 < level.w && level.cells[y * level.w + x + 1].type !== 'wall';

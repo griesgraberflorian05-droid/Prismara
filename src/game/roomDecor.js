@@ -287,8 +287,8 @@ function backWall(p, level, th, cfg, exit, out) {
       continue;
     }
     const capH = 5, faceTop = top + capH, faceBot = T;
-    p.r(px, top, T, capH, th.top); p.r(px, top, T, 1, th.trim); p.r(px, top + capH - 1, T, 1, th.dark);
-    for (let c = (x % 2) * 4; c < T; c += 8) p.r(px + c, top + 1, 0.5, capH - 2, th.dark); // Abdecksteine
+    p.r(px, top, T, capH, '#6b4426'); p.r(px, top, T, 1, '#b07f4a'); p.r(px, top + 2, T, 0.5, '#5a3a22'); p.r(px, top + capH - 1, T, 1, '#2a1a0e'); // Deckenbalken
+    if (x % 4 === 1) { p.r(px + 7, top + 1, 1, 1, '#ffd166'); }
     p.r(px, faceTop, T, faceBot - faceTop, th.face);
     // Einzelne Mauersteine: jeder mit eigenem Ton, Lichtkante oben, dunkle Fuge, hier und da Moos
     for (let k = 0, yy = faceTop; yy < faceBot - 3; yy += 6, k++) {
@@ -489,21 +489,20 @@ function outside(p, level, cfg, out) {
     // Boden in großen Flecken statt Einzelkrümeln, dazu feine Halbpixel-Körnung
     p.r(px, py, T, T, g0);
     for (let k = 0; k < 14; k++) p.r(px + hash(x, y, k + 100) * 15, py + hash(y, x, k + 100) * 15, k % 3 ? 1 : 2, 0.5, k % 2 ? g1 : g2);
-    // Pflasterweg rund ums Haus
+    // Ausgetretener Weg ums Haus: Boden der Welt, dunkler, mit einzelnen Trittsteinen
     if (x >= -1 && x <= w && y >= -BACK - 1 && y <= h) {
-      p.r(px, py, T, T, '#2a2430');
-      for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
-        const sx = px + 0.5 + i * 8, sy = py + 0.5 + j * 8, v = hash(x * 2 + i, y * 2 + j, 105);
-        p.r(sx, sy, 7, 7, v > 0.6 ? '#9a938c' : v > 0.3 ? '#837c78' : '#6e6a6c'); p.r(sx, sy, 7, 0.5, '#bdb6aa'); p.r(sx, sy + 6.5, 7, 0.5, '#544f54');
-      }
+      p.r(px, py, T, T, g2);
+      for (let k = 0; k < 10; k++) p.r(px + hash(x, y, k + 120) * 15, py + hash(y, x, k + 120) * 15, 1, 0.5, k % 2 ? g0 : 'rgba(0,0,0,0.14)');
+      if ((x + y) % 2 === 0) { const sx = px + 3 + hash(x, y, 121) * 4, sy = py + 4 + hash(y, x, 121) * 4; p.r(sx - 0.5, sy - 0.5, 9, 7, 'rgba(0,0,0,0.3)'); p.r(sx, sy, 8, 6, g1); p.r(sx, sy, 8, 0.5, 'rgba(255,255,255,0.35)'); p.r(sx, sy + 5.5, 8, 0.5, 'rgba(0,0,0,0.25)'); }
     }
     if (cfg.motes === 'bubbles' && hash(x, y, 107) > 0.7) p.r(px + 2, py + 6, 8, 1, g1);
     if (cfg.scatter === 'cracks' && hash(x, y, 108) > 0.85) { p.r(px + 3, py + 8, 6, 1, '#ff6a1a'); out.glows.push({ x: px + 6, y: py + 8, r: 8, c: '#ff6a1a', a: 0.35, pulse: true }); }
   }
-  // Sockel aus Bruchstein rund ums Gebäude, Schlagschatten fällt nach rechts unten
-  for (const [x0, y0, ww, hh] of [[-5, -BACK * T - 5, w * T + 10, 5], [-5, -BACK * T, 5, (h + BACK) * T + 5], [w * T, -BACK * T, 5, (h + BACK) * T + 5], [0, h * T, w * T, 5]]) {
-    p.r(x0, y0, ww, hh, '#3a3440');
-    for (let k = 0; k < ww; k += 6) for (let l = 0; l < hh; l += 3) p.r(x0 + k + (l % 2) * 3, y0 + l, Math.min(5, ww - k), Math.min(2.5, hh - l), hash(k, l, x0 + y0) > 0.5 ? '#6e6a78' : '#57525e');
+  // Hauswand außen: senkrechte Holzbohlen auf dunklem Grund
+  for (const [x0, y0, ww, hh] of [[-5, -BACK * T - 5, w * T + 10, 5], [-5, -BACK * T, 5, (h + BACK) * T + 5], [w * T, -BACK * T, 5, (h + BACK) * T + 5], [-5, h * T, w * T + 10, 5]]) {
+    p.r(x0, y0, ww, hh, '#2a1a0e');
+    const across = ww > hh;
+    for (let k = 0; k < (across ? ww : hh); k += 5) { const c = hash(k, x0 + y0, 123) > 0.5 ? '#7a4f2c' : '#8f5f36'; if (across) { p.r(x0 + k, y0 + 0.5, 4.5, hh - 1, c); p.r(x0 + k, y0 + 0.5, 4.5, 0.5, '#b07f4a'); } else { p.r(x0 + 0.5, y0 + k, ww - 1, 4.5, c); p.r(x0 + 0.5, y0 + k, ww - 1, 0.5, '#b07f4a'); } }
   }
   p.r(w * T + 5, -BACK * T, 3, (h + BACK) * T + 8, 'rgba(0,0,0,0.3)'); p.r(-5, h * T + 5, w * T + 10, 3, 'rgba(0,0,0,0.3)');
 }

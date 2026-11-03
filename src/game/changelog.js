@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.103', items: ['Wände und Außenumgebung neu: Holzbohlen, Deckenbalken, Trampelweg'] },
   { v: '3.23.102', items: ['Skins, Mobs und Bosse überarbeitet', 'Neues Schild, neue Icons, feinere Wände', 'Neue Eisplatten'] },
   { v: '3.23.101', items: ['Redstone-Spur einheitlich breit'] },
   { v: '3.23.100', items: ['Neue Lichtblöcke und Kisten', 'Neue Raumumgebung mit Pflasterweg', 'Neue Knöpfe', 'Fackeln und Leitungen im Redstone-Stil', 'Menü-Hintergrund jetzt in den Einstellungen', 'Teppiche als Webstoff', 'Mobs laufen in 4 Bildern'] },
