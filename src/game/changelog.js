@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.91', items: ['Neue Fackeln, Bilder und Feuerstelle'] },
   { v: '3.23.90', items: ['Räume neu: Mauersteine, Holzrahmen, neue Böden', 'Eigener Hintergrund für den Nachtwald'] },
   { v: '3.23.89', items: ['Neue gemalte Hintergründe für alle Welten'] },
   { v: '3.23.88', items: ['Alle Bosse neu als Puzzle-Golems mit vier Zuständen'] },

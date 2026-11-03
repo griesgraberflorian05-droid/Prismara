@@ -308,7 +308,9 @@ function backWall(p, level, th, cfg, exit, out) {
 
 const WALL = {
   torch(p, px, th, cfg, out, x) {
-    p.r(px + 7, -8, 2, 6, '#2a1a10'); p.r(px + 5, -10, 6, 2, '#6b4a2a'); p.r(px + 6, -9, 4, 1, '#3a2414');
+    // Eiserner Halter mit Schale
+    p.r(px + 7, -7, 2, 7, '#23202a'); p.r(px + 7, -7, 1, 7, '#4a4652'); p.r(px + 6, -1, 4, 1, '#23202a');
+    p.r(px + 4, -11, 8, 1, '#23202a'); p.r(px + 5, -10, 6, 2, '#6e6a78'); p.r(px + 5, -10, 6, 1, '#a09ca8'); p.r(px + 6, -8, 4, 1, '#3a3644');
     out.flames.push({ x: px + 8, y: -11, s: 1 });
     out.glows.push({ x: px + 8, y: -12, r: 26, c: cfg.torch, a: 0.4, flicker: true });
     out.lights.push({ x: x + 0.5, y: 0.2, level: 12, color: cfg.torch, reflect: 0.6 });
@@ -332,9 +334,11 @@ const WALL = {
     out.shafts.push({ x: px + 3, c: s1 });
   },
   painting(p, px, th) {
-    p.r(px + 2, -22, 12, 10, '#6b4a1e'); p.r(px + 2, -22, 12, 1, '#c9963f');
-    p.r(px + 3, -21, 10, 4, '#8ac0e8'); p.r(px + 3, -17, 10, 4, '#4a7a3c'); p.r(px + 6, -19, 4, 2, '#5a8a44');
-    p.r(px + 10, -20, 2, 2, '#ffd166'); p.r(px + 7, -11, 2, 1, '#2a1a10');
+    // Holzrahmen mit Lichtkante, darin Berge im Abendlicht
+    p.r(px + 1, -23, 14, 12, '#3a2414'); p.r(px + 2, -22, 12, 10, '#8a5a32'); p.r(px + 2, -22, 12, 1, '#c9963f');
+    p.r(px + 3, -21, 10, 3, '#f2a85a'); p.r(px + 3, -18, 10, 1, '#ffd9a0'); p.r(px + 3, -17, 10, 4, '#3f6b4a');
+    for (const [a, b] of [[3, 2], [5, 3], [7, 4], [9, 3], [11, 2]]) p.r(px + a, -17 - b, 2, b, '#5a5a78');
+    p.r(px + 7, -21, 2, 1, '#ffffff'); p.r(px + 10, -20, 2, 2, '#ffe9a8');
   },
   shelf(p, px) {
     p.r(px + 1, -20, 14, 2, '#5a3a22'); p.r(px + 1, -9, 14, 2, '#5a3a22'); p.r(px + 2, -18, 1, 2, '#3a2414'); p.r(px + 13, -18, 1, 2, '#3a2414');

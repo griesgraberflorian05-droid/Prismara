@@ -478,6 +478,13 @@ export function mountTitleArt(canvas, worldId = 'default') {
     glow(318, 58, 30, 'rgba(255,200,110,A)', 0.35 + 0.08 * Math.sin(t / 300));
     if (S.lavaGlow) glow(190, 165, 120, 'rgba(255,110,30,A)', 0.18 + 0.05 * Math.sin(t / 600));
     const fx = 238, fy = 196, fl = Math.sin(t / 90) * 0.5 + Math.sin(t / 37) * 0.3;
+    if (!S.noFire) { // Feuerstelle: Steinkreis mit gekreuzten Scheiten, aus = verkohlt
+      const log = fireOut ? '#3a3640' : '#8a4a24', tip = fireOut ? '#55505c' : '#ff9a4a';
+      R(g, fx - 11, fy + 1, 22, 4, '#1a1412');
+      for (let k = 0; k < 7; k++) { const sx = fx - 12 + k * 4; R(g, sx, fy + 2 + (k % 2), 3, 2, fireOut ? '#6a6672' : '#8a8690'); R(g, sx, fy + 2 + (k % 2), 3, 1, '#b0acb8'); }
+      for (let k = 0; k < 9; k++) { R(g, fx - 7 + k, fy - 3 + Math.floor(k / 2), 2, 2, log); R(g, fx + 7 - k, fy - 3 + Math.floor(k / 2), 2, 2, log); }
+      R(g, fx - 7, fy - 3, 2, 2, tip); R(g, fx + 7, fy - 3, 2, 2, tip);
+    }
     if (!S.noFire && !fireOut) {
       glow(fx, fy - 4, 46, 'rgba(255,150,60,A)', 0.42 + 0.1 * fl);
       R(g, fx - 6, fy + 1, 12, 2, '#4a2a14'); R(g, fx - 4, fy, 8, 2, '#6b4426');
