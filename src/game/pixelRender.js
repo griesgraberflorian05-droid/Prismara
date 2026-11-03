@@ -215,11 +215,14 @@ export class PixelRenderer {
       this.stone(X, Y, t);
       return;
     }
-    if (b.kind === 'mirror') return this.crate(X, Y, () => { // Spiegel: blaues Glas in Stufen, heller Spiegelstreifen zeigt die Lage, Glanz wandert darüber
-      this.r(X + 3, Y + 3, 10, 9, '#3f5f8a'); this.r(X + 3, Y + 3, 10, 3, '#6f9cc4'); this.r(X + 3, Y + 6, 10, 2, '#527aa6'); this.r(X + 3, Y + 11, 10, 1, '#2b3f62');
-      this.diag(X, Y + 1, b.orient, '#2b3f62'); this.diag(X, Y, b.orient, '#f4fbff');
-      const g = Math.floor(t / 70) % 70; if (g < 10) this.r(X + 3 + g, Y + 3, 1, 9, 'rgba(255,255,255,0.45)');
-    });
+    if (b.kind === 'mirror') { // Standspiegel: Metallrahmen mit Nieten, Glas mit Himmelsverlauf, breite Spiegelplatte zeigt die Lage
+      this.r(X + 1, Y + 1, 14, 14, '#17121f'); this.r(X + 2, Y + 2, 12, 12, '#8a8690'); this.r(X + 2, Y + 2, 12, 0.5, '#d4d0dc'); this.r(X + 2, Y + 13.5, 12, 0.5, '#4a4652');
+      for (const [a, c] of [[2.5, 2.5], [12.5, 2.5], [2.5, 12.5], [12.5, 12.5]]) this.r(X + a, Y + c, 1, 1, '#ffd166');
+      this.r(X + 3.5, Y + 3.5, 9, 9, '#2b3f62'); this.r(X + 3.5, Y + 3.5, 9, 3, '#4f7fb0'); this.r(X + 3.5, Y + 6.5, 9, 2, '#3a5a8a');
+      for (let k = 0; k < 18; k++) { const q = k / 2, x = X + 3.5 + q, y = b.orient === '/' ? Y + 12 - q : Y + 3.5 + q; this.r(x, y - 0.5, 1, 1.5, '#ffffff'); this.r(x, y + 1, 1, 0.5, '#9fd8ff'); }
+      const g = Math.floor(t / 70) % 70; if (g < 9) this.r(X + 3.5 + g, Y + 3.5, 0.5, 9, 'rgba(255,255,255,0.55)');
+      return;
+    }
     if (b.kind === 'splitter') return this.crate(X, Y, () => { this.r(X + 3, Y + 3, 10, 9, '#123a44'); this.diag(X, Y, b.orient, '#9ff6ff', true); });
     if (b.kind === 'prism') return this.crate(X, Y, () => { this.r(X + 7, Y + 3, 2, 1, '#ffffff'); this.r(X + 6, Y + 5, 4, 1, '#ff4d6d'); this.r(X + 5, Y + 7, 6, 1, '#ffd166'); this.r(X + 4, Y + 9, 8, 1, '#3ddc97'); this.r(X + 3, Y + 11, 10, 1, '#4da3ff'); });
     if (b.kind === 'filter') return this.crate(X, Y, () => { this.r(X + 3, Y + 3, 10, 9, COLOR_INFO[b.pass]?.hex || '#fff'); this.ctx.globalAlpha = 0.5; this.r(X + 4, Y + 4, 3, 7, '#ffffff'); this.ctx.globalAlpha = 1; this.glyphs(X + 8, Y + 8, b.pass, '#ffffff'); });
@@ -233,13 +236,15 @@ export class PixelRenderer {
   emitter(x, y, c, t = 0) {
     const px = x * T, py = y * T, hex = COLOR_INFO[c.color]?.hex || '#fff';
     const [dx, dy] = DIRS[c.dir];
-    this.r(px + 7 + dx * 6, py + 8 + dy * 6, 2, 2, shade(hex, -0.2)); // Leitungsansatz
-    this.r(px + 5, py + 13, 6, 2, '#3a3a3a'); this.r(px + 5, py + 13, 6, 1, '#6a6a6a'); // Steinsockel
-    this.r(px + 7, py + 6, 2, 7, '#5a3a1a'); this.r(px + 7, py + 6, 1, 7, '#8a5a2a'); // Stiel
-    const fl = Math.floor(t / 160) % 3;
-    this.r(px + 6, py + 2, 4, 4, shade(hex, -0.45));                // Kopf (dunkler Rand)
-    this.r(px + 7, py + 3, 2, 2, fl === 1 ? shade(hex, 0.35) : hex); // glühender Kern
-    this.r(px + 7, py + 1 - (fl === 2 ? 1 : 0), 1, 1, shade(hex, 0.5)); // aufsteigender Funke
+    this.r(px + 7 + dx * 6, py + 8 + dy * 6, 2, 2, hex); // Leitungsansatz
+    // Sockel aus behauenem Stein, Holzschaft, Eisenschale, mehrstufige Flamme in der Signalfarbe
+    this.r(px + 3, py + 12, 10, 3, '#17121f'); this.r(px + 4, py + 12, 8, 2, '#6e6a78'); this.r(px + 4, py + 12, 8, 0.5, '#b0acb8');
+    this.r(px + 6.5, py + 7, 3, 5, '#3a2414'); this.r(px + 7, py + 7, 1, 5, '#8a5a2a'); this.r(px + 8, py + 7, 0.5, 5, '#5a3a1a');
+    this.r(px + 5, py + 5.5, 6, 2, '#17121f'); this.r(px + 5.5, py + 6, 5, 1, '#8a8690');
+    const fl = Math.floor(t / 110) % 4, sway = [0, 0.5, 0, -0.5][fl];
+    this.r(px + 5 + sway, py + 2.5, 6, 3.5, shade(hex, -0.3)); this.r(px + 5.5 + sway, py + 1, 5, 2, hex);
+    this.r(px + 6 + sway, py - 0.5 + (fl % 2) * 0.5, 4, 2, hex); this.r(px + 6.5 + sway, py + 2, 3, 3.5, shade(hex, 0.4)); this.r(px + 7 + sway, py + 3, 2, 2.5, '#ffffff');
+    this.r(px + 7.5 - sway, py - 2 - fl * 0.5, 0.5, 0.5, shade(hex, 0.5));
     if (fl === 0) this.r(px + 9, py, 1, 1, hex);
   }
 
@@ -638,14 +643,17 @@ export class PixelRenderer {
   /** Schatztruhe in einer Wandnische (Seitenwand). */
   chest(c, t) {
     const px = c.x * T, py = c.y * T;
-    this.r(px + 1, py + 2, 14, 13, '#1a0f08');
-    this.r(px + 2, py + 7, 12, 7, '#6b4426'); this.r(px + 2, py + 13, 12, 1, '#3a2414'); this.r(px + 3, py + 8, 1, 6, '#c9963f'); this.r(px + 12, py + 8, 1, 6, '#c9963f'); for (let k = 0; k < 3; k++) this.r(px + 5, py + 9 + k * 2, 6, 1, '#8a5a32');
+    // Bauchige Truhe: dunkle Kontur, Holzlatten, Eisenbänder, Goldschloss
+    this.r(px + 1, py + 7, 14, 8, '#17121f'); this.r(px + 2, py + 8, 12, 6, '#7a4f2c'); this.r(px + 2, py + 8, 12, 0.5, '#a8713e'); this.r(px + 2, py + 13, 12, 1, '#3a2414');
+    for (let k = 0; k < 2; k++) this.r(px + 2, py + 10 + k * 2, 12, 0.5, '#5a3a22');
+    this.r(px + 3, py + 8, 1.5, 6, '#4a4652'); this.r(px + 11.5, py + 8, 1.5, 6, '#4a4652');
     if (c.open) {
-      this.r(px + 2, py + 2, 12, 3, '#9b6a3e'); this.r(px + 3, py + 5, 10, 2, '#2a1a08');
+      this.r(px + 2, py + 1, 12, 4, '#17121f'); this.r(px + 3, py + 2, 10, 2, '#a8713e'); this.r(px + 3, py + 5, 10, 3, '#1a0f08'); this.r(px + 4, py + 6.5, 8, 1.5, '#ffd166');
       if (t - (c.t0 || 0) < 1500) for (let k = 0; k < 5; k++) this.r(px + 4 + k * 2, py + 4 - ((t / 60 + k * 7) % 10), 1, 1, '#ffd166');
     } else {
-      this.r(px + 2, py + 3, 12, 4, '#9b6a3e'); this.r(px + 2, py + 3, 12, 1, '#c99766');
-      this.r(px + 7, py + 6, 2, 3, '#ffd166'); this.r(px + 4, py + 3, 1, 11, '#c98a00'); this.r(px + 11, py + 3, 1, 11, '#c98a00');
+      this.r(px + 1, py + 3, 14, 5, '#17121f'); this.r(px + 2, py + 2, 12, 1, '#17121f'); this.r(px + 2, py + 3, 12, 4.5, '#9b6a3e'); this.r(px + 3, py + 3, 10, 1, '#d09a64');
+      this.r(px + 3, py + 3, 1.5, 4.5, '#6e6a78'); this.r(px + 11.5, py + 3, 1.5, 4.5, '#6e6a78');
+      this.r(px + 6.5, py + 6, 3, 4, '#17121f'); this.r(px + 7, py + 6.5, 2, 3, '#ffd166'); this.r(px + 7.5, py + 7.5, 1, 1, '#7a4f2c');
       if (Math.floor(t / 500) % 6 === 0) this.r(px + 12, py + 3, 1, 1, '#ffffff');
     }
   }
@@ -686,12 +694,10 @@ export class PixelRenderer {
           const k = Math.round(dist);
           // Signalpuls: helle Welle läuft von der Quelle weg
           const wave = Math.sin((dist - t * 0.05) / 5);
-          this.r(px - 2, py - 2, 4, 4, dark);                       // breite Staubspur
-          this.r(px - 1, py - 1, 2, 2, wave > 0.55 ? hi : mid);     // glimmende Mitte
-          // verstreute Staubkörner an den Rändern (fest je Pixel, damit nichts zappelt)
-          const g = hash(k, i * 13 + beam.points[0][0]);
-          if (g > 0.5) { const side = g > 0.75 ? 1 : -1; this.r(px + nx * side * 3, py + ny * side * 3, 1, 1, wave > 0.2 ? mid : dark); }
-          if (g > 0.9) this.r(px - nx * 4, py - ny * 4, 1, 1, hi);
+          // Schein außen, Farbe, heller Kern, der Puls läuft von der Quelle weg
+          this.r(px - 2.5, py - 2.5, 5, 5, `${hex}33`); this.r(px - 1.5, py - 1.5, 3, 3, mid);
+          this.r(px - 0.5, py - 0.5, 1, 1, wave > 0.55 ? hi : hex);
+          if (hash(k, i * 13 + beam.points[0][0]) > 0.93) this.r(px + nx * 3, py + ny * 3, 0.5, 0.5, '#ffffff'); // einzelne Funken
           if (k % 15 === 9 && wave > 0) {                           // Farbsymbol, pulsiert mit
             comps.forEach((c, j) => this.glyph(px + nx * (j * 4 - (comps.length - 1) * 2) + nx * 4, py + ny * (j * 4 - (comps.length - 1) * 2) + ny * 4, c, hi));
           }
