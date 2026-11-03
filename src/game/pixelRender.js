@@ -325,8 +325,13 @@ export class PixelRenderer {
 
   iceTile(x, y) {
     const px = x * T, py = y * T;
-    this.ctx.fillStyle = 'rgba(190,235,255,0.45)'; this.ctx.fillRect(px + 1, py + 1, 14, 14);
-    this.r(px + 3, py + 4, 4, 1, '#ffffff'); this.r(px + 8, py + 10, 5, 1, '#ffffff');
+    // Eisplatte: tiefes Blau, heller Rand, Risse und diagonale Glanzstreifen, nahtlos zu Nachbarplatten
+    this.r(px, py, T, T, '#7fc4e8'); this.r(px, py, T, 6, '#a4dcf4'); this.r(px, py + 11, T, 5, '#5fa8d4');
+    this.r(px, py, T, 0.5, '#e8fbff'); this.r(px, py, 0.5, T, '#d0f2ff'); this.r(px, py + T - 0.5, T, 0.5, '#3a7aa8'); this.r(px + T - 0.5, py, 0.5, T, '#3a7aa8');
+    for (const o of [3, 9]) for (let k = 0; k < 5; k++) this.r(px + o + k, py + 9 - k, 1, 1, '#f0fcff');
+    const v = hash(x, y, 77), c = 2 + Math.floor(v * 8);
+    for (let k = 0; k < 5; k++) this.r(px + c + k, py + 11 + (k % 2) * 0.5 + Math.floor(k / 2), 1, 0.5, '#3a7aa8');
+    if (v > 0.5) this.r(px + 12, py + 3, 1, 1, '#ffffff');
   }
 
   // ---------- Spielfigur (Pixel-Held mit Animationen) ----------
@@ -384,6 +389,8 @@ export class PixelRenderer {
     this.part(px + 4 + lx, by, 8, 5 - breath, dark);
     this.r(px + 5 + lx, by, 6, 4 - breath, body);
     this.r(px + 7 + lx, by + 1, 2, 1, light); // Brosche
+    this.r(px + 5 + lx, by + 0.5, 0.5, 3, light); this.r(px + 10 + lx, by + 1, 0.5, 3, dark); this.r(px + 7.5 + lx, by + 2.5, 0.5, 1.5, dark); // Falten
+    this.r(px + 7.5 + lx, by + 1, 1, 0.5, '#ffffff');
     // Arme: normal schwingend; beim Schieben nach vorne gestreckt
     if (strain) {
       if (side) { this.part(px + (dx > 0 ? 11 : 1) + lx, by + 1, 4, 2, body); }
@@ -399,6 +406,7 @@ export class PixelRenderer {
     const hx = px + 4 + lx + (side ? dx : 0), hy = py + 1 + ly + breath;
     this.part(hx, hy, 8, 7, body);
     this.r(hx, hy, 8, 1, light);
+    this.r(hx, hy + 6.5, 8, 0.5, dark); this.r(hx + 0.5, hy + 1, 0.5, 2, light); this.r(hx + 7, hy + 1, 0.5, 5, dark); // Kapuze mit Licht und Saum
     if (!back) {
       // Gesicht: blinzeln, erschrocken, angestrengt, erschöpft
       const fx = hx + (side ? (dx > 0 ? 3 : 1) : 2), fy = hy + 2;
@@ -664,9 +672,11 @@ export class PixelRenderer {
   /** Hinweisschild an der Rückwand (Pergament auf Holzbrett). */
   signBoard(s, t) {
     const px = s.x * T, py = s.y * T;
-    this.r(px + 1, py - 1, 14, 11, '#3a2414'); this.r(px + 2, py, 12, 9, '#c99766'); this.r(px + 3, py + 1, 10, 7, '#f3e1b8');
+    this.r(px + 6.5, py + 9, 3, 5, '#17121f'); this.r(px + 7, py + 9, 2, 4.5, '#6b4426'); this.r(px + 7, py + 9, 1, 4.5, '#9b6a3e'); // Pfosten
+    this.r(px + 0.5, py - 1.5, 15, 12, '#17121f'); this.r(px + 1, py - 1, 14, 11, '#9b6a3e'); this.r(px + 1, py - 1, 14, 0.5, '#d09a64'); this.r(px + 1, py + 9, 14, 1, '#5a3a22');
+    for (const [a, c] of [[1.5, -0.5], [13.5, -0.5], [1.5, 8.5], [13.5, 8.5]]) this.r(px + a, py + c, 1, 1, '#ffd166');
+    this.r(px + 3, py + 1, 10, 7, '#f3e1b8'); this.r(px + 3, py + 7.5, 10, 0.5, '#d4bb88');
     for (let k = 0; k < 3; k++) this.r(px + 4, py + 2 + k * 2, 5 + (k % 2) * 3, 1, '#6b4a22');
-    this.r(px + 7, py + 10, 2, 3, '#3a2414');
     if (!s.read && Math.floor(t / 400) % 2) { this.r(px + 12, py - 6, 2, 4, '#ffd166'); this.r(px + 12, py - 1, 2, 2, '#ffd166'); }
   }
 

@@ -39,7 +39,11 @@ const GRIDS = {
 export function icon(name, cls = '') {
   const rows = GRIDS[name] || GRIDS.pause;
   const w = Math.max(...rows.map((r) => r.length)), h = rows.length;
-  let d = '';
-  rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (r[x] === '#') d += `M${x} ${y}h1v1h-1z`; });
-  return `<svg class="pxi ${cls}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="${d}"/></svg>`;
+  let d = '', edge = '', hi = '', lo = '';
+  const on = (x, y) => rows[y]?.[x] === '#';
+  rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (r[x] === '#') {
+    d += `M${x} ${y}h1v1h-1z`; edge += `M${x - 1} ${y - 1}h3v3h-3z`; // Kontur
+    if (!on(x, y - 1) || !on(x - 1, y)) hi += `M${x} ${y}h1v1h-1z`; else if (!on(x, y + 1) || !on(x + 1, y)) lo += `M${x} ${y}h1v1h-1z`; // Licht oben links, Schatten unten rechts
+  } });
+  return `<svg class="pxi ${cls}" viewBox="-1 -1 ${w + 2} ${h + 2}" shape-rendering="crispEdges" aria-hidden="true"><path fill="#17121f" d="${edge}"/><path fill="currentColor" d="${d}"/><path fill="#fff" fill-opacity=".35" d="${hi}"/><path fill="#000" fill-opacity=".3" d="${lo}"/></svg>`;
 }

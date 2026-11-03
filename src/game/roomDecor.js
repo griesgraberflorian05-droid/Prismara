@@ -288,6 +288,7 @@ function backWall(p, level, th, cfg, exit, out) {
     }
     const capH = 5, faceTop = top + capH, faceBot = T;
     p.r(px, top, T, capH, th.top); p.r(px, top, T, 1, th.trim); p.r(px, top + capH - 1, T, 1, th.dark);
+    for (let c = (x % 2) * 4; c < T; c += 8) p.r(px + c, top + 1, 0.5, capH - 2, th.dark); // Abdecksteine
     p.r(px, faceTop, T, faceBot - faceTop, th.face);
     // Einzelne Mauersteine: jeder mit eigenem Ton, Lichtkante oben, dunkle Fuge, hier und da Moos
     for (let k = 0, yy = faceTop; yy < faceBot - 3; yy += 6, k++) {
@@ -296,6 +297,8 @@ function backWall(p, level, th, cfg, exit, out) {
         const v = hash(x * 2 + id, k, 61);
         p.r(px + a, yy, b, 5, v > 0.66 ? 'rgba(255,255,255,0.1)' : v < 0.33 ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0)');
         p.r(px + a, yy, b, 1, 'rgba(255,255,255,0.14)');
+        p.r(px + a, yy + 4.5, b, 0.5, 'rgba(0,0,0,0.28)'); p.r(px + a + b - 0.5, yy, 0.5, 5, 'rgba(0,0,0,0.18)'); // Stein bekommt Kante
+        for (let g = 0; g < 4; g++) p.r(px + a + hash(x, k, g + id * 9) * (b - 1), yy + 1 + hash(k, x, g + id * 5) * 3, 0.5, 0.5, g % 2 ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.2)'); // Körnung
         p.r(px + a, yy + 4, b, 1, 'rgba(0,0,0,0.14)');
         for (let q = 0; q < 4; q++) p.r(px + a + hash(x + q, k, 64) * b, yy + hash(k, x + q, 65) * 4, 0.5, 0.5, q % 2 ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)'); // feines Korn
         if (hash(x + id, k, 63) > 0.86 && cfg.ivy) p.r(px + a + 1, yy + 4, 3, 2, cfg.ivy[0]);
