@@ -204,7 +204,9 @@ const FURN = {
       let k = 0;
       while (bx < end - 1) {
         const bw = 1 + Math.floor(hash(bx, sy, 1) * 2), bh = 5 + Math.floor(hash(bx, sy, 2) * 3);
-        p.r(bx, sy + 7 - bh, bw, bh, ['#a83a3a', '#3a6aa8', '#4a8a3a', '#c9963f', '#7a3fa0', '#d8c8a8'][Math.floor(hash(bx, sy, k++) * 6)]);
+        const col = ['#a83a3a', '#3a6aa8', '#4a8a3a', '#c9963f', '#7a3fa0', '#d8c8a8'][Math.floor(hash(bx, sy, k++) * 6)];
+        p.r(bx, sy + 7 - bh, bw, bh, col); p.r(bx, sy + 7 - bh, 0.5, bh, 'rgba(255,255,255,0.3)'); p.r(bx + bw - 0.5, sy + 7 - bh, 0.5, bh, 'rgba(0,0,0,0.35)'); // runder Buchrücken
+        p.r(bx, sy + 8 - bh, bw, 0.5, '#ffd166'); p.r(bx, sy + 5, bw, 0.5, '#ffd166'); // Goldbänder
         bx += bw + (hash(bx, sy, 5) > 0.8 ? 2 : 0);
       }
       p.r(px, sy + 7, T, 1, '#2a1a10');
@@ -314,9 +316,14 @@ function backWall(p, level, th, cfg, exit, out) {
     // Deko: Fackeln im Takt, dazwischen Fenster, Bilder, Regale …
     const torch = x % 4 === 2;
     const kind = torch ? 'torch' : hash(x, 0, 71) < 0.18 ? null : cfg.wall[(n++ + Math.floor(hash(x, 1, 72) * 3)) % cfg.wall.length];
+    if (OUTLINED.has(kind)) WALL[kind](contour(p), px, th, cfg, NO_OUT, x); // dunkle Kontur unter der Wanddeko
     WALL[kind]?.(p, px, th, cfg, out, x);
   }
 }
+
+const OUTLINED = new Set(['painting', 'shelf', 'banner', 'mask']);
+const NO_OUT = { flames: [], lights: [], glows: [], shafts: [] };
+const contour = (p) => ({ r: (x, y, w, h, c) => { if (!String(c).startsWith('rgba')) p.r(x - 0.5, y - 0.5, w + 1, h + 1, '#17121f'); } });
 
 const WALL = {
   torch(p, px, th, cfg, out, x) {
@@ -355,7 +362,7 @@ const WALL = {
   shelf(p, px) {
     p.r(px + 1, -20, 14, 2, '#5a3a22'); p.r(px + 1, -9, 14, 2, '#5a3a22'); p.r(px + 2, -18, 1, 2, '#3a2414'); p.r(px + 13, -18, 1, 2, '#3a2414');
     p.r(px + 3, -25, 3, 5, '#7fb8a8'); p.r(px + 3, -25, 1, 5, '#c8ece0'); p.r(px + 3, -22, 3, 2, '#7a3fa0'); p.r(px + 3, -26, 3, 1, '#5a3a22'); p.r(px + 8, -23, 4, 3, '#b0623a');
-    for (let k = 0; k < 5; k++) p.r(px + 2 + k * 2, -15 + (k % 2), 2, 6 - (k % 2), ['#a83a3a', '#3a6aa8', '#c9963f', '#4a8a3a', '#7a3fa0'][k]);
+    for (let k = 0; k < 5; k++) { const bx = px + 2 + k * 2, by = -15 + (k % 2); p.r(bx, by, 2, 6 - (k % 2), ['#a83a3a', '#3a6aa8', '#c9963f', '#4a8a3a', '#7a3fa0'][k]); p.r(bx, by, 0.5, 6 - (k % 2), 'rgba(255,255,255,0.3)'); p.r(bx + 1.5, by, 0.5, 6 - (k % 2), 'rgba(0,0,0,0.35)'); p.r(bx, by + 1, 2, 0.5, '#ffd166'); }
     p.r(px + 12, -12, 2, 3, '#efe6d0');
   },
   banner(p, px, th) {
@@ -532,7 +539,7 @@ export function makeDecor(level, themeId) {
 
 export const DecorSteps = {
   outside, outsideProps, backWall, rug, scatter,
-  furniture(p, level, x, y, f, out) { (FURN[f.kind] || PROPS[f.kind])?.(p, x * T, y * T, f.seg, out); },
+  furniture(p, level, x, y, f, out) { const draw = FURN[f.kind] || PROPS[f.kind]; draw?.(contour(p), x * T, y * T, f.seg, NO_OUT); draw?.(p, x * T, y * T, f.seg, out); },
   sideCandle(p, level, x, y, out) {
     const px = x * T, py = y * T;
     if (hash(x, y, 31) < 0.7) return;

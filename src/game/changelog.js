@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.108', items: ['Neue Türen, Gittertore und Bücher', 'Deko mit Kontur', 'Lichtziele mit Kristalllinse', 'Alle Spieler mit Stoffmuster, Gürtel und Goldsaum'] },
   { v: '3.23.107', items: ['Burgverlies: neuer Steinplattenboden'] },
   { v: '3.23.106', items: ['Strandhaus: Holzboden statt Sand'] },
   { v: '3.23.105', items: ['Nebelmoor: passende Wandfarben', 'Obere Wandflächen texturiert'] },

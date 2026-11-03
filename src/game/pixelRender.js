@@ -261,21 +261,19 @@ export class PixelRenderer {
     const px = x * T, py = y * T, hex = COLOR_INFO[c.need]?.hex || '#fff';
     const ok = info?.ok, wrong = info && info.got && !info.ok;
     const flick = wrong && Math.floor(t / 180) % 3 === 0;
-    this.r(px + 1, py + 1, 14, 14, '#2a1a10');                       // Rahmen außen
-    this.r(px + 2, py + 2, 12, 12, ok ? shade(hex, -0.15) : flick ? '#5a3a2a' : '#4a2c18'); // Glas
-    // Kachelfugen
-    const fug = ok ? shade(hex, -0.45) : '#2a1a10';
-    this.r(px + 7, py + 2, 2, 12, fug); this.r(px + 2, py + 7, 12, 2, fug);
+    // Fassung: Messingrahmen mit Nieten, Ecken in der Wunschfarbe, in der Mitte eine Kristalllinse
+    this.r(px + 0.5, py + 0.5, 15, 15, '#17121f'); this.r(px + 1, py + 1, 14, 14, '#a87a34'); this.r(px + 1, py + 1, 14, 0.5, '#f0cf7a'); this.r(px + 1, py + 1, 0.5, 14, '#d8aa52'); this.r(px + 1, py + 14, 14, 1, '#6a4a1e');
+    this.r(px + 3, py + 3, 10, 10, '#17121f');
+    for (const [a, b] of [[1.5, 1.5], [12.5, 1.5], [1.5, 12.5], [12.5, 12.5]]) this.r(px + a, py + b, 2, 2, ok ? shade(hex, 0.3) : hex);
+    const glass = ok ? hex : flick ? '#5a3a2a' : shade(hex, -0.7), edge = ok ? shade(hex, 0.45) : shade(hex, -0.4);
+    for (let k = 0; k < 5; k++) { const w = 2 + k * 2; this.r(px + 8 - w / 2, py + 3.5 + k, w, 1, k ? glass : edge); this.r(px + 8 - w / 2, py + 11.5 - k, w, 1, k ? glass : edge); this.r(px + 8 - w / 2, py + 3.5 + k, 1, 1, edge); this.r(px + 8 + w / 2 - 1, py + 3.5 + k, 1, 1, edge); this.r(px + 8 - w / 2, py + 11.5 - k, 1, 1, edge); this.r(px + 8 + w / 2 - 1, py + 11.5 - k, 1, 1, edge); }
     if (ok) {
-      // glühende Kacheln mit hellem Kern
-      for (const [ox, oy] of [[3, 3], [10, 3], [3, 10], [10, 10]]) this.r(px + ox, py + oy, 3, 3, shade(hex, 0.45));
-      this.r(px + 7, py + 7, 2, 2, '#fff6d0');
+      this.r(px + 6, py + 6, 4, 4, shade(hex, 0.6)); this.r(px + 7, py + 7, 2, 2, '#fff6d0');
+      const f = Math.floor(t / 160) % 4; this.r(px + 7.5, py + 2.5 - f * 0.5, 1, 1, '#fff6d0'); this.r(px + 7.5, py + 12.5 + f * 0.5, 1, 1, '#fff6d0');
     } else {
-      // dunkles Glas mit Wunschfarbe als Formsymbol in der Mitte
-      for (const [ox, oy] of [[3, 3], [10, 10]]) this.r(px + ox, py + oy, 2, 1, '#6a4428');
-      this.glyphs(px + 8, py + 8, c.need, wrong ? '#c0a090' : shade(hex, -0.1));
+      this.r(px + 5.5, py + 5.5, 1.5, 0.5, 'rgba(255,255,255,0.5)');
+      this.glyphs(px + 8, py + 8, c.need, wrong ? '#c0a090' : hex);
     }
-    this.r(px + 1, py + 1, 14, 1, '#4a3424');                        // Oberkante
   }
 
   sensor(x, y, c, info) {
@@ -289,9 +287,9 @@ export class PixelRenderer {
   door(x, y, open) {
     const px = x * T, py = y * T;
     if (open) { this.r(px + 1, py + 1, 14, 2, '#8a8f9e'); return; }
-    this.r(px + 1, py + 1, 14, 2, '#5a5f6e');
-    for (let k = 0; k < 4; k++) { this.r(px + 2 + k * 4, py + 1, 2, 14, '#9aa0b2'); this.r(px + 2 + k * 4, py + 1, 1, 14, '#c8cdd8'); }
-    this.r(px + 1, py + 8, 14, 1, '#5a5f6e');
+    this.r(px + 0.5, py + 0.5, 15, 3, '#17121f'); this.r(px + 1, py + 1, 14, 2, '#5a5f6e'); this.r(px + 1, py + 1, 14, 0.5, '#9aa0b2');
+    for (let k = 0; k < 4; k++) { this.r(px + 1.5 + k * 3.75, py + 3, 3, 12, '#17121f'); this.r(px + 2 + k * 3.75, py + 3, 2, 12, '#7a8092'); this.r(px + 2 + k * 3.75, py + 3, 0.5, 12, '#d4d8e4'); this.r(px + 2 + k * 3.75, py + 13, 2, 2, '#4a4e5c'); }
+    this.r(px + 1, py + 8, 14, 1.5, '#17121f'); this.r(px + 1, py + 8, 14, 1, '#5a5f6e'); for (let k = 0; k < 4; k++) this.r(px + 2.5 + k * 3.75, py + 1.5, 1, 1, '#d4d8e4');
   }
 
   flip(x, y, c, pressed) {
@@ -395,6 +393,11 @@ export class PixelRenderer {
     this.r(px + 7 + lx, by + 1, 2, 1, light); // Brosche
     this.r(px + 5 + lx, by + 0.5, 0.5, 3, light); this.r(px + 10 + lx, by + 1, 0.5, 3, dark); this.r(px + 7.5 + lx, by + 2.5, 0.5, 1.5, dark); // Falten
     this.r(px + 7.5 + lx, by + 1, 1, 0.5, '#ffffff');
+    // Stoff: Webmuster, Gürtel mit Schnalle, goldener Saum, Schulterlicht; gilt für jeden Skin
+    for (let wy = 0; wy < 3; wy++) for (let wx = (wy % 2) * 1.5; wx < 6; wx += 3) this.r(px + 5 + lx + wx, by + 1 + wy, 0.5, 0.5, dark);
+    this.r(px + 5 + lx, by + 2.5, 6, 0.5, '#3a2414'); this.r(px + 7.5 + lx, by + 2.5, 1, 0.5, '#ffd166');
+    this.r(px + 4.5 + lx, by + 4 - breath, 7, 0.5, '#ffd166'); this.r(px + 5 + lx, by, 6, 0.5, light);
+    if (!side) { this.r(px + 5, py + 13, 1, 0.5, '#8a6a50'); this.r(px + 9, py + 13, 1, 0.5, '#8a6a50'); } // Stiefelglanz
     // Arme: normal schwingend; beim Schieben nach vorne gestreckt
     if (strain) {
       if (side) { this.part(px + (dx > 0 ? 11 : 1) + lx, by + 1, 4, 2, body); }
@@ -410,6 +413,7 @@ export class PixelRenderer {
     const hx = px + 4 + lx + (side ? dx : 0), hy = py + 1 + ly + breath;
     this.part(hx, hy, 8, 7, body);
     this.r(hx, hy, 8, 1, light);
+    this.r(hx + 2, hy + 0.5, 3, 0.5, '#ffffff66'); this.r(hx + 6, hy + 1, 0.5, 0.5, '#ffffff66');
     this.r(hx, hy + 6.5, 8, 0.5, dark); this.r(hx + 0.5, hy + 1, 0.5, 2, light); this.r(hx + 7, hy + 1, 0.5, 5, dark); // Kapuze mit Licht und Saum
     if (!back) {
       // Gesicht: blinzeln, erschrocken, angestrengt, erschöpft
@@ -553,26 +557,21 @@ export class PixelRenderer {
   }
 
   exitDoor(ex, open, t) {
-    const px = ex.x * T;
-    let py = ex.y * T;
-    if (ex.y === 0) { // Tür in der hohen Rückwand: höher, mit Rahmen und Türsturz
-      this.r(px + 1, py - 12, 14, 28, '#2a1a10'); this.r(px, py - 14, 16, 3, '#6b4a2a'); this.r(px + 6, py - 13, 4, 1, '#ffd166');
-      this.r(px + 2, py - 10, 12, 11, open ? '#0c0a14' : '#7a4f2c');
-      if (!open) { // Holztür mit Füllungen, Eisenbändern und Knauf
-        this.r(px + 7, py - 10, 1, 26, '#3a2416'); this.r(px + 4, py - 8, 3, 7, '#5a3a22'); this.r(px + 9, py - 8, 3, 7, '#5a3a22'); this.r(px + 4, py + 3, 3, 9, '#5a3a22'); this.r(px + 9, py + 3, 3, 9, '#5a3a22');
-        this.r(px + 2, py - 7, 5, 1, '#23202a'); this.r(px + 2, py + 9, 5, 1, '#23202a'); this.r(px + 11, py + 1, 2, 2, '#ffd166');
-      }
-      else { this.r(px + 4, py - 8, 8, 9, Math.floor(t / 150) % 2 ? '#bff8f0' : '#9ff0e8'); this.r(px + 6, py - 6, 4, 7, '#ffffff'); }
-    }
-    if (open) {
-      this.r(px + 2, py + 1, 12, 15, '#0c0a14');
+    const px = ex.x * T, tall = ex.y === 0, py = ex.y * T + (tall ? -12 : 1), h = tall ? 28 : 15;
+    // Steinrahmen mit Bogensturz, in den Wänden überall dieselbe Tür
+    this.r(px, py - 2, 16, h + 2, '#17121f'); this.r(px + 0.5, py - 1.5, 15, h + 1.5, '#6e6a78'); this.r(px + 0.5, py - 1.5, 15, 0.5, '#b0acb8');
+    for (let k = 0; k * 4 < h; k++) { this.r(px + 0.5, py + k * 4, 1.5, 0.5, '#3a3644'); this.r(px + 14, py + k * 4 + 2, 1.5, 0.5, '#3a3644'); }
+    this.r(px + 2, py + 1, 12, h - 1, '#17121f'); this.r(px + 3, py, 10, 1, '#17121f');
+    if (open) { // Lichtschein im Türrahmen, Türblatt nach innen geklappt
       const g = Math.floor(t / 150) % 2;
-      this.r(px + 4, py + 3, 8, 12, g ? '#bff8f0' : '#9ff0e8');
-      this.r(px + 6, py + 5, 4, 9, '#ffffff');
-    } else {
-      this.r(px + 2, py + 1, 12, 15, '#3a2416'); this.r(px + 3, py + 2, 10, 13, '#7a4f2c');
-      this.r(px + 7, py + 2, 1, 13, '#3a2416'); this.r(px + 10, py + 8, 2, 2, '#ffd166');
+      this.r(px + 2.5, py + 1, 11, h - 1, '#0c0a14'); this.r(px + 4, py + 2, 8, h - 2, g ? '#bff8f0' : '#9ff0e8'); this.r(px + 6, py + 4, 4, h - 4, '#ffffff');
+      this.r(px + 2.5, py + 1, 2, h - 1, '#5a3a22'); this.r(px + 2.5, py + 1, 0.5, h - 1, '#9b6a3e');
+      return;
     }
+    // Eichenbohlen, Eisenbänder mit Nieten, Ringgriff
+    for (let k = 0; k < 4; k++) { const x = px + 2.5 + k * 2.75; this.r(x, py + 1, 2.5, h - 1, k % 2 ? '#7a4f2c' : '#8f5f36'); this.r(x, py + 1, 0.5, h - 1, '#b07f4a'); this.r(x + 2.25, py + 1, 0.5, h - 1, '#3a2416'); }
+    for (const b of tall ? [4, 20] : [3, 11]) { this.r(px + 2.5, py + b, 11, 1.5, '#23202a'); this.r(px + 2.5, py + b, 11, 0.5, '#6e6a78'); for (let k = 0; k < 3; k++) this.r(px + 4 + k * 3.5, py + b + 0.5, 0.5, 0.5, '#d4d0dc'); }
+    const hy = py + (tall ? 13 : 7); this.r(px + 10.5, hy, 2, 2.5, '#17121f'); this.r(px + 11, hy, 1, 1.5, '#ffd166');
   }
 
   /** Moor: Grube (dunkles Wasser mit Blasen), gefüllt = Trittstein, brüchiger Boden mit Rissen,
