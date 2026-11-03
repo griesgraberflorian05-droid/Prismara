@@ -66,13 +66,24 @@ export function stoneTile() {
 
 // Böden in 32 × 32: jede Welt ihr eigenes Material, vier Varianten, damit nichts nach Kacheln aussieht
 const mix = (a, b, k) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',')})`; };
-const STYLES = { default: 'planks', beach: 'planks', reef: 'sand', cherry: 'planks', moor: 'planks', jungle: 'flags', night: 'flags', castle: 'cobble', shadow: 'cobble', temple: 'tiles', aurora: 'ice', volcano: 'embers' };
+const STYLES = { default: 'planks', beach: 'planks', reef: 'sand', cherry: 'planks', moor: 'planks', jungle: 'flags', night: 'flags', castle: 'dungeon', shadow: 'cobble', temple: 'tiles', aurora: 'ice', volcano: 'embers' };
 const n2 = (x, y, s) => hash(Math.floor(x), Math.floor(y), s);
 const PAINT = {
   sand: (x, y, v, [a, b, d]) => { const r = Math.sin((y + Math.sin(x / 7 + v) * 2) / 2.6) > 0.82; const g = n2(x, y, v + 1); return r ? b : g > 0.93 ? d : g < 0.06 ? mix(a, '#ffffff', 0.3) : a; },
   planks: (x, y, v, [a, b, d]) => { const row = Math.floor(y / 11), off = (row * 13 + v * 7) % 32, sx = (x + off) % 32; if (y % 11 === 10 || sx === 0) return '#1c120c'; if (y % 11 === 0) return mix(a, '#ffffff', 0.14); const t = n2(sx / 9, row + y / 40, row + 2) * 0.5 + Math.sin(y * 1.7 + sx / 8) * 0.2 + 0.3; return t > 0.62 ? a : t > 0.36 ? b : d; },
   flags: (x, y, v, [a, b, d]) => { const split = 13 + v * 3, left = x < split; if (x === split || x === 31 || y === 31 || (left && y === 15 + v) || (!left && y === 20 - v)) return '#17130f'; if (x === 0 || y === 0) return mix(a, '#ffffff', 0.18); const c = n2(x / 5, y / 5, v + 5); return c > 0.72 ? a : c > 0.3 ? b : d; },
   cobble: (x, y, v, [a, b, d]) => { const cx = Math.floor(x / 10), cy = Math.floor((y + (cx % 2) * 5) / 10), fx = (x % 10) - 4.5, fy = ((y + (cx % 2) * 5) % 10) - 4.5, q = Math.hypot(fx, fy); if (q > 4.7) return '#141118'; const t = n2(cx + v, cy, 9); return fy < -2 ? mix(a, '#ffffff', 0.16) : t > 0.6 ? a : t > 0.3 ? b : d; },
+  // Verlies: große versetzte Steinplatten mit Fasenkante, Rissen, Feuchtigkeit und Moos in den Fugen
+  dungeon: (x, y, v, [a, b, d]) => {
+    const row = Math.floor(y / 16), off = row % 2 ? 8 : 0, sx = (x + off + v * 16) % 32, cell = Math.floor(sx / 16), fx = sx % 16, fy = y % 16, id = cell + row * 2 + v * 4;
+    if (fx === 15 || fy === 15) return n2(x / 3, y / 3, v + 20) > 0.72 ? '#3f5a34' : '#121016';
+    if (fx === 0 || fy === 0) return mix(a, '#ffffff', 0.2);
+    if (fx === 14 || fy === 14) return mix(d, '#000000', 0.25);
+    const crack = id % 3 === 0 && Math.abs(fy - 3 - fx * 0.7 - Math.sin(fx) * 1.2) < 0.6;
+    if (crack) return '#17141a';
+    const wet = n2(x / 6, y / 6, v + 30) > 0.8, g = n2(x, y, v + 31), base = id % 4 === 0 ? b : id % 4 === 1 ? a : mix(a, b, 0.5);
+    return wet ? mix(base, '#6a86a8', 0.28) : g > 0.92 ? mix(base, '#ffffff', 0.14) : g < 0.1 ? mix(base, d, 0.6) : base;
+  },
   tiles: (x, y, v, [a, b, d]) => { if (x % 16 === 15 || y % 16 === 15) return d; if (x % 16 === 0 || y % 16 === 0) return mix(a, '#ffffff', 0.2); const k = (x >> 4) + (y >> 4) + v; return (k % 2 ? a : b); },
   ice: (x, y, v, [a, b]) => { const s = (x + y + v * 5) % 19; return s < 1 ? '#ffffff' : s < 3 ? mix(a, '#ffffff', 0.5) : n2(x / 8, y / 8, v) > 0.5 ? a : b; },
   embers: (x, y, v, [a, b, d]) => { const vein = Math.abs(Math.sin(x / 5 + v * 2) * 8 + 16 - y) < 0.8; return vein ? (n2(x / 3, v, 4) > 0.5 ? '#ff5a1a' : '#b81e1e') : n2(x / 4, y / 4, v + 8) > 0.5 ? a : n2(x, y, 3) > 0.9 ? d : b; },
@@ -82,6 +93,7 @@ export function floorTile32(world, pal, v) {
   const key = `${world}|${v}`;
   if (floors[key]) return floors[key];
   const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'), f = PAINT[STYLES[world] || 'planks'];
+  if (world === 'castle') pal = ['#6e6a74', '#5c5862', '#3c3944'];
   if (world === 'beach') pal = ['#b98a58', '#a4764a', '#8a6038']; // Strandhaus: helles Treibholz statt Sand
   for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) { g.fillStyle = f(x, y, v, pal); g.fillRect(x, y, 1, 1); }
   return (floors[key] = c);
