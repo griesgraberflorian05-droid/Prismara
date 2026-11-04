@@ -36,7 +36,7 @@ const STEP_MS = 135, SWING_MS = 450, MAGIC_MS = 8000, MODES = ['Rundumschlag', '
 const KEYS = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3, W: 0, D: 1, S: 2, A: 3 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const wall = (x, y) => ROWS[y]?.[x] !== '.';
+let wall = (x, y) => ROWS[y]?.[x] !== '.';
 
 export function mountArena(root, params) {
   const endless = params[0] === 'endlos', depth = endless ? Math.max(1, parseInt(params[1] || '1', 10)) : 0;
@@ -44,8 +44,13 @@ export function mountArena(root, params) {
   const ci = endless ? depth % CHAPTERS.length : Math.max(0, Math.min(CHAPTERS.length - 1, parseInt(params[0] || '0', 10) || 0));
   const world = worldOf(ci), foe = foeOf(world), theme = PIXEL_THEMES[world] || PIXEL_THEMES.default;
   const touch = matchMedia('(pointer: coarse)').matches;
-  const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: {}, rows: ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)) });
-  const room = createPushState(level), tr = pushTrace(room);
+  // Licht-Boss (Krabbenkönig Klack): zwei Fackeln in der Wand, zwei Drehspiegel – nur Licht trifft ihn
+  const lightBoss = !endless && params[1] !== 'mini' && world === 'beach';
+  const rows = ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)).map((r, y) => (!lightBoss ? r : y === 2 ? `a${r.slice(1, 5)}m${r.slice(6)}` : y === 10 ? `${r.slice(0, 13)}m${r.slice(14, -1)}b` : r));
+  const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: { a: { type: 'emitter', dir: 'E', color: 'R' }, b: { type: 'emitter', dir: 'W', color: 'R' } }, rows });
+  let room = createPushState(level), tr = pushTrace(room);
+  const mirrorAt = (x, y) => room.blocks.findIndex((b) => b.x === x && b.y === y);
+  const relight = () => { room = { ...room, player: { ...room.player, x: hero.x, y: hero.y } }; tr = pushTrace(room); };
   const pix = new PixelRenderer(level, { rs: RS });
   const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), slots = spellSlots(), modes = [...MODES.slice(0, 2), ...(hasMagic() ? slots.map((id) => spellOf(id).name) : [])], ready = {}, help = !!getSettings().bossHelp, maxHp = stat('armor') + (help ? 2 : 0), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
@@ -100,7 +105,7 @@ export function mountArena(root, params) {
     $('#hearts').setAttribute('aria-label', `${hero.hp} von ${maxHp} Herzen`);
   }
   const bossCells = () => (boss ? [[boss.x, boss.y], [boss.x + 1, boss.y], [boss.x, boss.y + 1], [boss.x + 1, boss.y + 1]] : []);
-  const blocked = (x, y) => wall(x, y) || mobs.some((m) => m.x === x && m.y === y) || bossCells().some(([a, b]) => a === x && b === y);
+  const blocked = (x, y) => wall(x, y) || mirrorAt(x, y) >= 0 || mobs.some((m) => m.x === x && m.y === y) || bossCells().some(([a, b]) => a === x && b === y);
 
   function hurt(now, n = 1) {
     if (now < hero.safe || phase === 0) return;
@@ -115,6 +120,7 @@ export function mountArena(root, params) {
     hero.next = now + STEP_MS;
     if (blocked(x, y)) return;
     hero.fromX = hero.x; hero.fromY = hero.y; hero.x = x; hero.y = y; hero.moved = now;
+    if (lightBoss) relight();
   }
   function swing() {
     const now = performance.now();
@@ -133,6 +139,10 @@ export function mountArena(root, params) {
       showMode(); return;
     }
     if (now < hero.swing + swingMs) return;
+    if (lightBoss) { // vor einem Spiegel: Schlag dreht ihn statt zuzuschlagen
+      const [fx, fy] = DIRS[hero.dir], bi = mirrorAt(hero.x + fx, hero.y + fy);
+      if (bi >= 0) { room = { ...room, blocks: room.blocks.map((b, i) => (i === bi ? { ...b, orient: b.orient === '/' ? '\\' : '/' } : b)) }; relight(); hero.swing = now; play('rotate'); return; }
+    }
     hero.swing = now; play('swipe');
     // Rundumschlag: trifft alles im Kreis um den Helden
     let hitBoss = false;
@@ -146,6 +156,7 @@ export function mountArena(root, params) {
       }
       if (!hitBoss && bossCells().some(([a, b]) => a === x && b === y)) hitBoss = true;
     }
+    if (hitBoss && lightBoss) { sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); if (!boss.told) { boss.told = 1; banner('PANZER SPIEGELT', 'LENK DAS LICHT AUF KLACK'); } hitBoss = false; }
     if (hitBoss && !mini && now > boss.openUntil) { // Panzer zu: Treffer prallt ab
       boss.hit = 0; sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); hitBoss = false;
     }
@@ -233,12 +244,23 @@ export function mountArena(root, params) {
       if (x === hero.x && y === hero.y) { hurt(now); shots.splice(i, 1); } else if (x < 0 || y < 0 || x >= W || y >= H || wall(x, y)) shots.splice(i, 1);
     }
     if (phase === 0) return;
+    if (boss && lightBoss) { // Licht auf dem Panzer lädt auf: 0,35 s Kontakt ist ein Treffer
+      const lit = bossCells().some(([a, b]) => tr.visited.has(b * W + a));
+      boss.charge = lit ? (boss.charge || 0) + (now - (boss.lastT || now)) : Math.max(0, (boss.charge || 0) - (now - (boss.lastT || now)) * 2);
+      boss.lastT = now;
+      if (boss.charge >= 350) {
+        boss.charge = 0; boss.hp = Math.max(0, boss.hp - (damage + 2)); boss.hit = now; play('target', 6); shake = now + 200; sparksFx(boss.x + 0.5, boss.y + 0.5, '#ff4d6d', now);
+        $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`;
+        if (boss.hp <= 0) { finisher(); return; } nextStage(now);
+      }
+    }
     if (boss) {
       if (now >= boss.next) attack(now);
       if (!boss.jump && now >= boss.walk) { // zwischen den Angriffen rückt er nach
         boss.walk = now + (boss.hp <= bossHp / 2 ? 450 : 650);
         const nx = boss.x + Math.sign(hero.x - boss.x), ny = boss.y + Math.sign(hero.y - boss.y);
-        if (nx >= 1 && nx <= W - 3) boss.x = nx; else if (ny >= 1 && ny <= H - 3) boss.y = ny;
+        const free2 = (x, y) => ![[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]].some(([a, b]) => mirrorAt(a, b) >= 0);
+        if (nx >= 1 && nx <= W - 3 && free2(nx, boss.y)) boss.x = nx; else if (ny >= 1 && ny <= H - 3 && free2(boss.x, ny)) boss.y = ny;
       }
       if (bossCells().some(([a, b]) => a === hero.x && b === hero.y)) { // vom Ansturm getroffen: zur Seite geschleudert
         hurt(now);
@@ -415,7 +437,7 @@ export function mountArena(root, params) {
     const rx = walking ? hero.fromX + (hero.x - hero.fromX) * lerp : hero.x, ry = walking ? hero.fromY + (hero.y - hero.fromY) * lerp : hero.y;
     hero.rx = rx; hero.ry = ry;
     const blink = now < hero.safe && Math.floor(now / 90) % 2;
-    const img = pix.draw(t, { tr, blocks: [], got: [], loot: [], fragments: [], enemies: [], dust: [], theme, grow: Infinity, player: blink ? null : { x: rx, y: ry, dir: hero.dir, walk: held != null || walking ? (now / 300) % 1 : null, stamina: 1, hat: hat() } });
+    const img = pix.draw(t, { tr, blocks: room.blocks, got: [], loot: [], fragments: [], enemies: [], dust: [], theme, grow: Infinity, player: blink ? null : { x: rx, y: ry, dir: hero.dir, walk: held != null || walking ? (now / 300) % 1 : null, stamina: 1, hat: hat() } });
     const g = img.getContext('2d');
     g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS);
     const r = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
@@ -427,6 +449,7 @@ export function mountArena(root, params) {
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
     if (boss && !dying) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, state: mini ? 'normal' : boss.stage === 3 ? 'aggro' : boss.stage === 2 ? 'hurt' : 'normal' });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
+    if (boss && lightBoss && boss.charge > 0) { const k = Math.min(1, boss.charge / 350); r(boss.x * T, boss.y * T - 8, 32, 4, '#17121f'); r(boss.x * T + 1, boss.y * T - 7, 30 * k, 2, '#ff4d6d'); }
     if (boss && !dying && !mini && now > boss.openAt && now < boss.openUntil) { // Schwachpunkt leuchtet golden
       const f = Math.floor(now / 100) % 2 ? '#ffd166' : '#ffffff'; r(boss.x * T - 2, boss.y * T - 2 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T + 32 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T - hop(now), 2, 32, f); r(boss.x * T + 32, boss.y * T - hop(now), 2, 32, f);
     }
