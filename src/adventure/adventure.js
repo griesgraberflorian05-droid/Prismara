@@ -669,13 +669,37 @@ export function mountAdventure(root, params, opts = {}) {
     if (index < 0 || index + 1 >= PUSH_LEVELS.length) { setRush(false); toast('Durchlauf fertig'); location.hash = '#/menu'; return; }
     location.hash = `#/adv/${index + 1}`;
   }
+  // Sammelrunde: läuft zum nächsten erreichbaren Fundstück, Kristall oder zur Truhe, bis nichts mehr geht
+  function rushCollect(left) {
+    if (!rushOn()) return;
+    const { w, h, cells } = level, solid = new Set(state.blocks.map((b) => b.y * w + b.x));
+    const free = (x, y) => { const k = y * w + x, c = cells[k]; return c && c.type === 'empty' && !solid.has(k) && (!c.hole || (state.fill || []).includes(k)); };
+    const goals = new Set([...loot, ...fragments].filter((g) => !g.got).map((g) => g.y * w + g.x));
+    const start = state.player.y * w + state.player.x, prev = new Map([[start, null]]), q = [start];
+    const canChest = chest && !chest.open && count('pick') > 0;
+    let path = null;
+    while (q.length && !path) {
+      const k = q.shift(), x = k % w, y = Math.floor(k / w);
+      const back = (n, extra) => { const out = extra == null ? [] : [extra]; for (let c = n; prev.get(c); c = prev.get(c).k) out.unshift(prev.get(c).d); return out; };
+      if (k !== start && goals.has(k)) { path = back(k); break; }
+      for (let d = 0; d < 4; d++) {
+        const nx = x + DIRS[d][0], ny = y + DIRS[d][1], n = ny * w + nx;
+        if (canChest && chest.x === nx && chest.y === ny) { path = back(k, d); break; }
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h && !prev.has(n) && free(nx, ny)) { prev.set(n, { k, d }); q.push(n); }
+      }
+    }
+    if (!path || left <= 0) { later(rushNext, 350); return; }
+    path.forEach((d, i) => later(() => { if (rushOn()) stepDir(d); }, i * 60));
+    later(() => rushCollect(left - 1), path.length * 60 + 120);
+  }
   function rushRoom() {
     const res = solvePush(level, { from: state, limit: 150000 });
     if (!res.solvable) { toast(`${def.id}: übersprungen`); devlog('SPIEL', `Durchlauf: ${def.id} ohne Lösung übersprungen`); later(rushNext, 400); return; }
-    res.path.forEach((p, i) => later(() => { if (!rushOn()) return; if (p === 'rot') rotate(); else stepDir(String(p).startsWith('turn') ? +String(p).slice(4) : p); }, i * 170));
-    later(rushNext, res.path.length * 170 + 700);
+    // schnell durch, die letzten drei Züge in normalem Tempo zum Zuschauen
+    const n = res.path.length, at = (i) => Math.min(i, n - 3) * 60 + Math.max(0, i - (n - 3)) * 170;
+    res.path.forEach((p, i) => later(() => { if (!rushOn()) return; if (p === 'rot') rotate(); else stepDir(String(p).startsWith('turn') ? +String(p).slice(4) : p); }, at(i)));
+    later(() => rushCollect(40), at(n) + 300);
   }
-  if (rushOn() && !tutorial) later(rushRoom, 500);
   function debug(a) {
     setPaused(false);
     if (a === 'open') { exitOpen = true; if (solveMoves == null) solveMoves = state.moves; play('exitopen'); updateHud(); }
@@ -893,6 +917,7 @@ export function mountAdventure(root, params, opts = {}) {
   reset();
   requestAnimationFrame(frame);
   canvas.focus();
+  if (rushOn() && !tutorial) later(() => { paused = false; rushRoom(); }, 900);
   devlog('SPIEL', `Abenteuer: Raum „${def.name}“ (${def.id}) betreten · Ausgang (${exit?.x},${exit?.y}) · Welt ${themeId}`);
   if (location.hostname === 'localhost') window.__adv = { get state() { return { moves: state.moves, player: state.player, exitOpen, done, caught, solved: tr.solved, exit, fragments, loot, chest, sign, keys: state.keys, level, blocks: state.blocks, raw: state, held }; }, step: stepDir, rotate, use };
 

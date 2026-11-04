@@ -703,7 +703,7 @@ export class PixelRenderer {
   loot(it, t) {
     if (it.got) return;
     if (it.kind === 'critter') { drawMinion((x, y, w, h, c) => this.r(x, y, w, h, c), it.foe.minion, it.foe.colors, it.x * T, it.y * T, t); return; }
-    const px = it.x * T, py = it.y * T + Math.round(Math.sin(t / 420 + it.x * 2) * 3) / 2; // gleitet auf dem Halbpixel-Raster
+    const px = it.x * T, py = it.y * T + (it.kind === 'lens' ? 0 : Math.round(Math.sin(t / 420 + it.x * 2) * 3) / 2); // die Lupe liegt ruhig, ihr Glas glänzt
     this.r(px + 5, py + 12, 7, 2, 'rgba(0,0,0,0.25)');
     const O = '#17121f';
     if (it.kind === 'coin') {
@@ -716,6 +716,7 @@ export class PixelRenderer {
     } else if (it.kind === 'lens') {
       this.r(px + 9, py + 9, 4, 4, O); this.r(px + 9.5, py + 9.5, 3, 3, '#8a5a2a');
       this.r(px + 3.5, py + 3.5, 7, 7, O); this.r(px + 4, py + 4, 6, 6, '#c9963f'); this.r(px + 5, py + 5, 4, 4, '#7fc4e8'); this.r(px + 5, py + 5, 2, 1, '#e8fbff'); this.r(px + 5, py + 6, 0.5, 1, '#e8fbff');
+      if (Math.floor(t / 90) % 24 < 3) this.r(px + 5 + (Math.floor(t / 90) % 24), py + 5, 1, 4, 'rgba(255,255,255,0.6)');
     }
   }
 
