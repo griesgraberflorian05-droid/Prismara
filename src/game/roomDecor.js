@@ -112,15 +112,14 @@ const PROPS = {
     }
   },
   snowpine(p, px, py) { PROPS.pine(p, px, py, true); },
-  palm(p, px, py) {
+  palm(p, px, py) { // geschwungener Stamm mit Ringen, Wedel aus einzelnen Fiedern, Kokosnüsse
     shadow(p, px, py, 16);
-    for (let k = 0; k < 7; k++) { const tx = px + 7 + Math.round(Math.sin(k / 3) * 3); p.r(tx, py + 13 - k * 3, 3, 3, k % 2 ? '#8a6438' : '#a57a48'); }
-    const cx = px + 10, cy = py - 8;
-    for (const [dx, dy] of [[-9, 2], [-6, -3], [0, -5], [6, -3], [9, 2], [-4, 4], [5, 4]]) {
-      const n = 4;
-      for (let k = 1; k <= n; k++) p.r(cx + Math.round(dx * k / n), cy + Math.round(dy * k / n) + (k === n ? 1 : 0), 2, 2, k % 2 ? '#3f9a3a' : '#5ab845');
+    for (let k = 0; k < 14; k++) { const tx = px + 7 + Math.sin(k / 5) * 3, ty = py + 14 - k * 1.5; p.r(tx - 0.5, ty, 4, 1.5, '#3a2414'); p.r(tx, ty, 3, 1.5, k % 2 ? '#8a6438' : '#a57a48'); p.r(tx, ty, 1, 1.5, '#c99a5a'); }
+    const cx = px + 10, cy = py - 7;
+    for (const [dx, dy] of [[-10, 3], [-7, -3], [0, -6], [7, -3], [10, 3], [-5, 5], [5, 5]]) {
+      for (let k = 1; k <= 10; k++) { const q = k / 10, x = cx + dx * q, y = cy + dy * q + q * q * 3; p.r(x - 0.5, y - 0.5, 2, 1.5, '#1f3a18'); p.r(x, y, 1.5, 1, q > 0.5 ? '#3f9a3a' : '#5ab845'); if (k % 2) p.r(x + (dx > 0 ? -0.5 : 0.5), y + 1, 1, 1.5, '#2f7a2a'); }
     }
-    p.r(cx - 1, cy, 3, 3, '#6b4a22'); p.r(cx + 1, cy + 2, 2, 2, '#5a3a18');
+    for (const [a, b] of [[-1, 0], [1, 1], [0, 2]]) { p.r(cx + a - 0.5, cy + b - 0.5, 2.5, 2.5, '#17121f'); p.r(cx + a, cy + b, 2, 2, '#6b4a22'); p.r(cx + a, cy + b, 1, 0.5, '#a07a4a'); }
   },
   bush(p, px, py, c = ['#3f7d34', '#2a5a24', '#6cb455']) {
     shadow(p, px, py, 14);
@@ -255,10 +254,12 @@ const FURN = {
     }
     if (hash(px, py, 7) > 0.5) { p.r(px + 5, py - 5, 2, 2, '#ff9cc8'); p.r(px + 11, py - 3, 2, 2, '#fff6b0'); }
   },
-  barrel(p, px, py) {
+  barrel(p, px, py) { // bauchiges Fass: Dauben, zwei Eisenreifen mit Nieten, Deckel mit Lichtkante
     p.r(px + 3, py + 13, 10, 2, 'rgba(0,0,0,0.3)');
-    p.r(px + 3, py - 2, 10, 15, '#7a4f2c'); p.r(px + 2, py + 1, 12, 9, '#7a4f2c'); p.r(px + 4, py - 3, 8, 2, '#9b6a3e');
-    p.r(px + 2, py + 1, 12, 1, '#3a2a1c'); p.r(px + 2, py + 9, 12, 1, '#3a2a1c'); p.r(px + 5, py - 2, 1, 15, '#9b6a3e'); p.r(px + 11, py - 2, 1, 15, '#5a3a22');
+    p.r(px + 3, py - 2, 10, 15, '#6b4426'); p.r(px + 2, py + 1, 12, 9, '#6b4426');
+    for (let k = 0; k < 5; k++) p.r(px + 3.5 + k * 2, py - 2, 1.5, 15, ['#7a4f2c', '#8f5f36', '#9b6a3e', '#8f5f36', '#6b4426'][k]);
+    p.r(px + 4, py - 3, 8, 1.5, '#9b6a3e'); p.r(px + 4, py - 3, 8, 0.5, '#d09a64');
+    for (const y of [1, 9]) { p.r(px + 2, py + y, 12, 1.5, '#3a3644'); p.r(px + 2, py + y, 12, 0.5, '#8e8894'); p.r(px + 4, py + y + 0.5, 0.5, 0.5, '#d4d0dc'); p.r(px + 11, py + y + 0.5, 0.5, 0.5, '#d4d0dc'); }
   },
   urn(p, px, py) {
     p.r(px + 3, py + 13, 10, 2, 'rgba(0,0,0,0.3)');
@@ -271,12 +272,16 @@ const FURN = {
   },
   chest(p, px, py) {
     p.r(px + 2, py + 13, 12, 2, 'rgba(0,0,0,0.3)');
-    p.r(px + 2, py + 3, 12, 10, '#6b4426'); p.r(px + 2, py, 12, 4, '#9b6a3e'); p.r(px + 2, py, 12, 1, '#c99766');
-    p.r(px + 4, py, 1, 13, '#c9963f'); p.r(px + 11, py, 1, 13, '#c9963f'); p.r(px + 7, py + 4, 2, 3, '#ffd166'); p.r(px + 2, py + 4, 12, 1, '#3a2414');
+    p.r(px + 2, py + 4, 12, 9, '#7a4f2c'); p.r(px + 2, py + 6, 12, 0.5, '#5a3a22'); p.r(px + 2, py + 9, 12, 0.5, '#5a3a22');
+    p.r(px + 2, py, 12, 4, '#9b6a3e'); p.r(px + 3, py, 10, 0.5, '#d09a64'); p.r(px + 2, py + 3.5, 12, 0.5, '#3a2414');
+    for (const a of [3, 11.5]) { p.r(px + a, py, 1.5, 13, '#6e6a78'); p.r(px + a, py, 0.5, 13, '#b0acb8'); }
+    p.r(px + 6.5, py + 3, 3, 3.5, '#17121f'); p.r(px + 7, py + 3.5, 2, 2.5, '#ffd166'); p.r(px + 7.5, py + 4.5, 1, 1, '#7a4f2c');
   },
-  statue(p, px, py) {
-    p.r(px + 3, py + 8, 10, 6, '#6a6a72'); p.r(px + 3, py + 8, 10, 1, '#9a9aa2');
-    p.r(px + 5, py - 3, 6, 11, '#8a8a92'); p.r(px + 6, py - 7, 4, 4, '#9a9aa2'); p.r(px + 4, py - 1, 2, 6, '#7a7a82'); p.r(px + 10, py - 1, 2, 6, '#7a7a82'); p.r(px + 6, py - 3, 1, 10, '#b0b0b8');
+  statue(p, px, py) { // Wächterfigur auf Sockel, Licht von links
+    p.r(px + 2.5, py + 9, 11, 5, '#5a5a62'); p.r(px + 2.5, py + 9, 11, 0.5, '#a0a0aa'); p.r(px + 2.5, py + 13, 11, 1, '#3a3a42');
+    p.r(px + 5, py - 3, 6, 12, '#8a8a92'); p.r(px + 5, py - 3, 1.5, 12, '#b0b0b8'); p.r(px + 9.5, py - 3, 1.5, 12, '#6a6a72');
+    p.r(px + 5.5, py - 8, 5, 5, '#9a9aa2'); p.r(px + 5.5, py - 8, 1.5, 5, '#c0c0c8'); p.r(px + 6.5, py - 6, 1, 1, '#4a4a52'); p.r(px + 8.5, py - 6, 1, 1, '#4a4a52');
+    p.r(px + 3.5, py - 1, 2, 6, '#7a7a82'); p.r(px + 10.5, py - 1, 2, 6, '#6a6a72'); p.r(px + 11, py - 6, 1, 11, '#c0c0c8'); p.r(px + 10.5, py - 7, 2, 1.5, '#ffd166');
   },
   idol(p, px, py) {
     p.r(px + 4, py - 4, 8, 18, '#5a6a4a'); p.r(px + 3, py - 6, 10, 3, '#6b7d55'); p.r(px + 5, py, 2, 2, '#ffd166'); p.r(px + 9, py, 2, 2, '#ffd166'); p.r(px + 6, py + 5, 4, 1, '#2a3020');
@@ -286,13 +291,19 @@ const FURN = {
     p.r(px + 5, py + 8, 6, 6, '#3a3034'); p.r(px + 2, py + 3, 12, 5, '#4a4044'); p.r(px + 1, py + 3, 3, 2, '#4a4044'); p.r(px + 2, py + 3, 12, 1, '#7a7074'); p.r(px + 9, py + 1, 2, 2, '#ff6a1a');
   },
   crates(p, px, py) {
-    const box = (x, y, s) => { p.r(x, y, s, s, '#3a2416'); p.r(x + 1, y + 1, s - 2, s - 2, '#9b6a3e'); p.r(x + 1, y + 1, s - 2, 1, '#c99766'); p.r(x + 1, y + s / 2, s - 2, 1, '#6b4426'); };
+    const box = (x, y, s) => {
+      p.r(x, y, s, s, '#3a2416'); p.r(x + 0.5, y + 0.5, s - 1, s - 1, '#9b6a3e'); p.r(x + 0.5, y + 0.5, s - 1, 0.5, '#d09a64');
+      for (let k = 0; k < s * 2 - 3; k++) p.r(x + 1 + k / 2, y + 1 + k / 2, 1, 1, '#c08a54');
+      p.r(x + 0.5, y + s / 2, s - 1, 0.5, '#6b4426'); p.r(x + 0.5, y + s - 1.5, s - 1, 1, '#6b4426');
+    };
     p.r(px + 1, py + 13, 14, 2, 'rgba(0,0,0,0.3)');
     box(px + 1, py + 4, 10); box(px + 9, py + 6, 7); box(px + 4, py - 4, 8);
   },
-  pillar(p, px, py) {
-    p.r(px + 3, py + 11, 10, 3, '#7a7a82'); p.r(px + 4, py - 6, 8, 17, '#9a9aa2'); p.r(px + 3, py - 8, 10, 3, '#b0b0b8');
-    p.r(px + 6, py - 5, 1, 16, '#c0c0c8'); p.r(px + 9, py - 5, 1, 16, '#7a7a82');
+  pillar(p, px, py) { // kannelierte Säule mit Kapitell und Basis
+    p.r(px + 2.5, py + 11, 11, 3, '#7a7a82'); p.r(px + 2.5, py + 11, 11, 0.5, '#c0c0c8');
+    p.r(px + 4, py - 6, 8, 17, '#9a9aa2'); for (const a of [5, 7.5, 10]) { p.r(px + a, py - 5, 0.5, 15, '#7a7a82'); p.r(px + a + 0.5, py - 5, 0.5, 15, '#c0c0c8'); }
+    p.r(px + 4, py - 6, 1, 17, '#c8c8d0'); p.r(px + 11, py - 6, 1, 17, '#6a6a72');
+    p.r(px + 2.5, py - 9, 11, 3, '#b0b0b8'); p.r(px + 2.5, py - 9, 11, 0.5, '#e0e0e8'); p.r(px + 2.5, py - 6.5, 11, 0.5, '#6a6a72');
   },
 };
 

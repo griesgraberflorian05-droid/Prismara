@@ -44,6 +44,16 @@ export function drawMinion(raw, kind, [body, dark], px0, py0, t, { flash = false
   } };
   shape((x, yy, w, h) => R(x - 0.5, yy - 0.5, w + 1, h + 1, '#17121f')); shape(R);
   const r = R;
+  // Feinheiten in halben Pixeln: Licht oben links, Schattenkante, typische Merkmale je Wesen
+  if (!flash) {
+    const L = '#ffffff55', D = 'rgba(0,0,0,0.28)';
+    if (kind === 'crab') { r(px + 4, y + 6.5, 4, 0.5, L); r(px + 6, y + 9, 1, 1, D); r(px + 9, y + 9, 1, 1, D); r(px + 0.5, y + 5.5, 1, 0.5, L); r(px + 13.5, y + 5.5, 1, 0.5, L); r(px + 2.5, y + 6, 0.5, 1.5, d); r(px + 13, y + 6, 0.5, 1.5, d); }
+    else if (kind === 'sprout') { r(px + 5, y + 6.5, 3, 0.5, L); r(px + 4, y + 1.5, 3, 0.5, L); r(px + 9.5, y + 1.5, 3, 0.5, L); r(px + 7.5, y + 3, 0.5, 3, '#ffffff33'); r(px + 5, y + 11, 6, 0.5, D); }
+    else if (kind === 'rat') { r(px + 4.5, y + 4.5, 1, 1, '#ff9cb0'); r(px + 8.5, y + 4.5, 1, 1, '#ff9cb0'); r(px + 3.5, y + 6.5, 5, 0.5, L); r(px + 13.5, y + 8.5, 1, 1, '#2a1a20'); for (let k = 0; k < 4; k++) r(px - k * 0.8, y + 9.5 + (k % 2) * 0.5, 1, 0.5, d); }
+    else if (kind === 'wisp') { r(px + 6, y + 6, 4, 4, '#ffffff66'); r(px + 7, y + 7, 2, 2, '#ffffff'); r(px + 5, y + 4.5, 2, 0.5, L); }
+    else if (kind === 'bat') { for (const x of [1.5, 3, 12, 13.5]) r(px + x, y + 5.5 + Math.round(Math.sin(t / 70) + 1) / 2, 0.5, 2, '#ffffff33'); r(px + 6, y + 5.5, 3, 0.5, L); r(px + 7, y + 11, 2, 0.5, '#ffe45a'); }
+    else { r(px + 3, y + 7.5, 1.5, 2, '#ffffffaa'); r(px + 4.5, y + 6, 4, 0.5, L); r(px + 9, y + 10, 1.5, 1.5, '#ffffff44'); r(px + 6, y + 11, 1, 1, '#ffffff33'); }
+  }
   if (!flash) r(px + 4, y + 12, 8, 0.5, 'rgba(0,0,0,0.3)'); // Schatten unten
   const ey = kind === 'crab' ? y + 7 : kind === 'wisp' || kind === 'bat' ? y + 6 : y + 8;
   // Böser Blick: schräge Brauen, glühende Augen beim Ausholen, Maul mit Zähnen
