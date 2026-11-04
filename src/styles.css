@@ -1710,3 +1710,29 @@ body.wood .ihud-tl, body.wood .ihud-bl, body.wood .ihud-chip, .ihud-tl, .ihud-bl
 .sign-card ul { padding: 0; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 0.5rem; line-height: 1.8; }
 .sign-card li { padding: 8px 10px; background: rgba(143, 95, 54, 0.14); border-left: 4px solid #8f5f36; }
 .sign-card .sign-extra { font-family: 'Press Start 2P', monospace; font-size: 0.45rem; line-height: 1.9; }
+
+/* Zauberbuch: Zeile mit Zauber und Stufen-Knopf */
+.mg-list div.mg-spell { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.mg-list div.mg-spell > button:first-child, .mg-list div.mg-spell > span { flex: 1; display: grid; gap: 4px; text-align: left; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
+/* Kampf: Zauberleiste wie in League of Legends */
+.ar-spells { position: absolute; z-index: 5; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; gap: 6px; align-items: flex-end; }
+.ar-mana { position: absolute; left: 0; right: 0; top: -14px; height: 8px; background: #17121f; border: 2px solid #17121f; }
+.ar-mana b { display: block; height: 100%; background: linear-gradient(#7fb8ff, #3a6ad8); }
+.ar-spell { position: relative; width: 54px; height: 54px; display: grid; place-items: center; background: #3a2414; border: 3px solid #17121f; box-shadow: inset 0 0 0 2px #8f5f36; color: #fff6d8; font: 0.55rem 'Press Start 2P', monospace; text-align: center; overflow: hidden; }
+.ar-spell.ult { width: 62px; height: 62px; box-shadow: inset 0 0 0 2px #ffd166; }
+.ar-spell kbd { position: absolute; left: 3px; top: 3px; font: inherit; color: #ffd166; }
+.ar-spell i { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(10, 6, 20, 0.72); }
+.ar-spell.low { color: #7fb8ff; }
+.ar-spell small { font-size: 0.4rem; line-height: 1.3; padding: 0 2px; }
+
+/* Handy: Zauber als runde Knöpfe im Bogen um die rechte untere Ecke (Tippen aufs Feld schlägt, Wischen läuft) */
+.arena.touch .ar-spells { left: auto; transform: none; right: 0; bottom: 0; width: 200px; height: 200px; display: block; pointer-events: none; }
+.arena.touch .ar-mana { left: auto; right: 10px; top: auto; bottom: 186px; width: 150px; }
+.arena.touch .ar-spell { position: absolute; width: 58px; height: 58px; border-radius: 50%; pointer-events: auto; touch-action: none; }
+.arena.touch .ar-spell.ult { width: 70px; height: 70px; right: 10px; bottom: 14px; }
+.arena.touch .ar-spell:nth-child(2) { right: 92px; bottom: 12px; }
+.arena.touch .ar-spell:nth-child(3) { right: 86px; bottom: 80px; }
+.arena.touch .ar-spell:nth-child(4) { right: 22px; bottom: 100px; }
+.arena.touch .ar-spell em { position: absolute; inset: 0; display: grid; place-items: center; font: 0.8rem 'Press Start 2P', monospace; font-style: normal; color: #fff; text-shadow: 2px 2px 0 #000; }
+.arena.touch .ar-spell:active { transform: translateY(2px); }
+.arena.touch .ar-mode { top: 70px; bottom: auto; right: 8px; }

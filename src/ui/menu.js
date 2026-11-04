@@ -12,7 +12,7 @@ import { CHANGELOG } from '../game/changelog.js';
 import * as fx from '../game/fx.js';
 const fxNs = fx;
 import { TEXTURES, texture } from '../game/textures.js';
-import { swordTint, setSwordTint, hasMagic, SPELLS, spellSlots, setSlots, spellOf, presets, savePreset, MAGIC_COLORS, magicColor, ownsMagic, pickMagic, PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
+import { swordTint, setSwordTint, hasMagic, SPELLS, spellSlots, setSlots, spellOf, presets, savePreset, spellStats, spellCost, levelSpell, TALENTS, talentLv, talentCost, levelTalent, manaMax, manaRegen, MAX_SPELL_LV, MAGIC_COLORS, magicColor, ownsMagic, pickMagic, PARTS, partOf, ownsPart, pickPart, UPGRADES, shownSkins, ownsSkin, pickSkin, swordSkin, getCombat, nextCost, upgrade, foeOf, bossBeaten, bossPending, worldDone } from '../game/combat.js';
 import { icon } from './icons.js';
 import { prefersReducedMotion, getSettings, updateSettings } from '../settings.js';
 import { play, isMuted, toggleMute } from '../game/sound.js';
@@ -650,26 +650,33 @@ function realShopPage(el) {
   render();
 }
 
-// ---------- Magie: drei Zauberplätze, Presets, Farben ----------
+// ---------- Magie: Zauberbuch mit Q W E R, Stufen, Talenten, Presets und Farbe ----------
 function magicPage(el) {
   let slot = 0;
-  const render = () => {
-    const slots = spellSlots();
+  const KEYS = ['Q', 'E', 'R', 'F'];
+  const render = (msg = '') => {
+    const slots = spellSlots(), ult = slot === 3;
     el.innerHTML = `
       ${head('#/menu', 'Magie', `${icon('coin')} ${getInv().coins}`)}
       <div class="sg">
-        <h2 class="sg-title">Deine Zauber</h2>
+        <h2 class="sg-title">Zauberleiste</h2>
         ${hasMagic() ? '' : '<p class="sg-info">Magie wird mit dem ersten besiegten Boss frei.</p>'}
-        <div class="mg-slots">${slots.map((id, i) => `<button class="mg-slot${i === slot ? ' on' : ''}" type="button" data-slot="${i}"><small>Platz ${i + 1}</small><b>${esc(spellOf(id).name)}</b></button>`).join('')}</div>
-        <div class="mg-list">${SPELLS.map((sp) => `<button class="mg-spell${slots[slot] === sp.id ? ' on' : ''}" type="button" data-spell="${sp.id}"><b>${esc(sp.name)}</b><small>${esc(sp.info)} ${sp.cd / 1000} s Pause</small></button>`).join('')}</div>
+        <p class="sg-info">Mana ${manaMax()} · +${manaRegen()} pro Sekunde. Jeder Zauber kostet Mana und hat eine Abklingzeit. F ist dein Ultimate.</p>
+        ${msg ? `<p class="sg-info"><b>${esc(msg)}</b></p>` : ''}
+        <div class="mg-slots">${slots.map((id, i) => `<button class="mg-slot${i === slot ? ' on' : ''}" type="button" data-slot="${i}"><small>Taste ${KEYS[i]}</small><b>${esc(spellOf(id).name)}</b><small>Stufe ${spellStats(id).lv}</small></button>`).join('')}</div>
+        <div class="mg-list">${SPELLS.filter((sp) => !!sp.ult === ult).map((sp) => { const st = spellStats(sp.id), cost = spellCost(sp.id); return `<div class="mg-spell${slots[slot] === sp.id ? ' on' : ''}"><button type="button" data-spell="${sp.id}"><b>${esc(sp.name)} · Stufe ${st.lv}/${MAX_SPELL_LV}</b><small>${esc(sp.info)}</small><small>Stärke ${st.power} · ${(st.cd / 1000).toFixed(1)} s Pause · ${st.mana} Mana</small></button><button class="wbtn sm" type="button" data-lv="${sp.id}" ${cost == null ? 'disabled' : ''}>${cost == null ? 'MAX' : `${icon('coin')} ${cost}`}</button></div>`; }).join('')}</div>
+        <h2 class="sg-title">Talente</h2>
+        <div class="mg-list">${Object.entries(TALENTS).map(([id, t]) => { const c = talentCost(id); return `<div class="mg-spell"><span><b>${esc(t.name)} · ${talentLv(id)}/${t.costs.length}</b><small>${esc(t.info)}</small></span><button class="wbtn sm" type="button" data-tal="${id}" ${c == null ? 'disabled' : ''}>${c == null ? 'MAX' : `${icon('coin')} ${c}`}</button></div>`; }).join('')}</div>
         <h2 class="sg-title">Presets</h2>
         <div class="mg-pre">${presets().map((p, i) => `<div><b>Preset ${i + 1}</b><small>${p ? p.map((x) => esc(spellOf(x).name)).join(' · ') : 'leer'}</small><span><button class="wbtn sm" type="button" data-load="${i}" ${p ? '' : 'disabled'}>Laden</button><button class="wbtn sm" type="button" data-save="${i}">Speichern</button></span></div>`).join('')}</div>
         <h2 class="sg-title">Farbe</h2>
         <div class="mg-col">${MAGIC_COLORS.map((c) => `<button class="kit-swatch${magicColor().id === c.id ? ' active' : ''}" type="button" data-col="${c.id}"><span class="ks-dot" style="background:${c.color}"></span><small>${esc(c.name)}${ownsMagic(c.id) ? '' : ` ${c.price}`}</small></button>`).join('')}</div>
       </div>`;
-    const on = (sel, fn) => el.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => { fn(b); play('ui'); render(); }));
+    const on = (sel, fn) => el.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => { const m = fn(b); play('ui'); render(typeof m === 'string' ? m : ''); }));
     on('[data-slot]', (b) => { slot = +b.dataset.slot; });
-    on('[data-spell]', (b) => { const s = spellSlots(); s[slot] = b.dataset.spell; setSlots(s); });
+    on('[data-spell]', (b) => { const s = spellSlots(), i = s.indexOf(b.dataset.spell); if (i >= 0) s[i] = s[slot]; s[slot] = b.dataset.spell; setSlots(s); });
+    on('[data-lv]', (b) => (levelSpell(b.dataset.lv) ? `${spellOf(b.dataset.lv).name} ist jetzt stärker!` : 'Dafür fehlen Münzen.'));
+    on('[data-tal]', (b) => (levelTalent(b.dataset.tal) ? `${TALENTS[b.dataset.tal].name} verbessert!` : 'Dafür fehlen Münzen.'));
     on('[data-load]', (b) => setSlots(presets()[+b.dataset.load]));
     on('[data-save]', (b) => savePreset(+b.dataset.save));
     on('[data-col]', (b) => pickMagic(b.dataset.col));

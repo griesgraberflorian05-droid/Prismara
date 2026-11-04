@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.128', items: ['Neues Magiesystem: Mana, Abklingzeiten, 9 Zauber mit 5 Stufen, Ultimates, Talente', 'Zauber wie in League of Legends auf Q, E, R und F (oder 1–4), Laufen bleibt WASD', 'Handy: Zauberknöpfe im Bogen um den Schlag-Knopf'] },
   { v: '3.23.127', items: ['Licht-Boss Klack: Schwert prallt ab, nur die Redstone-Spur über Drehspiegel trifft'] },
   { v: '3.23.126', items: ['Bosse mit Plattenfugen, Augenglanz und Mundgitter', 'Held von hinten und seitlich feiner'] },
   { v: '3.23.125', items: ['Palmen, Fässer, Truhen, Statuen, Kisten und Säulen in 32 × 32', 'Mobs mit feineren Details'] },

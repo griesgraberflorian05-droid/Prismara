@@ -9,7 +9,7 @@ import { addCoins, getInv, hat } from '../game/inventory.js';
 import { getSettings, updateSettings } from '../settings.js';
 import { markFound } from '../game/inventory.js';
 import { addSpins } from '../game/skins.js';
-import { spellSlots, spellOf, magicColor, hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
+import { spellSlots, spellOf, spellStats, manaMax, manaRegen, magicColor, hasMagic, foeOf, worldOf, stat, partOf, swordSkin, bossBeaten, markBoss } from '../game/combat.js';
 import { drawMinion, drawBoss } from '../game/monsters.js';
 import { play, bossSound } from '../game/sound.js';
 import { FX, hitstop, stopped, flash as fxFlash, sparks as sparksFx, ring as ringFx, bolt as boltFx, drawFx } from '../game/fx.js';
@@ -34,6 +34,9 @@ function genRows(depth) {
 }
 const STEP_MS = 135, SWING_MS = 450, MAGIC_MS = 8000, MODES = ['Rundumschlag', 'Stoß', 'Magie'], SAFE_MS = 950;
 const KEYS = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3, W: 0, D: 1, S: 2, A: 3 };
+// Zauber wie in League of Legends auf vier Tasten; W gehört zum Laufen, darum Q E R und F (oder 1–4)
+const CAST = { q: 0, e: 1, r: 2, f: 3, 1: 0, 2: 1, 3: 2, 4: 3 };
+const CAST_KEYS = 'QERF';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 let wall = (x, y) => ROWS[y]?.[x] !== '.';
@@ -52,7 +55,7 @@ export function mountArena(root, params) {
   const mirrorAt = (x, y) => room.blocks.findIndex((b) => b.x === x && b.y === y);
   const relight = () => { room = { ...room, player: { ...room.player, x: hero.x, y: hero.y } }; tr = pushTrace(room); };
   const pix = new PixelRenderer(level, { rs: RS });
-  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), slots = spellSlots(), modes = [...MODES.slice(0, 2), ...(hasMagic() ? slots.map((id) => spellOf(id).name) : [])], ready = {}, help = !!getSettings().bossHelp, maxHp = stat('armor') + (help ? 2 : 0), reach = stat('reach'), skin = swordSkin();
+  const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), slots = spellSlots(), modes = MODES.slice(0, 2) /* Zauber liegen jetzt auf Q W E R */, ready = {}, help = !!getSettings().bossHelp, maxHp = stat('armor') + (help ? 2 : 0), reach = stat('reach'), skin = swordSkin();
   // Am Handy (Wischen) sind die Gegnerwellen leichter: weniger Treffer nötig, langsamer, längeres Ausholen
   const minionHp = touch ? 1 + Math.floor(ci / 6) : 1 + Math.floor(ci / 4), minionMs = Math.round(Math.max(340, 620 - ci * 26) * (touch ? 1.3 : 1)), windMs = touch ? 700 : 430;
   const mini = endless ? depth % 5 === 0 : params[1] === 'mini', bossHp = mini ? 10 + ci * 3 : 30 + ci * 8; // Miniboss: kurzer Kampf ohne Ultra
@@ -62,19 +65,21 @@ export function mountArena(root, params) {
   setMusic(world);
   root.innerHTML = `
     <section class="adv-full pixel-ui arena${touch ? ' touch' : ''}">
-      <canvas id="board" class="pixel-canvas" tabindex="0" aria-label="Kampf. WASD oder Pfeiltasten laufen, Leertaste oder Klick schlägt."></canvas>
+      <canvas id="board" class="pixel-canvas" tabindex="0" aria-label="Kampf. WASD oder Pfeiltasten laufen, Leertaste oder Klick schlägt, Q E R F zaubern."></canvas>
       <div class="ihud ihud-tl pixel"><div class="ihud-world">${esc(WORLDS[world]?.name || '')}</div><div class="ihud-room" id="wave">WELLE 1/2</div></div>
       <div class="ar-hearts" id="hearts" role="img"></div><div class="ar-mode pixel" id="mode"></div>
       <div class="ar-boss" id="bossbar" hidden><span>${mini ? `Wächter: ${esc(foe.critter)}` : esc(foe.boss)}</span><i><b id="bosshp"></b></i></div>
       <div class="ihud ihud-tr"><button class="ibtn" id="pause" title="Pause (Esc)" aria-label="Pause">${icon('pause')}</button></div>
       <div class="ar-banner pixel" id="banner" hidden></div>
       <div class="pause" id="panel" hidden role="dialog"><div class="pause-card pixel-card" id="panel-card"></div></div>
+      <div class="ar-spells" id="spells"></div>
       ${touch ? `<div class="dpad" aria-hidden="true"><button data-d="0">▲</button><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button><i class="dpad-hub"></i></div>
       <button class="tpad-rot" id="tpad-hit" aria-label="Schlagen">${icon('sword')}<small>SCHLAG</small></button>` : ''}
     </section>`;
   const $ = (s) => root.querySelector(s);
   const canvas = $('#board'), ctx = canvas.getContext('2d');
 
+  let mana = manaMax(), manaT = 0, shield = 0, sunUntil = 0;
   let allies = [], dying = 0, checkpoint = 0, mode = 0, magicAt = 0, shots = [], hero, mobs, boss, tele, phase, held, paused, running = true, shake = 0, view = null, sparks;
   const reduced = prefersReducedMotion();
 
@@ -109,6 +114,7 @@ export function mountArena(root, params) {
 
   function hurt(now, n = 1) {
     if (now < hero.safe || phase === 0) return;
+    if (shield > 0) { shield--; hero.safe = now + SAFE_MS; ringFx(hero.x, hero.y, '#9ff6ff'); play('rotate'); return; }
     hero.hp -= n; hero.safe = now + SAFE_MS; shake = now + 220;
     play('bump'); navigator.vibrate?.(60);
     showHearts();
@@ -121,6 +127,40 @@ export function mountArena(root, params) {
     if (blocked(x, y)) return;
     hero.fromX = hero.x; hero.fromY = hero.y; hero.x = x; hero.y = y; hero.moved = now;
     if (lightBoss) relight();
+  }
+  // ---------- Magie: Mana + Abklingzeit, vier Plätze ----------
+  const castSlots = slots;
+  function showSpells(now = performance.now()) {
+    const el = $('#spells'); if (!el) return;
+    if (!hasMagic()) { el.hidden = true; return; }
+    el.innerHTML = `<div class="ar-mana"><b style="width:${(mana / manaMax()) * 100}%"></b></div>` + castSlots.map((id, i) => {
+      const st = spellStats(id), left = Math.max(0, (ready[id] || 0) - now), k = left / st.cd;
+      return `<div class="ar-spell${st.ult ? ' ult' : ''}${mana < st.mana ? ' low' : ''}" data-cast="${i}">${touch ? '' : `<kbd>${CAST_KEYS[i]}</kbd>`}<small>${esc(touch ? st.name.slice(0, 6) : st.name)}</small>${left ? `<i style="height:${k * 100}%"></i>` : ''}${left && touch ? `<em>${Math.ceil(left / 1000)}</em>` : ''}</div>`;
+    }).join('');
+  }
+  function cast(i) {
+    const now = performance.now();
+    if (paused || phase === 0 || !hasMagic()) return;
+    const st = spellStats(castSlots[i]);
+    if (now < (ready[st.id] || 0)) { play('bump'); return; }
+    if (mana < st.mana) { play('bump'); banner('ZU WENIG MANA', `${st.name} braucht ${st.mana}`); return; }
+    mana -= st.mana; ready[st.id] = now + (now < sunUntil ? st.cd / 2 : st.cd);
+    const c = magicColor().color, pow = st.power + magicBonus;
+    shake = now + 200; bossSound('slam'); sparksFx(hero.x, hero.y, c);
+    const hurtBoss = (n) => { if (!boss || lightBoss) return; boss.hp = Math.max(0, boss.hp - n); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) finisher(); else nextStage(now); };
+    const zap = (m, n) => { m.hp -= n; m.hit = now; if (now < sunUntil) mana = Math.min(manaMax(), mana + 8); if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } };
+    const near = (x, y, r) => Math.max(Math.abs(x - hero.x), Math.abs(y - hero.y)) <= r;
+    const bossNear = (r) => boss && bossCells().some(([a, b]) => near(a, b, r));
+    if (st.id === 'nova') { for (let k = 0; k < 3; k++) ringFx(hero.x, hero.y, c, now + k * 120); [...mobs].filter((m) => near(m.x, m.y, 3)).forEach((m) => zap(m, pow)); if (bossNear(3)) hurtBoss(pow); }
+    if (st.id === 'blitz') { const list = [...mobs].sort((p, q) => Math.hypot(p.x - hero.x, p.y - hero.y) - Math.hypot(q.x - hero.x, q.y - hero.y)).slice(0, 3); list.forEach((m, k) => { boltFx(m.x, m.y, c, now + k * 90); zap(m, pow); }); if (!list.length && boss) { boltFx(boss.x, boss.y, c, now); hurtBoss(pow * 2); } }
+    if (st.id === 'lanze') { const [dx, dy] = DIRS[hero.dir]; for (let x = hero.x + dx, y = hero.y + dy; !wall(x, y); x += dx, y += dy) { sparksFx(x, y, c, now + Math.abs(x - hero.x + y - hero.y) * 30); for (const m of [...mobs]) if (m.x === x && m.y === y) zap(m, pow); if (boss && bossCells().some(([a, b]) => a === x && b === y)) hurtBoss(pow); } }
+    if (st.id === 'frost') { const ms = 1500 + st.power * 1000; for (const m of mobs) { m.next = now + ms; m.wind = 0; } if (boss) { boss.next += ms; boss.walk += ms; } }
+    if (st.id === 'schild') { shield = Math.round(st.power); ringFx(hero.x, hero.y, '#9ff6ff'); }
+    if (st.id === 'heil') { hero.hp = Math.min(maxHp, hero.hp + Math.max(1, Math.floor(st.power))); showHearts(); }
+    if (st.id === 'sprung') { const [dx, dy] = DIRS[hero.dir]; let n = 0; while (n < Math.floor(st.power) && !blocked(hero.x + dx, hero.y + dy)) { hero.x += dx; hero.y += dy; n++; } hero.moved = 0; if (lightBoss) relight(); ringFx(hero.x, hero.y, c); }
+    if (st.id === 'meteor') { banner('STERNENFALL', 'GLEICH SCHLÄGT ES EIN'); setTimeout(() => { if (!running || phase === 0) return; fxFlash(performance.now()); [...mobs].forEach((m) => zap(m, pow * 2)); hurtBoss(pow * 2); shake = performance.now() + 500; }, 1100); }
+    if (st.id === 'sonne') { sunUntil = now + 6000; banner('ZWEITE SONNE', 'TREFFER LADEN MANA'); }
+    showSpells(now);
   }
   function swing() {
     const now = performance.now();
@@ -204,6 +244,8 @@ export function mountArena(root, params) {
   }
 
   function update(now) {
+    if (manaT) mana = Math.min(manaMax(), mana + ((now - manaT) / 1000) * manaRegen()); manaT = now;
+    if (Math.floor(now / 100) !== Math.floor((now - 16) / 100)) showSpells(now);
     if (held != null && now >= hero.next) move(held, now);
     for (const m of mobs) {
       const near = Math.abs(m.x - hero.x) + Math.abs(m.y - hero.y) === 1;
@@ -365,7 +407,8 @@ export function mountArena(root, params) {
   function onKeyDown(e) {
     if (e.key === 'Escape') { setPaused(!paused); return; }
     if (paused || phase === 0) return;
-    if (e.key === 'f' || e.key === 'F') { mode = (mode + 1) % modes.length; showMode(); play('ui'); return; }
+    if (e.key === 'Tab') { mode = (mode + 1) % modes.length; showMode(); play('ui'); e.preventDefault(); return; }
+    if (e.key.toLowerCase() in CAST && !e.repeat) { cast(CAST[e.key.toLowerCase()]); e.preventDefault(); return; }
     if (e.key in KEYS) { if (!e.repeat) { pressed = [...pressed.filter((d) => d !== KEYS[e.key]), KEYS[e.key]]; held = KEYS[e.key]; hero.next = 0; } e.preventDefault(); } else if (e.key === ' ' || e.key === 'e' || e.key === 'E') { swing(); e.preventDefault(); }
   }
   let pressed = [];
@@ -480,6 +523,9 @@ export function mountArena(root, params) {
   }
 
   start();
+  showSpells();
+  // Handy: Zauberknöpfe im Bogen um den Schlag-Knopf, antippen zaubert (wie in Wild Rift)
+  $('#spells').addEventListener('pointerdown', (ev) => { const b = ev.target.closest('[data-cast]'); if (!b) return; ev.preventDefault(); cast(+b.dataset.cast); });
   requestAnimationFrame(frame);
   if (location.hostname === 'localhost') window.__arena = { get state() { return { hero, mobs, boss, tele, phase, paused }; }, swing, finish: () => { if (boss) { boss.hp = 0; finisher(); } else { mobs.length = 0; } } };
 

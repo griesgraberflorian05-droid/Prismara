@@ -35,16 +35,46 @@ export function pickPart(slot, id) {
   return true;
 }
 
-// Zaubersprüche: drei Plätze, mit F im Kampf durchschalten; Presets speichern ganze Aufstellungen
+// Magie nach klaren Regeln (harte Magie): jeder Zauber kostet Mana UND hat eine Abklingzeit.
+// Vier Plätze wie in League of Legends: Q, E, R für normale Zauber, F nur für einen Ultimate (W ist Laufen).
+// Jeder Zauber hat 5 Stufen (mehr Wirkung, weniger Pause, weniger Mana); Talente verbessern alles.
 export const SPELLS = [
-  { id: 'nova', name: 'Lichtnova', info: 'Trifft alles im Raum.', cd: 8000 }, { id: 'blitz', name: 'Kettenblitz', info: 'Dreifacher Schaden am nächsten Gegner.', cd: 5000 },
-  { id: 'frost', name: 'Frostbann', info: 'Friert Gegner und Boss kurz ein.', cd: 10000 }, { id: 'heil', name: 'Heillicht', info: 'Heilt ein Herz.', cd: 15000 },
+  { id: 'nova', name: 'Lichtnova', info: 'Lichtring um dich, trifft alles in 3 Feldern.', cd: 7000, mana: 30, power: 2, grow: 1 },
+  { id: 'blitz', name: 'Kettenblitz', info: 'Springt auf bis zu 3 Gegner, starker Einzelschaden.', cd: 5000, mana: 25, power: 3, grow: 1 },
+  { id: 'lanze', name: 'Lichtlanze', info: 'Strahl in Blickrichtung bis zur Wand, durchbohrt alles.', cd: 4000, mana: 20, power: 2, grow: 1 },
+  { id: 'frost', name: 'Frostbann', info: 'Friert Gegner und Boss ein (länger mit jeder Stufe).', cd: 11000, mana: 35, power: 1, grow: 0.5 },
+  { id: 'schild', name: 'Lichtschild', info: 'Fängt die nächsten Treffer ab.', cd: 14000, mana: 30, power: 1, grow: 0.5 },
+  { id: 'heil', name: 'Heillicht', info: 'Heilt Herzen.', cd: 16000, mana: 45, power: 1, grow: 0.34 },
+  { id: 'sprung', name: 'Lichtsprung', info: 'Teleport 3 Felder in Blickrichtung.', cd: 6000, mana: 15, power: 3, grow: 0.25 },
+  { id: 'meteor', name: 'Sternenfall', info: 'ULTIMATE: Nach kurzer Warnung trifft ein Stern den ganzen Raum.', cd: 45000, mana: 80, power: 6, grow: 2, ult: true },
+  { id: 'sonne', name: 'Zweite Sonne', info: 'ULTIMATE: 6 s lang lädt jeder Treffer Mana zurück und Zauber kühlen doppelt so schnell ab.', cd: 60000, mana: 60, power: 6, grow: 1, ult: true },
 ];
-export const spellSlots = () => load().slots || ['nova', 'blitz', 'frost'];
+export const MAX_SPELL_LV = 5;
+const LV_COST = [0, 150, 400, 900, 1800]; // Preis für Stufe 2..5
+export const spellOf = (id) => SPELLS.find((s) => s.id === id) || SPELLS[0];
+export const spellLv = (id) => (isFull() ? MAX_SPELL_LV : Math.max(1, load().spellLv?.[id] || 1));
+export const spellCost = (id) => (spellLv(id) >= MAX_SPELL_LV ? null : isAdmin() ? 0 : LV_COST[spellLv(id)] * (spellOf(id).ult ? 2 : 1));
+export function levelSpell(id) { const c = spellCost(id); if (c == null || !pay(c)) return false; const d = load(); d.spellLv = { ...(d.spellLv || {}), [id]: spellLv(id) + 1 }; save(d); return true; }
+// Talente: dauerhafte Werte für das ganze System
+export const TALENTS = {
+  pool: { name: 'Manavorrat', info: '+20 maximales Mana je Stufe.', costs: [200, 600, 1400], per: 20 },
+  flow: { name: 'Manafluss', info: '+3 Mana pro Sekunde je Stufe.', costs: [250, 700, 1600], per: 3 },
+  focus: { name: 'Fokus', info: '-8 % Abklingzeit je Stufe.', costs: [300, 900, 2000], per: 0.08 },
+};
+export const talentLv = (id) => (isFull() ? TALENTS[id].costs.length : load().talents?.[id] || 0);
+export const talentCost = (id) => (talentLv(id) >= TALENTS[id].costs.length ? null : isAdmin() ? 0 : TALENTS[id].costs[talentLv(id)]);
+export function levelTalent(id) { const c = talentCost(id); if (c == null || !pay(c)) return false; const d = load(); d.talents = { ...(d.talents || {}), [id]: talentLv(id) + 1 }; save(d); return true; }
+export const manaMax = () => 100 + talentLv('pool') * TALENTS.pool.per;
+export const manaRegen = () => 6 + talentLv('flow') * TALENTS.flow.per;
+/** Fertige Werte eines Zaubers auf seiner Stufe: Stärke, Abklingzeit, Manakosten. */
+export function spellStats(id) {
+  const sp = spellOf(id), lv = spellLv(id) - 1;
+  return { ...sp, lv: lv + 1, power: sp.power + sp.grow * lv, cd: Math.round(sp.cd * (1 - lv * 0.07) * (1 - talentLv('focus') * TALENTS.focus.per)), mana: Math.round(sp.mana * (1 - lv * 0.06)) };
+}
+export const spellSlots = () => { const s = load().slots || []; const q = (i, d) => (SPELLS.some((x) => x.id === s[i] && !x.ult) ? s[i] : d); return [q(0, 'nova'), q(1, 'blitz'), q(2, 'lanze'), SPELLS.some((x) => x.id === s[3] && x.ult) ? s[3] : 'meteor']; };
 export const setSlots = (slots) => { const d = load(); d.slots = slots; save(d); };
 export const presets = () => load().presets || [null, null, null];
 export const savePreset = (i) => { const d = load(); d.presets = presets().map((p, k) => (k === i ? spellSlots() : p)); save(d); };
-export const spellOf = (id) => SPELLS.find((s) => s.id === id) || SPELLS[0];
 
 // Farben der Magie
 export const MAGIC_COLORS = [
