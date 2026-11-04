@@ -447,6 +447,8 @@ export class PixelRenderer {
     this.part(hx, hy, 8, 7, body);
     this.r(hx, hy, 8, 1, light);
     this.r(hx + 2, hy + 0.5, 3, 0.5, '#ffffff66'); this.r(hx + 6, hy + 1, 0.5, 0.5, '#ffffff66');
+    if (back) { this.r(hx + 3.5, hy + 1, 1, 5.5, dark); this.r(hx + 3, hy + 1, 0.5, 5, light); this.r(px + 7.5 + lx, by, 1, 4 - breath, dark); } // Kapuzennaht und Rückenfalte
+    else if (side) { const fr = dx > 0 ? hx + 7 : hx; this.r(fr, hy + 1.5, 1, 4.5, dark); this.r(dx > 0 ? hx + 0.5 : hx + 6.5, hy + 1, 1, 5, light); } // Kapuzenrand seitlich
     this.r(hx, hy + 6.5, 8, 0.5, dark); this.r(hx + 0.5, hy + 1, 0.5, 2, light); this.r(hx + 7, hy + 1, 0.5, 5, dark); // Kapuze mit Licht und Saum
     if (!back) {
       // Gesicht: blinzeln, erschrocken, angestrengt, erschöpft

@@ -80,6 +80,7 @@ export function drawBoss(r, shape, [main, dark], px, py, t, { flash = false, ang
   // Platte: Kontur, Licht oben, Schatten unten, Nieten in den Ecken
   const plate = (x, yy, w, h, face = mid, top = hi, bottom = lo) => {
     r(px + x - 1, yy - 1, w + 2, h + 2, line); r(px + x, yy, w, h, face); r(px + x, yy, w, 1, top); r(px + x, yy + h - 1, w, 1, bottom); r(px + x, yy, 1, h, top);
+    if (!ghost) { r(px + x + 1, yy + 1, w - 2, 0.5, flash ? top : '#ffffff22'); r(px + x + w - 1.5, yy + 1, 0.5, h - 2, flash ? bottom : 'rgba(0,0,0,0.22)'); if (h > 7) r(px + x + 1, yy + Math.floor(h / 2), w - 2, 0.5, 'rgba(0,0,0,0.18)'); } // Fase und Plattenfuge
     if (w > 5 && h > 4) for (const [a, b] of [[1, 1], [w - 2, 1], [1, h - 2], [w - 2, h - 2]]) { r(px + x + a, yy + b, 1, 1, bottom); r(px + x + a, yy + b, 0.5, 0.5, top); }
     if (!ghost && w > 7 && h > 6) { r(px + x + 2, yy + 2, 1.5, 0.5, top); r(px + x + w - 4, yy + h - 3, 1.5, 0.5, bottom); r(px + x + w / 2, yy + 1.5, 0.5, 2, bottom); } // Kratzer
   };
@@ -110,7 +111,9 @@ export function drawBoss(r, shape, [main, dark], px, py, t, { flash = false, ang
     r(px + ex - 1, eyeY - 1, 6, 6, line);
     if (blink || (state === 'hurt' && i === 1)) { r(px + ex, eyeY + 1, 4, 2, lo); continue; }
     r(px + ex, eyeY, 4, 4, aggro ? '#ff3a1a' : '#e8b04a'); r(px + ex + 1, eyeY + 1, 2, 2, aggro ? (Math.floor(t / 110) % 2 ? '#fff0a0' : '#ffd166') : line);
+    r(px + ex + 0.5, eyeY + 0.5, 1, 1, '#ffffff'); // Lichtpunkt im Auge
   }
+  if (!ghost) for (let k = 0; k < 5; k++) { r(px + 11 + k * 2, y + 9, 1, 2, line); r(px + 11 + k * 2, y + 9, 1, 0.5, aggro ? '#ff5a1a' : '#ffffff33'); } // Mundgitter
   if (hurt && !ghost) { // Risse und Rauch
     r(px + 21, y + 2, 1, 3, line); r(px + 20, y + 4, 2, 1, line); r(px + 12, y + 16, 1, 4, line); r(px + 13, y + 19, 2, 1, line);
     for (let k = 0; k < 3; k++) { const q = (t / 900 + k / 3) % 1; r(px + 25 + Math.round(Math.sin(q * 6) * 2), y - 1 - q * 12, 3 - k, 3 - k, 'rgba(190,186,180,0.7)'); }

@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.126', items: ['Bosse mit Plattenfugen, Augenglanz und Mundgitter', 'Held von hinten und seitlich feiner'] },
   { v: '3.23.125', items: ['Palmen, Fässer, Truhen, Statuen, Kisten und Säulen in 32 × 32', 'Mobs mit feineren Details'] },
   { v: '3.23.124', items: ['Hinweisschild verdeckt keine Wanddeko mehr'] },
   { v: '3.23.122', items: ['Admin-Debug: alle Welten automatisch durchspielen, einsammeln und Truhen öffnen, Bosse übersprungen'] },
