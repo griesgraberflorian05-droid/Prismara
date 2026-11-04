@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.124', items: ['Hinweisschild verdeckt keine Wanddeko mehr'] },
   { v: '3.23.122', items: ['Admin-Debug: alle Welten automatisch durchspielen, einsammeln und Truhen öffnen, Bosse übersprungen'] },
   { v: '3.23.121', items: ['Mobs und Items zittern nicht mehr, keine Lücken im Körper'] },
   { v: '3.23.120', items: ['Neue Menü- und Spielsounds: Holzklicks, Pergament, Metallrasten'] },

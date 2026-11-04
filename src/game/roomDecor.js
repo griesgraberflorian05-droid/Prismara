@@ -297,7 +297,7 @@ const FURN = {
 };
 
 // ---------- Rückwand ----------
-function backWall(p, level, th, cfg, exit, out) {
+function backWall(p, level, th, cfg, exit, out, sign) {
   const { w } = level;
   const top = -BACK * T;
   let n = 0;
@@ -335,6 +335,7 @@ function backWall(p, level, th, cfg, exit, out) {
     }
     p.r(px, faceBot - 3, T, 3, th.dark); p.r(px, faceBot - 3, T, 1, th.trim);
     if (exit && exit.y === 0 && exit.x === x) continue;
+    if (sign && sign.y === 0 && sign.x === x) continue; // hier hängt das Hinweisschild, keine Deko dahinter
     // Deko: Fackeln im Takt, dazwischen Fenster, Bilder, Regale …
     const torch = x % 4 === 2;
     const kind = torch ? 'torch' : hash(x, 0, 71) < 0.18 ? null : cfg.wall[(n++ + Math.floor(hash(x, 1, 72) * 3)) % cfg.wall.length];

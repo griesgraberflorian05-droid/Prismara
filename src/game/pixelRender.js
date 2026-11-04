@@ -75,7 +75,7 @@ export class PixelRenderer {
   r(x, y, w, h, c) { const k = this.rs || 1; this.ctx.fillStyle = c; this.ctx.fillRect(Math.round(x * k) / k, Math.round(y * k) / k, Math.round(w * k) / k, Math.round(h * k) / k); }
 
   // ---------- statische Ebene: Boden und Wände (einmal je Welt) ----------
-  buildStatic(theme, exit) {
+  buildStatic(theme, exit, sign) {
     const { level } = this;
     const themeId = Object.keys(PIXEL_THEMES).find((k) => PIXEL_THEMES[k] === theme) || 'default';
     const { cfg, out } = makeDecor(level, themeId);
@@ -98,7 +98,7 @@ export class PixelRenderer {
       if (up) for (let j = 0; j < 8; j++) for (let i = (j % 2); i < T; i += 1 + (j >> 1)) this.r(x * T + i, y * T + j, 1, 1, `rgba(10,6,16,${0.34 - j * 0.035})`);
       if (lf) for (let i = 0; i < 6; i++) for (let j = (i % 2); j < T; j += 1 + (i >> 1)) this.r(x * T + i, y * T + j, 1, 1, `rgba(10,6,16,${0.26 - i * 0.035})`);
     }
-    DecorSteps.backWall(this, level, theme, cfg, exit, out);
+    DecorSteps.backWall(this, level, theme, cfg, exit, out, sign);
     for (let y = 0; y < level.h; y++) for (let x = 0; x < level.w; x++) {
       const i = y * level.w + x;
       if (level.cells[i].type !== 'wall') continue;
@@ -908,8 +908,8 @@ export class PixelRenderer {
     const th = opts.theme || PIXEL_THEMES.default;
     const exitKey = opts.exit ? `${opts.exit.x},${opts.exit.y}` : '';
     if (!this.static || this.staticTheme !== th || this.staticExit !== exitKey) {
-      this.skipRug = true; this.buildStatic(th, opts.exit); this.bare = this.static; this.skipRug = false;
-      this.buildStatic(th, opts.exit); this.staticTheme = th; this.staticExit = exitKey; this.rollT0 = null;
+      this.skipRug = true; this.buildStatic(th, opts.exit, opts.sign); this.bare = this.static; this.skipRug = false;
+      this.buildStatic(th, opts.exit, opts.sign); this.staticTheme = th; this.staticExit = exitKey; this.rollT0 = null;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = false;

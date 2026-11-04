@@ -194,7 +194,7 @@ export function mountAdventure(root, params, opts = {}) {
   ensurePixelFont();
   const custom = opts.def || null; // z. B. das Tagesrätsel
   // Allererstes Spiel: Raum 1 leitet automatisch ins Lehrzimmer um
-  if (!custom && params[0] !== 'tutorial' && !tutorialSeen() && (parseInt(params[0] || '0', 10) || 0) === 0) { location.replace('#/adv/tutorial'); return () => {}; }
+  if (!custom && !rushOn() && params[0] !== 'tutorial' && !tutorialSeen() && (parseInt(params[0] || '0', 10) || 0) === 0) { location.replace('#/adv/tutorial'); return () => {}; }
   const tutorial = params[0] === 'tutorial';
   const index = tutorial || custom ? -1 : Math.max(0, Math.min(PUSH_LEVELS.length - 1, parseInt(params[0] || '0', 10) || 0));
   const def = custom || (tutorial ? TUTORIAL : PUSH_LEVELS[index]);
