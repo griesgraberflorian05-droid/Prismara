@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.134', items: ['Licht-Boss Nachtschwinge: Windstöße schieben Spiegel und blasen die Fackeln aus, Spiegel lassen sich zurückschieben'] },
   { v: '3.23.133', items: ['Licht-Boss Grull: treibende Nebelbänke schlucken das Licht, das Schwert pustet sie weg', 'Kein zweiter Held mehr, der im Bosskampf hinterherläuft'] },
   { v: '3.23.132', items: ['Licht-Boss Grimbart: Licht auf der Laterne lässt einen Schlüssel fallen, aufgehoben öffnet er die Rüstung'] },
   { v: '3.23.131', items: ['Licht-Boss Rankenschlund: Ranken überwuchern Spiegel, das Schwert schneidet sie frei'] },
