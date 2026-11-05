@@ -54,6 +54,8 @@ export function mountArena(root, params) {
     beach: { rows: (r, y) => (y === 2 ? `a${r.slice(1, 5)}m${r.slice(6)}` : y === 10 ? `${r.slice(0, 13)}m${r.slice(14, -1)}b` : r), need: () => 7, hint: ['PANZER SPIEGELT', 'LENK DAS LICHT AUF KLACK'] },
     // weiße Fackel → Prisma: Rot nach oben, Grün geradeaus, Blau nach unten; Spiegel lenken Rot und Blau quer durch den Raum
     cherry: { rows: (r, y) => (y === 6 ? `c..P${r.slice(4)}` : y === 2 ? `${r.slice(0, 3)}m${r.slice(4, 12)}m${r.slice(13)}` : y === 10 ? `${r.slice(0, 3)}n${r.slice(4, 12)}m${r.slice(13)}` : r), need: (stage) => [1, 2, 4][stage - 1] || 1, hint: ['DREI HERZEN', 'NUR DIE RICHTIGE FARBE TRIFFT'] },
+    // Rankenschlund (Dschungel): wie Klack, aber Ranken überwuchern Spiegel – das Schwert schneidet sie frei
+    jungle: { rows: (r, y) => (y === 2 ? `a${r.slice(1, 5)}m${r.slice(6, 12)}n${r.slice(13)}` : y === 10 ? `${r.slice(0, 6)}n${r.slice(7, 13)}m${r.slice(14, -1)}b` : r), need: () => 7, vines: true, hint: ['RANKEN WUCHERN', 'SCHNEID SIE MIT DEM SCHWERT FREI'] },
   };
   const LA = !endless && params[1] !== 'mini' ? LIGHT_ARENAS[world] : null, lightBoss = !!LA;
   const rows = ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)).map((r, y) => (!lightBoss ? r : LA.rows(r, y)));
@@ -191,6 +193,7 @@ export function mountArena(root, params) {
     if (now < hero.swing + swingMs) return;
     if (lightBoss) { // vor einem Spiegel: Schlag dreht ihn statt zuzuschlagen
       const [fx, fy] = DIRS[hero.dir], bi = mirrorAt(hero.x + fx, hero.y + fy);
+      if (bi >= 0 && room.blocks[bi].vine) { room = { ...room, blocks: room.blocks.map((b, i) => (i === bi ? { ...b, kind: 'mirror', vine: false } : b)) }; relight(); hero.swing = now; play('swipe'); sparksFx(hero.x + fx, hero.y + fy, '#6cb455', now); return; }
       if (bi >= 0 && room.blocks[bi].orient) { room = { ...room, blocks: room.blocks.map((b, i) => (i === bi ? { ...b, orient: b.orient === '/' ? '\\' : '/' } : b)) }; relight(); hero.swing = now; play('rotate'); return; }
     }
     hero.swing = now; play('swipe');
@@ -296,6 +299,16 @@ export function mountArena(root, params) {
       if (x === hero.x && y === hero.y) { hurt(now); shots.splice(i, 1); } else if (x < 0 || y < 0 || x >= W || y >= H || wall(x, y)) shots.splice(i, 1);
     }
     if (phase === 0) return;
+    if (boss && LA?.vines && !boss.jump) {
+      boss.vineAt ??= now + 4000;
+      if (now >= boss.vineAt) {
+        boss.vineAt = now + [7000, 5200, 3800][boss.stage - 1];
+        const free = room.blocks.map((b, i) => [b, i]).filter(([b]) => b.kind === 'mirror');
+        const lit = free.filter(([b]) => tr.visited.has(b.y * W + b.x) || tr.beams.some((bm) => bm.points.some(([x, y]) => Math.floor(x) === b.x && Math.floor(y) === b.y)));
+        const pick = (lit.length ? lit : free)[Math.floor(Math.random() * (lit.length || free.length))];
+        if (pick) { room = { ...room, blocks: room.blocks.map((b, i) => (i === pick[1] ? { ...b, kind: 'stone', vine: true } : b)) }; relight(); bossSound('charge'); sparksFx(pick[0].x, pick[0].y, '#3f8a2e', now); }
+      }
+    }
     if (boss && lightBoss) { // Licht auf dem Panzer lädt auf: 0,35 s Kontakt ist ein Treffer
       const need = LA.need(boss.stage), cells = new Set(bossCells().map(([a, b]) => b * W + a));
       let got = 0;
@@ -506,6 +519,11 @@ export function mountArena(root, params) {
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
     if (boss && !dying) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, state: mini ? 'normal' : boss.stage === 3 ? 'aggro' : boss.stage === 2 ? 'hurt' : 'normal' });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
+    for (const b of room.blocks) if (b.vine) { // Ranken: dunkle Kontur, zwei Grüntöne, Blätter, wiegen sich
+      const x = b.x * T, y = b.y * T, w = Math.sin(now / 300 + b.x) * 0.5;
+      for (let k = 0; k < 5; k++) { const vx = x + 2 + k * 3 + w; for (let j = 0; j < 14; j += 1) { r(vx + Math.sin(j / 2 + k) - 0.5, y + 1 + j, 2, 1, '#17121f'); r(vx + Math.sin(j / 2 + k), y + 1 + j, 1, 1, j % 3 ? '#3f8a2e' : '#6cb455'); } r(vx - 1, y + 3 + k * 2, 3, 2, '#5ab845'); }
+      r(x + 6, y + 6, 4, 3, '#c0342c'); r(x + 7, y + 6, 1, 1, '#ffd166'); // Blüte
+    }
     if (boss && lightBoss && boss.charge > 0) { const k = Math.min(1, boss.charge / 350); r(boss.x * T, boss.y * T - 8, 32, 4, '#17121f'); r(boss.x * T + 1, boss.y * T - 7, 30 * k, 2, ({ 1: '#ff4d6d', 2: '#3ddc97', 4: '#4da3ff' })[LA.need(boss.stage)] || '#ff4d6d'); }
     if (boss && lightBoss && !dying && world === 'cherry') { const c = ({ 1: '#ff4d6d', 2: '#3ddc97', 4: '#4da3ff' })[LA.need(boss.stage)], f = Math.floor(now / 200) % 2; r(boss.x * T + 12, boss.y * T + 12 - hop(now), 8, 8, '#17121f'); r(boss.x * T + 13, boss.y * T + 13 - hop(now), 6, 6, now - (boss.wrong || 0) < 200 ? '#ffffff' : f ? c : '#ffffff'); } // leuchtendes Herz in der Phasenfarbe
     if (boss && !dying && !mini && now > boss.openAt && now < boss.openUntil) { // Schwachpunkt leuchtet golden

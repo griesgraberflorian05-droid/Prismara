@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.131', items: ['Licht-Boss Rankenschlund: Ranken überwuchern Spiegel, das Schwert schneidet sie frei'] },
   { v: '3.23.130', items: ['Licht-Boss Hanami: Prisma teilt weißes Licht, jede Phase verlangt eine andere Farbe'] },
   { v: '3.23.129', items: ['Große Zaubereffekte: Schockwelle, Blitzkette, Lichtlanze, Eiskristalle, Schildplatten, Heilkreuze, Nachbilder, fallender Stern, zweite Sonne', 'Schadenszahlen und Trefferstopp bei Zaubern'] },
   { v: '3.23.128', items: ['Neues Magiesystem: Mana, Abklingzeiten, 9 Zauber mit 5 Stufen, Ultimates, Talente', 'Zauber wie in League of Legends auf Q, E, R und F (oder 1–4), Laufen bleibt WASD', 'Handy: Zauberknöpfe im Bogen um den Schlag-Knopf'] },
