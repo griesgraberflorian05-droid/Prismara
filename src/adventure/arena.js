@@ -14,6 +14,7 @@ import { drawMinion, drawBoss } from '../game/monsters.js';
 import { play, bossSound } from '../game/sound.js';
 import { FX, hitstop, stopped, flash as fxFlash, sparks as sparksFx, ring as ringFx, bolt as boltFx, drawFx } from '../game/fx.js';
 import { setMusic } from '../game/music.js';
+import { addSpellFx, drawSpellFx, clearSpellFx } from '../game/spellFx.js';
 import { prefersReducedMotion } from '../settings.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
@@ -147,18 +148,21 @@ export function mountArena(root, params) {
     mana -= st.mana; ready[st.id] = now + (now < sunUntil ? st.cd / 2 : st.cd);
     const c = magicColor().color, pow = st.power + magicBonus;
     shake = now + 200; bossSound('slam'); sparksFx(hero.x, hero.y, c);
-    const hurtBoss = (n) => { if (!boss || lightBoss) return; boss.hp = Math.max(0, boss.hp - n); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) finisher(); else nextStage(now); };
-    const zap = (m, n) => { m.hp -= n; m.hit = now; if (now < sunUntil) mana = Math.min(manaMax(), mana + 8); if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } };
+    const hurtBoss = (n) => { if (!boss || lightBoss) return; addSpellFx('num', { x: boss.x + 0.5, y: boss.y, n, color: '#ff7a2a' }); boss.hp = Math.max(0, boss.hp - n); boss.hit = now; $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`; if (boss.hp <= 0) finisher(); else nextStage(now); };
+    const zap = (m, n) => { addSpellFx('num', { x: m.x, y: m.y, n }); m.hp -= n; m.hit = now; if (now < sunUntil) mana = Math.min(manaMax(), mana + 8); if (m.hp <= 0) { mobs.splice(mobs.indexOf(m), 1); sparks.push({ x: m.x, y: m.y, t0: now }); } };
     const near = (x, y, r) => Math.max(Math.abs(x - hero.x), Math.abs(y - hero.y)) <= r;
     const bossNear = (r) => boss && bossCells().some(([a, b]) => near(a, b, r));
+    hitstop(st.ult ? 140 : 60, now);
+    const fxOn = { nova: () => addSpellFx('nova', { x: hero.x, y: hero.y }), schild: () => addSpellFx('schild', { x: hero.x, y: hero.y, dur: 600000, charges: () => shield }), heil: () => addSpellFx('heil', { x: hero.x, y: hero.y }), sonne: () => addSpellFx('sonne', { x: hero.x, y: hero.y }) };
+    fxOn[st.id]?.();
     if (st.id === 'nova') { for (let k = 0; k < 3; k++) ringFx(hero.x, hero.y, c, now + k * 120); [...mobs].filter((m) => near(m.x, m.y, 3)).forEach((m) => zap(m, pow)); if (bossNear(3)) hurtBoss(pow); }
-    if (st.id === 'blitz') { const list = [...mobs].sort((p, q) => Math.hypot(p.x - hero.x, p.y - hero.y) - Math.hypot(q.x - hero.x, q.y - hero.y)).slice(0, 3); list.forEach((m, k) => { boltFx(m.x, m.y, c, now + k * 90); zap(m, pow); }); if (!list.length && boss) { boltFx(boss.x, boss.y, c, now); hurtBoss(pow * 2); } }
-    if (st.id === 'lanze') { const [dx, dy] = DIRS[hero.dir]; for (let x = hero.x + dx, y = hero.y + dy; !wall(x, y); x += dx, y += dy) { sparksFx(x, y, c, now + Math.abs(x - hero.x + y - hero.y) * 30); for (const m of [...mobs]) if (m.x === x && m.y === y) zap(m, pow); if (boss && bossCells().some(([a, b]) => a === x && b === y)) hurtBoss(pow); } }
-    if (st.id === 'frost') { const ms = 1500 + st.power * 1000; for (const m of mobs) { m.next = now + ms; m.wind = 0; } if (boss) { boss.next += ms; boss.walk += ms; } }
+    if (st.id === 'blitz') { const list = [...mobs].sort((p, q) => Math.hypot(p.x - hero.x, p.y - hero.y) - Math.hypot(q.x - hero.x, q.y - hero.y)).slice(0, 3); addSpellFx('blitz', { x: hero.x, y: hero.y, pts: list.length ? list.map((m) => [m.x, m.y]) : boss ? [[boss.x + 0.5, boss.y + 0.5]] : [] }); list.forEach((m) => zap(m, pow)); if (!list.length && boss) hurtBoss(pow * 2); }
+    if (st.id === 'lanze') { const [dx, dy] = DIRS[hero.dir]; let len = 0; for (let x = hero.x + dx, y = hero.y + dy; !wall(x, y); x += dx, y += dy) len++; addSpellFx('lanze', { x: hero.x, y: hero.y, dir: [dx, dy], len: len + 0.5 }); shake = now + 260; for (let x = hero.x + dx, y = hero.y + dy; !wall(x, y); x += dx, y += dy) { for (const m of [...mobs]) if (m.x === x && m.y === y) zap(m, pow); if (boss && bossCells().some(([a, b]) => a === x && b === y)) hurtBoss(pow); } }
+    if (st.id === 'frost') { addSpellFx('frost', { x: hero.x, y: hero.y, pts: [...mobs.map((m) => [m.x, m.y]), ...bossCells()] }); const ms = 1500 + st.power * 1000; for (const m of mobs) { m.next = now + ms; m.wind = 0; } if (boss) { boss.next += ms; boss.walk += ms; } }
     if (st.id === 'schild') { shield = Math.round(st.power); ringFx(hero.x, hero.y, '#9ff6ff'); }
     if (st.id === 'heil') { hero.hp = Math.min(maxHp, hero.hp + Math.max(1, Math.floor(st.power))); showHearts(); }
-    if (st.id === 'sprung') { const [dx, dy] = DIRS[hero.dir]; let n = 0; while (n < Math.floor(st.power) && !blocked(hero.x + dx, hero.y + dy)) { hero.x += dx; hero.y += dy; n++; } hero.moved = 0; if (lightBoss) relight(); ringFx(hero.x, hero.y, c); }
-    if (st.id === 'meteor') { banner('STERNENFALL', 'GLEICH SCHLÄGT ES EIN'); setTimeout(() => { if (!running || phase === 0) return; fxFlash(performance.now()); [...mobs].forEach((m) => zap(m, pow * 2)); hurtBoss(pow * 2); shake = performance.now() + 500; }, 1100); }
+    if (st.id === 'sprung') { const from = [hero.x, hero.y], [dx, dy] = DIRS[hero.dir]; let n = 0; while (n < Math.floor(st.power) && !blocked(hero.x + dx, hero.y + dy)) { hero.x += dx; hero.y += dy; n++; } hero.moved = 0; if (lightBoss) relight(); addSpellFx('sprung', { x: hero.x, y: hero.y, from }); }
+    if (st.id === 'meteor') { banner('STERNENFALL', 'GLEICH SCHLÄGT ES EIN'); addSpellFx('meteor', { x: 9, y: 6, room: { cx: (W * T) / 2, cy: (H * T) / 2, x0: 0, y0: 0, w: W * T, h: H * T } }); setTimeout(() => { if (!running || phase === 0) return; fxFlash(performance.now()); [...mobs].forEach((m) => zap(m, pow * 2)); hurtBoss(pow * 2); shake = performance.now() + 500; }, 1100); }
     if (st.id === 'sonne') { sunUntil = now + 6000; banner('ZWEITE SONNE', 'TREFFER LADEN MANA'); }
     showSpells(now);
   }
@@ -510,6 +514,7 @@ export function mountArena(root, params) {
       drawBoss(mirror(g), foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, state: mini ? 'normal' : boss.stage === 3 ? 'aggro' : boss.stage === 2 ? 'hurt' : 'normal' });
       if (!blink) pix.ctx && drawHero(g, now);
     }
+    drawSpellFx(mirror(g), now, T, magicColor().color, hero); // Zauber leuchten auch im düsteren Bosskampf voll
     g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS); drawFx(g, T, now); g.restore();
     const dpr = devicePixelRatio || 1, rect = canvas.getBoundingClientRect();
     const cw = Math.max(1, Math.round(rect.width * dpr)), ch = Math.max(1, Math.round(rect.height * dpr));
@@ -531,6 +536,7 @@ export function mountArena(root, params) {
 
   return () => {
     running = false;
+    clearSpellFx();
     document.body.classList.remove('ingame');
     removeEventListener('keydown', onKeyDown); removeEventListener('keyup', onKeyUp);
     delete window.__arena;
