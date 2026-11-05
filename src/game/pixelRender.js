@@ -375,9 +375,8 @@ export class PixelRenderer {
     if (isDinnerbone()) { ctx.translate(0, fy * 2 - T); ctx.scale(1, -1); }
     // Bewegungsunschärfe: die letzten Positionen laufen als blasse Nachbilder hinterher
     const tr = (this.heroTrail ||= []);
-    tr.unshift({ x: p.x, y: p.y });
-    if (tr.length > 7) tr.pop();
-    for (let k = tr.length - 1; k > 0; k -= 2) {
+    if (!p.noTrail) { tr.unshift({ x: p.x, y: p.y }); if (tr.length > 7) tr.pop(); }
+    for (let k = tr.length - 1; k > 0 && !p.noTrail; k -= 2) {
       if (Math.hypot(tr[k].x - p.x, tr[k].y - p.y) < 0.04) continue;
       ctx.globalAlpha = 0.34 * (1 - k / 8); this.hero({ ...p, x: tr[k].x, y: tr[k].y, stamina: null, caught: false, exhausted: false }, t);
     }

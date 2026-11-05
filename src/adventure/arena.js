@@ -58,13 +58,15 @@ export function mountArena(root, params) {
     jungle: { rows: (r, y) => (y === 2 ? `a${r.slice(1, 5)}m${r.slice(6, 12)}n${r.slice(13)}` : y === 10 ? `${r.slice(0, 6)}n${r.slice(7, 13)}m${r.slice(14, -1)}b` : r), need: () => 7, vines: true, hint: ['RANKEN WUCHERN', 'SCHNEID SIE MIT DEM SCHWERT FREI'] },
     // Kerkermeister Grimbart (Burgverlies): Licht auf seiner Laterne lässt einen Schlüssel fallen; aufgehoben öffnet er die Rüstung fürs Schwert
     castle: { rows: (r, y) => (y === 2 ? `a${r.slice(1, 9)}m${r.slice(10)}` : y === 10 ? `${r.slice(0, 9)}m${r.slice(10, -1)}b` : r), need: () => 7, keys: true, hint: ['RÜSTUNG ZU', 'LEUCHTE AUF SEINE LATERNE'] },
+    // Moorhexe Grull (Nebelmoor): Nebelbänke treiben durch die Arena und schlucken das Licht; das Schwert pustet sie weg
+    moor: { rows: (r, y) => (y === 2 ? `a${r.slice(1, 5)}m${r.slice(6)}` : y === 10 ? `${r.slice(0, 13)}m${r.slice(14, -1)}b` : r), need: () => 7, fog: true, hint: ['NEBEL SCHLUCKT DAS LICHT', 'PUSTE IHN MIT DEM SCHWERT WEG'] },
   };
   const LA = !endless && params[1] !== 'mini' ? LIGHT_ARENAS[world] : null, lightBoss = !!LA;
   let key = null; // Schlüssel, den Grimbart fallen lässt
   const rows = ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)).map((r, y) => (!lightBoss ? r : LA.rows(r, y)));
   const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: { a: { type: 'emitter', dir: 'E', color: 'R' }, b: { type: 'emitter', dir: 'W', color: 'R' }, c: { type: 'emitter', dir: 'E', color: 'W' } }, rows });
   let room = createPushState(level), tr = pushTrace(room);
-  const mirrorAt = (x, y) => room.blocks.findIndex((b) => b.x === x && b.y === y);
+  const mirrorAt = (x, y) => room.blocks.findIndex((b) => b.x === x && b.y === y && !b.fog);
   const relight = () => { room = { ...room, player: { ...room.player, x: hero.x, y: hero.y } }; tr = pushTrace(room); };
   const pix = new PixelRenderer(level, { rs: RS });
   const damage = stat('sword') + partOf('blade').v, swingMs = SWING_MS * partOf('guard').v, magicBonus = partOf('grip').v + stat('magic'), slots = spellSlots(), modes = MODES.slice(0, 2) /* Zauber liegen jetzt auf Q W E R */, ready = {}, help = !!getSettings().bossHelp, maxHp = stat('armor') + (help ? 2 : 0), reach = stat('reach'), skin = swordSkin();
@@ -201,6 +203,9 @@ export function mountArena(root, params) {
       if (bi >= 0 && room.blocks[bi].orient) { room = { ...room, blocks: room.blocks.map((b, i) => (i === bi ? { ...b, orient: b.orient === '/' ? '\\' : '/' } : b)) }; relight(); hero.swing = now; play('rotate'); return; }
     }
     hero.swing = now; play('swipe');
+    if (LA?.fog && room.blocks.some((b) => b.fog && Math.max(Math.abs(b.x - hero.x), Math.abs(b.y - hero.y)) <= reach + 1)) {
+      room = { ...room, blocks: room.blocks.filter((b) => !(b.fog && Math.max(Math.abs(b.x - hero.x), Math.abs(b.y - hero.y)) <= reach + 1)) }; relight(); sparksFx(hero.x, hero.y, '#b8c4b4', now);
+    }
     // Rundumschlag: trifft alles im Kreis um den Helden
     let hitBoss = false;
     for (let y = hero.y - reach; y <= hero.y + reach; y++) for (let x = hero.x - reach; x <= hero.x + reach; x++) {
@@ -305,6 +310,19 @@ export function mountArena(root, params) {
       if (x === hero.x && y === hero.y) { hurt(now); shots.splice(i, 1); } else if (x < 0 || y < 0 || x >= W || y >= H || wall(x, y)) shots.splice(i, 1);
     }
     if (phase === 0) return;
+    if (boss && LA?.fog) {
+      boss.fogAt ??= now + 3000; boss.driftAt ??= now + 1500;
+      if (now >= boss.fogAt) { // neue Nebelbank: drei Felder senkrecht auf einer Lichtbahn
+        boss.fogAt = now + [6500, 5000, 3600][boss.stage - 1];
+        const x = 3 + Math.floor(Math.random() * 6), rowsY = Math.random() < 0.5 ? [1, 2, 3] : [9, 10, 11];
+        const add = rowsY.filter((y) => !wall(x, y) && mirrorAt(x, y) < 0 && !(x === hero.x && y === hero.y)).map((y) => ({ x, y, kind: 'stone', fog: true }));
+        room = { ...room, blocks: [...room.blocks, ...add] }; relight(); bossSound('charge');
+      }
+      if (now >= boss.driftAt) { // Nebel treibt ein Feld weiter, an Wänden und Spiegeln löst er sich auf
+        boss.driftAt = now + 1500;
+        room = { ...room, blocks: room.blocks.flatMap((b) => { if (!b.fog) return [b]; const nx = b.x + 1; return wall(nx, b.y) || mirrorAt(nx, b.y) >= 0 ? [] : [{ ...b, x: nx }]; }) }; relight();
+      }
+    }
     if (boss && LA?.vines && !boss.jump) {
       boss.vineAt ??= now + 4000;
       if (now >= boss.vineAt) {
@@ -510,7 +528,7 @@ export function mountArena(root, params) {
   const mirror = (g) => (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x + pix.ox, y + pix.oy, w, h); };
   function drawHero(g, now) {
     const r = mirror(g), x = hero.x * T, y = hero.y * T;
-    g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS); pix.player({ x: hero.x, y: hero.y, dir: hero.dir, walk: null, stamina: 1, hat: hat() }, now); drawSword(g, now);
+    g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS); pix.player({ x: hero.rx ?? hero.x, y: hero.ry ?? hero.y, dir: hero.dir, walk: null, stamina: 1, hat: hat(), noTrail: true }, now); drawSword(g, now); // gleiche Position wie im Raumbild, sonst läuft ein zweiter Held hinterher
     for (const q of tele) for (const [a, b] of q.cells) { r(a * T - pix.ox + 1, b * T - pix.oy + 1, T - 2, 1, '#ff3a2a'); }
     for (const p of shots) if (now >= p.at) { const sx = Math.round(p.x * T) + 4, sy = Math.round(p.y * T) + 4; g.fillStyle = '#1a0208'; g.fillRect(sx, sy, 8, 8); g.fillStyle = '#ff3a2a'; g.fillRect(sx + 2, sy + 2, 4, 4); }
     g.restore(); void x; void y;
@@ -524,7 +542,7 @@ export function mountArena(root, params) {
     const rx = walking ? hero.fromX + (hero.x - hero.fromX) * lerp : hero.x, ry = walking ? hero.fromY + (hero.y - hero.fromY) * lerp : hero.y;
     hero.rx = rx; hero.ry = ry;
     const blink = now < hero.safe && Math.floor(now / 90) % 2;
-    const img = pix.draw(t, { tr, blocks: room.blocks, got: [], loot: [], fragments: [], enemies: [], dust: [], theme, grow: Infinity, player: blink ? null : { x: rx, y: ry, dir: hero.dir, walk: held != null || walking ? (now / 300) % 1 : null, stamina: 1, hat: hat() } });
+    const img = pix.draw(t, { tr, blocks: room.blocks.filter((b) => !b.fog), got: [], loot: [], fragments: [], enemies: [], dust: [], theme, grow: Infinity, player: blink ? null : { x: rx, y: ry, dir: hero.dir, walk: held != null || walking ? (now / 300) % 1 : null, stamina: 1, hat: hat() } });
     const g = img.getContext('2d');
     g.save(); g.setTransform(RS, 0, 0, RS, pix.ox * RS, pix.oy * RS);
     const r = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
@@ -538,6 +556,10 @@ export function mountArena(root, params) {
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
     if (key) { const x = key.x * T, y = key.y * T - Math.abs(Math.sin(now / 200)) * 3; r(x + 3, y + 5, 6, 6, '#17121f'); r(x + 4, y + 6, 4, 4, '#ffd166'); r(x + 5, y + 7, 2, 2, '#17121f'); r(x + 8, y + 7.5, 6, 2, '#17121f'); r(x + 8, y + 8, 5, 1, '#ffd166'); r(x + 11, y + 9, 1, 2, '#ffd166'); r(x + 13, y + 9, 1, 2, '#ffd166'); if (Math.floor(now / 150) % 2) r(x + 4, y + 6, 1, 1, '#ffffff'); }
     if (boss && LA?.keys && now < (boss.vulnUntil || 0)) { const f = Math.floor(now / 80) % 2 ? '#ffd166' : '#ffffff'; r(boss.x * T - 2, boss.y * T - 2 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T + 32 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T - hop(now), 2, 32, f); r(boss.x * T + 32, boss.y * T - hop(now), 2, 32, f); }
+    for (const b of room.blocks) if (b.fog) { // Nebelbank: weiche, wabernde Schwaden
+      const x = b.x * T, y = b.y * T;
+      for (let k = 0; k < 6; k++) { const ox = Math.sin(now / 400 + k * 1.7 + b.y) * 3, oy = Math.cos(now / 520 + k) * 2; r(x + 1 + k * 2.4 + ox, y + 3 + (k % 3) * 3 + oy, 6, 5, k % 2 ? 'rgba(184,196,180,0.55)' : 'rgba(220,230,214,0.45)'); }
+    }
     for (const b of room.blocks) if (b.vine) { // Ranken: dunkle Kontur, zwei Grüntöne, Blätter, wiegen sich
       const x = b.x * T, y = b.y * T, w = Math.sin(now / 300 + b.x) * 0.5;
       for (let k = 0; k < 5; k++) { const vx = x + 2 + k * 3 + w; for (let j = 0; j < 14; j += 1) { r(vx + Math.sin(j / 2 + k) - 0.5, y + 1 + j, 2, 1, '#17121f'); r(vx + Math.sin(j / 2 + k), y + 1 + j, 1, 1, j % 3 ? '#3f8a2e' : '#6cb455'); } r(vx - 1, y + 3 + k * 2, 3, 2, '#5ab845'); }
