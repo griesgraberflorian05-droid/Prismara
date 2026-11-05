@@ -49,9 +49,15 @@ export function mountArena(root, params) {
   const world = worldOf(ci), foe = foeOf(world), theme = PIXEL_THEMES[world] || PIXEL_THEMES.default;
   const touch = matchMedia('(pointer: coarse)').matches;
   // Licht-Boss (Krabbenkönig Klack): zwei Fackeln in der Wand, zwei Drehspiegel – nur Licht trifft ihn
-  const lightBoss = !endless && params[1] !== 'mini' && world === 'beach';
-  const rows = ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)).map((r, y) => (!lightBoss ? r : y === 2 ? `a${r.slice(1, 5)}m${r.slice(6)}` : y === 10 ? `${r.slice(0, 13)}m${r.slice(14, -1)}b` : r));
-  const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: { a: { type: 'emitter', dir: 'E', color: 'R' }, b: { type: 'emitter', dir: 'W', color: 'R' } }, rows });
+  // Licht-Bosse: Klack (Strand) nur mit Licht verwundbar; Hanami (Kirschblüte) je Phase nur mit einer Farbe
+  const LIGHT_ARENAS = {
+    beach: { rows: (r, y) => (y === 2 ? `a${r.slice(1, 5)}m${r.slice(6)}` : y === 10 ? `${r.slice(0, 13)}m${r.slice(14, -1)}b` : r), need: () => 7, hint: ['PANZER SPIEGELT', 'LENK DAS LICHT AUF KLACK'] },
+    // weiße Fackel → Prisma: Rot nach oben, Grün geradeaus, Blau nach unten; Spiegel lenken Rot und Blau quer durch den Raum
+    cherry: { rows: (r, y) => (y === 6 ? `c..P${r.slice(4)}` : y === 2 ? `${r.slice(0, 3)}m${r.slice(4, 12)}m${r.slice(13)}` : y === 10 ? `${r.slice(0, 3)}n${r.slice(4, 12)}m${r.slice(13)}` : r), need: (stage) => [1, 2, 4][stage - 1] || 1, hint: ['DREI HERZEN', 'NUR DIE RICHTIGE FARBE TRIFFT'] },
+  };
+  const LA = !endless && params[1] !== 'mini' ? LIGHT_ARENAS[world] : null, lightBoss = !!LA;
+  const rows = ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)).map((r, y) => (!lightBoss ? r : LA.rows(r, y)));
+  const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: { a: { type: 'emitter', dir: 'E', color: 'R' }, b: { type: 'emitter', dir: 'W', color: 'R' }, c: { type: 'emitter', dir: 'E', color: 'W' } }, rows });
   let room = createPushState(level), tr = pushTrace(room);
   const mirrorAt = (x, y) => room.blocks.findIndex((b) => b.x === x && b.y === y);
   const relight = () => { room = { ...room, player: { ...room.player, x: hero.x, y: hero.y } }; tr = pushTrace(room); };
@@ -185,7 +191,7 @@ export function mountArena(root, params) {
     if (now < hero.swing + swingMs) return;
     if (lightBoss) { // vor einem Spiegel: Schlag dreht ihn statt zuzuschlagen
       const [fx, fy] = DIRS[hero.dir], bi = mirrorAt(hero.x + fx, hero.y + fy);
-      if (bi >= 0) { room = { ...room, blocks: room.blocks.map((b, i) => (i === bi ? { ...b, orient: b.orient === '/' ? '\\' : '/' } : b)) }; relight(); hero.swing = now; play('rotate'); return; }
+      if (bi >= 0 && room.blocks[bi].orient) { room = { ...room, blocks: room.blocks.map((b, i) => (i === bi ? { ...b, orient: b.orient === '/' ? '\\' : '/' } : b)) }; relight(); hero.swing = now; play('rotate'); return; }
     }
     hero.swing = now; play('swipe');
     // Rundumschlag: trifft alles im Kreis um den Helden
@@ -200,7 +206,7 @@ export function mountArena(root, params) {
       }
       if (!hitBoss && bossCells().some(([a, b]) => a === x && b === y)) hitBoss = true;
     }
-    if (hitBoss && lightBoss) { sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); if (!boss.told) { boss.told = 1; banner('PANZER SPIEGELT', 'LENK DAS LICHT AUF KLACK'); } hitBoss = false; }
+    if (hitBoss && lightBoss) { sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); if (!boss.told) { boss.told = 1; banner(...LA.hint); } hitBoss = false; }
     if (hitBoss && !mini && now > boss.openUntil) { // Panzer zu: Treffer prallt ab
       boss.hit = 0; sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); hitBoss = false;
     }
@@ -291,7 +297,11 @@ export function mountArena(root, params) {
     }
     if (phase === 0) return;
     if (boss && lightBoss) { // Licht auf dem Panzer lädt auf: 0,35 s Kontakt ist ein Treffer
-      const lit = bossCells().some(([a, b]) => tr.visited.has(b * W + a));
+      const need = LA.need(boss.stage), cells = new Set(bossCells().map(([a, b]) => b * W + a));
+      let got = 0;
+      for (const bm of tr.beams) for (let i = 1; i < bm.points.length; i++) { const [x0, y0] = bm.points[i - 1], [x1, y1] = bm.points[i], n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2); for (let k = 0; k <= n; k++) { const x = Math.floor(x0 + ((x1 - x0) * k) / n), y = Math.floor(y0 + ((y1 - y0) * k) / n); if (cells.has(y * W + x)) got |= bm.color; } }
+      const lit = (got & need) === need || (need === 7 && got > 0);
+      boss.wrong = got && !lit ? now : boss.wrong; // falsche Farbe: Herz flackert abweisend
       boss.charge = lit ? (boss.charge || 0) + (now - (boss.lastT || now)) : Math.max(0, (boss.charge || 0) - (now - (boss.lastT || now)) * 2);
       boss.lastT = now;
       if (boss.charge >= 350) {
@@ -334,7 +344,7 @@ export function mountArena(root, params) {
     if (stage <= boss.stage) return;
     boss.stage = stage; checkpoint = boss.hp; tele = []; shots = []; mobs = [];
     boss.next = now + 2000; boss.walk = now + 2000; hero.safe = now + 2000; shake = now + 400;
-    bossSound('roar'); hitstop(FX.hitstopBoss, now); banner(`PHASE ${stage}`, stage === 3 ? 'LETZTE KRAFT' : 'DER BOSS WIRD WÜTEND');
+    bossSound('roar'); hitstop(FX.hitstopBoss, now); banner(`PHASE ${stage}`, world === 'cherry' && lightBoss ? `JETZT ${['ROT', 'GRÜN', 'BLAU'][stage - 1]}` : stage === 3 ? 'LETZTE KRAFT' : 'DER BOSS WIRD WÜTEND');
   }
   // Finisher: Zeitlupe, Weißblitz, Boss zerfällt in Pixel, dann Sieg
   function finisher() {
@@ -496,7 +506,8 @@ export function mountArena(root, params) {
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
     if (boss && !dying) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, state: mini ? 'normal' : boss.stage === 3 ? 'aggro' : boss.stage === 2 ? 'hurt' : 'normal' });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
-    if (boss && lightBoss && boss.charge > 0) { const k = Math.min(1, boss.charge / 350); r(boss.x * T, boss.y * T - 8, 32, 4, '#17121f'); r(boss.x * T + 1, boss.y * T - 7, 30 * k, 2, '#ff4d6d'); }
+    if (boss && lightBoss && boss.charge > 0) { const k = Math.min(1, boss.charge / 350); r(boss.x * T, boss.y * T - 8, 32, 4, '#17121f'); r(boss.x * T + 1, boss.y * T - 7, 30 * k, 2, ({ 1: '#ff4d6d', 2: '#3ddc97', 4: '#4da3ff' })[LA.need(boss.stage)] || '#ff4d6d'); }
+    if (boss && lightBoss && !dying && world === 'cherry') { const c = ({ 1: '#ff4d6d', 2: '#3ddc97', 4: '#4da3ff' })[LA.need(boss.stage)], f = Math.floor(now / 200) % 2; r(boss.x * T + 12, boss.y * T + 12 - hop(now), 8, 8, '#17121f'); r(boss.x * T + 13, boss.y * T + 13 - hop(now), 6, 6, now - (boss.wrong || 0) < 200 ? '#ffffff' : f ? c : '#ffffff'); } // leuchtendes Herz in der Phasenfarbe
     if (boss && !dying && !mini && now > boss.openAt && now < boss.openUntil) { // Schwachpunkt leuchtet golden
       const f = Math.floor(now / 100) % 2 ? '#ffd166' : '#ffffff'; r(boss.x * T - 2, boss.y * T - 2 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T + 32 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T - hop(now), 2, 32, f); r(boss.x * T + 32, boss.y * T - hop(now), 2, 32, f);
     }
