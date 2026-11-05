@@ -56,8 +56,11 @@ export function mountArena(root, params) {
     cherry: { rows: (r, y) => (y === 6 ? `c..P${r.slice(4)}` : y === 2 ? `${r.slice(0, 3)}m${r.slice(4, 12)}m${r.slice(13)}` : y === 10 ? `${r.slice(0, 3)}n${r.slice(4, 12)}m${r.slice(13)}` : r), need: (stage) => [1, 2, 4][stage - 1] || 1, hint: ['DREI HERZEN', 'NUR DIE RICHTIGE FARBE TRIFFT'] },
     // Rankenschlund (Dschungel): wie Klack, aber Ranken überwuchern Spiegel – das Schwert schneidet sie frei
     jungle: { rows: (r, y) => (y === 2 ? `a${r.slice(1, 5)}m${r.slice(6, 12)}n${r.slice(13)}` : y === 10 ? `${r.slice(0, 6)}n${r.slice(7, 13)}m${r.slice(14, -1)}b` : r), need: () => 7, vines: true, hint: ['RANKEN WUCHERN', 'SCHNEID SIE MIT DEM SCHWERT FREI'] },
+    // Kerkermeister Grimbart (Burgverlies): Licht auf seiner Laterne lässt einen Schlüssel fallen; aufgehoben öffnet er die Rüstung fürs Schwert
+    castle: { rows: (r, y) => (y === 2 ? `a${r.slice(1, 9)}m${r.slice(10)}` : y === 10 ? `${r.slice(0, 9)}m${r.slice(10, -1)}b` : r), need: () => 7, keys: true, hint: ['RÜSTUNG ZU', 'LEUCHTE AUF SEINE LATERNE'] },
   };
   const LA = !endless && params[1] !== 'mini' ? LIGHT_ARENAS[world] : null, lightBoss = !!LA;
+  let key = null; // Schlüssel, den Grimbart fallen lässt
   const rows = ROWS.map((r, y) => (y === 4 ? `#@${r.slice(2)}` : r)).map((r, y) => (!lightBoss ? r : LA.rows(r, y)));
   const level = parsePushLevel({ id: `arena-${ci}`, name: foe.boss, legend: { a: { type: 'emitter', dir: 'E', color: 'R' }, b: { type: 'emitter', dir: 'W', color: 'R' }, c: { type: 'emitter', dir: 'E', color: 'W' } }, rows });
   let room = createPushState(level), tr = pushTrace(room);
@@ -100,6 +103,7 @@ export function mountArena(root, params) {
     }
   }
   function start() {
+    key = null;
     allies = Array.from({ length: endless ? RUN.army : 0 }, (_, i) => ({ x: 1, y: i % 2 ? 5 : 3, next: 0, hitAt: 0 }));
     hero = { x: 1, y: 4, dir: 1, hp: endless && RUN.hp ? RUN.hp : maxHp, safe: 0, next: 0, swing: 0, moved: 0 };
     mobs = []; tele = []; shots = []; sparks = []; boss = null; phase = 1;
@@ -209,12 +213,14 @@ export function mountArena(root, params) {
       }
       if (!hitBoss && bossCells().some(([a, b]) => a === x && b === y)) hitBoss = true;
     }
-    if (hitBoss && lightBoss) { sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); if (!boss.told) { boss.told = 1; banner(...LA.hint); } hitBoss = false; }
-    if (hitBoss && !mini && now > boss.openUntil) { // Panzer zu: Treffer prallt ab
+    if (hitBoss && LA?.keys && now < (boss.vulnUntil || 0)) { /* Rüstung offen: Treffer zählt */ }
+    else if (hitBoss && lightBoss) { sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); if (!boss.told) { boss.told = 1; banner(...LA.hint); } hitBoss = false; }
+    if (hitBoss && !mini && now > boss.openUntil && !(LA?.keys && now < (boss.vulnUntil || 0))) { // Panzer zu: Treffer prallt ab
       boss.hit = 0; sparksFx(boss.x + 0.5, boss.y + 0.5, '#c8c8d0', now); play('bump'); hitBoss = false;
     }
     if (hitBoss) {
-      boss.hp = Math.max(0, boss.hp - damage); boss.hit = now; play('target', 6);
+      const dmg = LA?.keys && now < (boss.vulnUntil || 0) ? damage * 3 + 1 : damage; // offene Rüstung: dreifacher Schaden
+      boss.hp = Math.max(0, boss.hp - dmg); boss.hit = now; play('target', 6); addSpellFx('num', { x: boss.x + 0.5, y: boss.y, n: dmg, color: '#ff7a2a' });
       $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`;
       if (boss.hp <= 0) finisher(); else nextStage(now);
     }
@@ -309,6 +315,9 @@ export function mountArena(root, params) {
         if (pick) { room = { ...room, blocks: room.blocks.map((b, i) => (i === pick[1] ? { ...b, kind: 'stone', vine: true } : b)) }; relight(); bossSound('charge'); sparksFx(pick[0].x, pick[0].y, '#3f8a2e', now); }
       }
     }
+    if (key && hero.x === key.x && hero.y === key.y && boss) {
+      key = null; boss.vulnUntil = now + 4000; boss.openUntil = now + 4000; play('target', 7); banner('RÜSTUNG OFFEN', 'JETZT ZUSCHLAGEN!'); ringFx(hero.x, hero.y, '#ffd166');
+    }
     if (boss && lightBoss) { // Licht auf dem Panzer lädt auf: 0,35 s Kontakt ist ein Treffer
       const need = LA.need(boss.stage), cells = new Set(bossCells().map(([a, b]) => b * W + a));
       let got = 0;
@@ -317,6 +326,14 @@ export function mountArena(root, params) {
       boss.wrong = got && !lit ? now : boss.wrong; // falsche Farbe: Herz flackert abweisend
       boss.charge = lit ? (boss.charge || 0) + (now - (boss.lastT || now)) : Math.max(0, (boss.charge || 0) - (now - (boss.lastT || now)) * 2);
       boss.lastT = now;
+      if (boss.charge >= 350 && LA.keys) {
+        boss.charge = 0;
+        if (!key && now >= (boss.vulnUntil || 0)) {
+          const spots = inner((x, y) => !blocked(x, y) && Math.abs(x - boss.x) + Math.abs(y - boss.y) > 4 && !(x === hero.x && y === hero.y));
+          const k = spots[Math.floor(Math.random() * spots.length)];
+          if (k) { key = { x: k[0], y: k[1], t0: now }; play('door'); banner('SCHLÜSSEL!', 'HEB IHN AUF'); sparksFx(boss.x + 0.5, boss.y, '#ffd166', now); }
+        }
+      }
       if (boss.charge >= 350) {
         boss.charge = 0; boss.hp = Math.max(0, boss.hp - (damage + 2)); boss.hit = now; play('target', 6); shake = now + 200; sparksFx(boss.x + 0.5, boss.y + 0.5, '#ff4d6d', now);
         $('#bosshp').style.width = `${(boss.hp / bossHp) * 100}%`;
@@ -519,6 +536,8 @@ export function mountArena(root, params) {
     for (const m of mobs) drawMinion(r, foe.minion, foe.colors, m.x * T, m.y * T, t, mobLook(m, now));
     if (boss && !dying) drawBoss(r, foe.shape, foe.colors, boss.x * T, boss.y * T - hop(now), t, { flash: now - boss.hit < 110, state: mini ? 'normal' : boss.stage === 3 ? 'aggro' : boss.stage === 2 ? 'hurt' : 'normal' });
     for (const p of shots) if (now >= p.at) { const x = Math.round(p.x * T) + 4, y = Math.round(p.y * T) + 4; r(x, y, 8, 8, '#1a0208'); r(x + 2, y + 2, 4, 4, '#ff3a2a'); }
+    if (key) { const x = key.x * T, y = key.y * T - Math.abs(Math.sin(now / 200)) * 3; r(x + 3, y + 5, 6, 6, '#17121f'); r(x + 4, y + 6, 4, 4, '#ffd166'); r(x + 5, y + 7, 2, 2, '#17121f'); r(x + 8, y + 7.5, 6, 2, '#17121f'); r(x + 8, y + 8, 5, 1, '#ffd166'); r(x + 11, y + 9, 1, 2, '#ffd166'); r(x + 13, y + 9, 1, 2, '#ffd166'); if (Math.floor(now / 150) % 2) r(x + 4, y + 6, 1, 1, '#ffffff'); }
+    if (boss && LA?.keys && now < (boss.vulnUntil || 0)) { const f = Math.floor(now / 80) % 2 ? '#ffd166' : '#ffffff'; r(boss.x * T - 2, boss.y * T - 2 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T + 32 - hop(now), 36, 2, f); r(boss.x * T - 2, boss.y * T - hop(now), 2, 32, f); r(boss.x * T + 32, boss.y * T - hop(now), 2, 32, f); }
     for (const b of room.blocks) if (b.vine) { // Ranken: dunkle Kontur, zwei Grüntöne, Blätter, wiegen sich
       const x = b.x * T, y = b.y * T, w = Math.sin(now / 300 + b.x) * 0.5;
       for (let k = 0; k < 5; k++) { const vx = x + 2 + k * 3 + w; for (let j = 0; j < 14; j += 1) { r(vx + Math.sin(j / 2 + k) - 0.5, y + 1 + j, 2, 1, '#17121f'); r(vx + Math.sin(j / 2 + k), y + 1 + j, 1, 1, j % 3 ? '#3f8a2e' : '#6cb455'); } r(vx - 1, y + 3 + k * 2, 3, 2, '#5ab845'); }
@@ -561,7 +580,7 @@ export function mountArena(root, params) {
   // Handy: Zauberknöpfe im Bogen um den Schlag-Knopf, antippen zaubert (wie in Wild Rift)
   $('#spells').addEventListener('pointerdown', (ev) => { const b = ev.target.closest('[data-cast]'); if (!b) return; ev.preventDefault(); cast(+b.dataset.cast); });
   requestAnimationFrame(frame);
-  if (location.hostname === 'localhost') window.__arena = { get state() { return { hero, mobs, boss, tele, phase, paused }; }, swing, finish: () => { if (boss) { boss.hp = 0; finisher(); } else { mobs.length = 0; } } };
+  if (location.hostname === 'localhost') window.__arena = { get state() { return { hero, mobs, boss, tele, phase, paused, key }; }, swing, finish: () => { if (boss) { boss.hp = 0; finisher(); } else { mobs.length = 0; } } };
 
   return () => {
     running = false;

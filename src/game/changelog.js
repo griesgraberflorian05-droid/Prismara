@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.132', items: ['Licht-Boss Grimbart: Licht auf der Laterne lässt einen Schlüssel fallen, aufgehoben öffnet er die Rüstung'] },
   { v: '3.23.131', items: ['Licht-Boss Rankenschlund: Ranken überwuchern Spiegel, das Schwert schneidet sie frei'] },
   { v: '3.23.130', items: ['Licht-Boss Hanami: Prisma teilt weißes Licht, jede Phase verlangt eine andere Farbe'] },
   { v: '3.23.129', items: ['Große Zaubereffekte: Schockwelle, Blitzkette, Lichtlanze, Eiskristalle, Schildplatten, Heilkreuze, Nachbilder, fallender Stern, zweite Sonne', 'Schadenszahlen und Trefferstopp bei Zaubern'] },
