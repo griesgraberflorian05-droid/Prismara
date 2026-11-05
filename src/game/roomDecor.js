@@ -582,7 +582,11 @@ export function makeDecor(level, themeId) {
 
 export const DecorSteps = {
   outside, outsideProps, backWall, rug, scatter,
-  furniture(p, level, x, y, f, out) { const draw = FURN[f.kind] || PROPS[f.kind]; draw?.(contour(p), x * T, y * T, f.seg, NO_OUT); draw?.(p, x * T, y * T, f.seg, out); },
+  furniture(p, level, x, y, f, out) {
+    // Möbel bekommen (seg, out), Außen-Requisiten nur (glows) – sonst stürzen Räume mit Lavaspitzen oder Pilzen ab
+    if (FURN[f.kind]) { FURN[f.kind](contour(p), x * T, y * T, f.seg, NO_OUT); FURN[f.kind](p, x * T, y * T, f.seg, out); return; }
+    PROPS[f.kind]?.(contour(p), x * T, y * T, NO_OUT.glows); PROPS[f.kind]?.(p, x * T, y * T, out.glows);
+  },
   sideCandle(p, level, x, y, out) {
     const px = x * T, py = y * T;
     if (hash(x, y, 31) < 0.7) return;
