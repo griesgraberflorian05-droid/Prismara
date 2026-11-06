@@ -173,21 +173,21 @@ function mainPage(el) {
 
 // ---------- Code eingeben: „freeadmin“ schaltet alles frei ----------
 function codePage(el) {
-  const applyCode = (text) => {
+  const applyCode = (text, say = (m) => render(m)) => {
     const code = redeem(text);
     if (code === 'resetall') { play('bump'); confirmReset(); return; }
     if (code === 'lab') { location.hash = '#/lab'; return; }
-    if (code === 'allfullmonitor') { play('chapter'); spanAllMonitors().then(({ screens, popup }) => render(popup ? `Prismara läuft jetzt über ${screens} Monitor${screens > 1 ? 'e' : ''}.` : 'Dein Browser hat das Fenster blockiert – Vollbild auf diesem Monitor.')); return; }
+    if (code === 'allfullmonitor') { play('chapter'); spanAllMonitors().then(({ screens, popup }) => say(popup ? `Prismara läuft jetzt über ${screens} Monitor${screens > 1 ? 'e' : ''}.` : 'Dein Browser hat das Fenster blockiert – Vollbild auf diesem Monitor.')); return; }
     if (code === 'cinematicplayer') { play('chapter'); startCinema(); location.hash = '#/menu'; return; }
     if (code === 'function') { play('ui'); askPassword(); return; }
-    if (code === 'used') { play('bump'); render('Diesen Code hast du schon eingelöst.'); return; }
-    if (code === 'moneten') { play('chapter'); render('250 Münzen gehören dir!'); return; }
-    if (!code) { play('bump'); render('Dieser Code stimmt nicht.'); return; }
+    if (code === 'used') { play('bump'); say('Diesen Code hast du schon eingelöst.'); return; }
+    if (code === 'moneten') { play('chapter'); say('250 Münzen gehören dir!'); return; }
+    if (!code) { play('bump'); say('Dieser Code stimmt nicht.'); return; }
     play('chapter');
     if (code === 'halloween') {
-      render('🎃 Halloween-Umhang freigeschaltet und angelegt!');
+      say('🎃 Halloween-Umhang freigeschaltet und angelegt!');
       setTimeout(() => { stopMusic(); setTimeout(jumpscare, 1400); }, 4000 + Math.random() * 5000); // erst in Sicherheit wiegen, dann Stille, dann zuschlagen
-    } else render(code === 'dinnerbone' ? 'Dein Held steht jetzt auf dem Kopf.' : '');
+    } else say(code === 'dinnerbone' ? 'Dein Held steht jetzt auf dem Kopf.' : `„${code}“ ist jetzt an.`);
   };
   const render = (msg = '') => {
     const on = isAdmin();
@@ -232,13 +232,20 @@ function codePage(el) {
       e.preventDefault();
       if (el.querySelector('#pw').value !== CODE_PASSWORD) { play('bump'); askPassword('Falsches Passwort.'); return; }
       play('chapter');
-      el.innerHTML = `
-        ${head('#/menu/code', 'Geheime Codes')}
-        <div class="parch settings">${ALL_CODES.map(([id, info]) => `<div class="set-row"><span class="code-row"><b>${esc(id)}</b><small>${esc(info)}</small></span><button class="wbtn sm" type="button" data-apply="${esc(id)}">Anwenden</button></div>`).join('')}</div>`;
-      backToForm();
-      el.querySelectorAll('[data-apply]').forEach((b) => b.addEventListener('click', () => applyCode(b.dataset.apply)));
+      showList();
     });
     el.querySelector('#pw').focus();
+  };
+  // Liste aller Codes: bleibt nach „Anwenden“ offen, bis man selbst zurückgeht; Meldung steht oben
+  const showList = (msg = '') => {
+    const y = scrollY;
+    el.innerHTML = `
+      ${head('#/menu/code', 'Geheime Codes')}
+      ${msg ? `<p class="parch code-msg">${esc(msg)}</p>` : ''}
+      <div class="parch settings">${ALL_CODES.map(([id, info]) => `<div class="set-row"><span class="code-row"><b>${esc(id)}</b><small>${esc(info)}</small></span><button class="wbtn sm" type="button" data-apply="${esc(id)}">Anwenden</button></div>`).join('')}</div>`;
+    backToForm();
+    el.querySelectorAll('[data-apply]').forEach((b) => b.addEventListener('click', () => applyCode(b.dataset.apply, showList)));
+    scrollTo(0, y);
   };
   // resetall löscht alles und lässt sich nicht rückgängig machen, darum einmal nachfragen
   const confirmReset = () => {
