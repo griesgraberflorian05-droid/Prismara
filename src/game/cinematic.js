@@ -161,3 +161,24 @@ export function startCinema() {
   if (!running) director();
 }
 export function stopCinema() { removeEventListener('keydown', onEsc, true); pilot?.remove(); pilot = null; applyCinema(); }
+
+// ---------- Testumgebung (Port 1100): Start-Knopf, Steuerung von außen, Status an das KI-Dashboard ----------
+function turnOn() { updateSettings({ fx: [...new Set([...(getSettings().fx || []), 'cinematicplayer'])] }); startCinema(); }
+export function setupAutoplay() {
+  const embedded = window.parent !== window;
+  if (new URLSearchParams(location.search).has('autoplay') && !cinemaOn()) {
+    const b = document.createElement('button'); b.id = 'autoplay-start'; b.className = 'wbtn big'; b.textContent = '▶ START';
+    b.addEventListener('click', () => { b.remove(); turnOn(); });
+    document.body.append(b);
+  }
+  addEventListener('message', (e) => { // das Dashboard schickt { cmd: 'start' | 'stop' }
+    if (e.data?.cmd === 'start') { document.getElementById('autoplay-start')?.remove(); turnOn(); }
+    if (e.data?.cmd === 'stop') { updateSettings({ fx: (getSettings().fx || []).filter((x) => x !== 'cinematicplayer') }); stopCinema(); }
+  });
+  if (!embedded) return;
+  setInterval(() => { // jede Sekunde den echten Spielstand melden
+    const d = load(), solved = PUSH_LEVELS.filter((l) => isSolved(l.id)).length;
+    let coins = 0; try { coins = JSON.parse(localStorage.getItem('prismara.inventory.v1') || '{}').coins || 0; } catch { /* leer */ }
+    window.parent.postMessage({ type: 'prismara', hash: location.hash || '#/menu', solved, total: PUSH_LEVELS.length, rooms: d.rooms || 0, coins, running: cinemaOn(), title: document.querySelector('.ihud-name, .tm-plank')?.textContent || '' }, '*');
+  }, 1000);
+}

@@ -1755,3 +1755,4 @@ body.cinema-player .ihud-bl { display: none !important; }
 #pilot.warp { transition: none; }
 #pilot[hidden] { display: block !important; visibility: hidden; }
 #span-offer { position: fixed; z-index: 10001; left: 50%; top: 12%; transform: translateX(-50%); }
+#autoplay-start { position: fixed; z-index: 10002; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.4rem; padding: 26px 40px; }
