@@ -15,6 +15,7 @@ import { setMusic } from '../game/music.js';
 import { transitionTo } from '../ui/transition.js';
 import { icon } from '../ui/icons.js';
 import { foeOf, bossBeaten, bossPending } from '../game/combat.js';
+import { cinemaOn } from '../game/cinematic.js';
 import { getLook, getSkin, addSpins } from '../game/skins.js';
 import { FX, fxQuality, goalBurst, bolt, sparks, ring, mote, squash as squashFx, buzz, addTrauma, hitstop, stopped, shake, drawFx } from '../game/fx.js';
 import { codeOn } from '../game/codes.js';
@@ -73,7 +74,7 @@ function ensurePixelFont() {
 
 // Admin-Durchlauf: spielt Raum für Raum selbst, bis er gestoppt wird
 const RUSH = 'prismara.rush';
-const rushOn = () => { try { return sessionStorage.getItem(RUSH) === '1'; } catch { return false; } };
+const rushOn = () => { if (cinemaOn()) return true; try { return sessionStorage.getItem(RUSH) === '1'; } catch { return false; } };
 const setRush = (on) => { try { if (on) sessionStorage.setItem(RUSH, '1'); else sessionStorage.removeItem(RUSH); } catch { /* blockiert */ } };
 
 const seeded = (str) => { let h = 2166136261; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -688,9 +689,23 @@ export function mountAdventure(root, params, opts = {}) {
         if (nx >= 0 && ny >= 0 && nx < w && ny < h && !prev.has(n) && free(nx, ny)) { prev.set(n, { k, d }); q.push(n); }
       }
     }
-    if (!path || left <= 0) { later(rushNext, 350); return; }
+    if (!path || left <= 0) { later(cinemaOn() ? walkOut : rushNext, 350); return; }
     path.forEach((d, i) => later(() => { if (rushOn()) stepDir(d); }, i * 60));
     later(() => rushCollect(left - 1), path.length * 60 + 120);
+  }
+  // Cinematic Player: zum Feld vor der Tür laufen und hindurchgehen, damit der Raum wirklich als geschafft zählt
+  function walkOut() {
+    if (!exit || !exitOpen) { later(rushNext, 300); return; }
+    const { w, h, cells } = level, solid = new Set(state.blocks.map((b) => b.y * w + b.x));
+    const start = state.player.y * w + state.player.x, goal = exit.inY * w + exit.inX, prev = new Map([[start, null]]), q = [start];
+    while (q.length && !prev.has(goal)) {
+      const k = q.shift(), x = k % w, y = Math.floor(k / w);
+      for (let d = 0; d < 4; d++) { const nx = x + DIRS[d][0], ny = y + DIRS[d][1], n = ny * w + nx, c = cells[n]; if (nx < 0 || ny < 0 || nx >= w || ny >= h || prev.has(n) || !c || c.type !== 'empty' || solid.has(n) || (c.hole && !(state.fill || []).includes(n))) continue; prev.set(n, { k, d }); q.push(n); }
+    }
+    if (!prev.has(goal)) { later(rushNext, 300); return; }
+    const path = []; for (let c = goal; prev.get(c); c = prev.get(c).k) path.unshift(prev.get(c).d);
+    path.push(DIRS.findIndex(([dx, dy]) => exit.inX + dx === exit.x && exit.inY + dy === exit.y));
+    path.forEach((d, i) => later(() => stepDir(d), i * 110));
   }
   function rushRoom() {
     const res = solvePush(level, { from: state, limit: 150000 });
@@ -917,7 +932,7 @@ export function mountAdventure(root, params, opts = {}) {
   reset();
   requestAnimationFrame(frame);
   canvas.focus();
-  if (rushOn() && !tutorial) later(() => { paused = false; rushRoom(); }, 900);
+  if (rushOn() && (!tutorial || cinemaOn())) later(() => { paused = false; rushRoom(); }, 900);
   devlog('SPIEL', `Abenteuer: Raum „${def.name}“ (${def.id}) betreten · Ausgang (${exit?.x},${exit?.y}) · Welt ${themeId}`);
   if (location.hostname === 'localhost') window.__adv = { get state() { return { moves: state.moves, player: state.player, exitOpen, done, caught, solved: tr.solved, exit, fragments, loot, chest, sign, keys: state.keys, level, blocks: state.blocks, raw: state, held }; }, step: stepDir, rotate, use };
 

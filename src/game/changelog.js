@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.136', items: ['Code „all full monitor“: Spiel über alle Monitore im Kino-Look', 'Code „cinematic player“: das Spiel spielt sich selbst, ESC beendet'] },
   { v: '3.23.135', items: ['Licht-Boss Glutgolem: nur blaues Licht kühlt den Kern, Lava steigt abwechselnd oben und unten', 'Behoben: Räume mit Lavaspitzen, Pilzen oder Steinlaternen blieben schwarz'] },
   { v: '3.23.134', items: ['Licht-Boss Nachtschwinge: Windstöße schieben Spiegel und blasen die Fackeln aus, Spiegel lassen sich zurückschieben'] },
   { v: '3.23.133', items: ['Licht-Boss Grull: treibende Nebelbänke schlucken das Licht, das Schwert pustet sie weg', 'Kein zweiter Held mehr, der im Bosskampf hinterherläuft'] },

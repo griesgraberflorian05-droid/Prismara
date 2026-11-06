@@ -6,6 +6,7 @@ import { isSolved, bestMoves, starsFor } from '../game/progress.js';
 import { SKIN_COLORS, SKIN_TONES, LANTERNS, getSkin, setSkin, getLook, setLook, hasHalloween, TRAILS, AURAS, ownsAura, buyAura, GOALS, CAPES, ownedHeroes, buyHero, getPreview, setPreview, dupes, addDupe, SELL_PRICE, getSpins, addSpins, rollSkin, rarityOf, RARITY, skinTint, setSkinTint } from '../game/skins.js';
 import { redeem, usedCodes, toggleCode, resetAll, ALL_CODES, CODE_PASSWORD } from '../game/codes.js';
 import { jumpscare } from './jumpscare.js';
+import { spanAllMonitors, startCinema } from '../game/cinematic.js';
 import { drawSwordIcon } from '../game/monsters.js';
 const shadeHex = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (c) => Math.max(0, Math.min(255, Math.round(c + (k > 0 ? (255 - c) * k : c * k)))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
 import { CHANGELOG } from '../game/changelog.js';
@@ -176,6 +177,8 @@ function codePage(el) {
     const code = redeem(text);
     if (code === 'resetall') { play('bump'); confirmReset(); return; }
     if (code === 'lab') { location.hash = '#/lab'; return; }
+    if (code === 'allfullmonitor') { play('chapter'); spanAllMonitors().then(({ screens, popup }) => render(popup ? `Prismara läuft jetzt über ${screens} Monitor${screens > 1 ? 'e' : ''}.` : 'Dein Browser hat das Fenster blockiert – Vollbild auf diesem Monitor.')); return; }
+    if (code === 'cinematicplayer') { play('chapter'); startCinema(); location.hash = '#/menu'; return; }
     if (code === 'function') { play('ui'); askPassword(); return; }
     if (code === 'used') { play('bump'); render('Diesen Code hast du schon eingelöst.'); return; }
     if (code === 'moneten') { play('chapter'); render('250 Münzen gehören dir!'); return; }

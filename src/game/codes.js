@@ -30,18 +30,19 @@ export const CODES = [
   fx('disco', 'Disco', 'Die Farben tanzen durch die Welt.'),
   fx('nachtsicht', 'Nachtsicht', 'Die Welt in Grün wie durch ein Nachtsichtgerät.'),
   fx('kopfueber', 'Kopfüber', 'Das ganze Spiel steht auf dem Kopf.'),
+  toggle('cinematicplayer', 'Cinematic Player', 'Das Spiel spielt sich selbst: Räume lösen, einsammeln, aufrüsten, Menüs ansehen. ESC beendet.'),
 ];
 
 export const CODE_PASSWORD = '1234';
 /** Alle geheimen Codes für die Liste hinter dem Code „function“. */
 export const ALL_CODES = [
-  ...CODES.map((c) => [c.id, c.info]), ['moneten', 'Einmalig 250 Münzen.'], ['resetall', 'Setzt das ganze Spiel zurück.'], ['function', 'Zeigt diese Liste.'], ['lab', 'Öffnet das Gehirn Lab.'],
+  ...CODES.map((c) => [c.id, c.info]), ['moneten', 'Einmalig 250 Münzen.'], ['allfullmonitor', 'Spiel über alle Monitore, im Kino-Look.'], ['resetall', 'Setzt das ganze Spiel zurück.'], ['function', 'Zeigt diese Liste.'], ['lab', 'Öffnet das Gehirn Lab.'],
 ];
 
 /** Löst einen Code ein; liefert seine Kennung oder null. „resetall“ löscht hier noch nichts. */
 export function redeem(text) {
-  const id = text.trim().toLowerCase();
-  if (id === 'resetall' || id === 'function' || id === 'lab') return id;
+  const id = text.trim().toLowerCase().replace(/\s+/g, ''); // „all full monitor“ = „allfullmonitor“
+  if (id === 'resetall' || id === 'function' || id === 'lab' || id === 'allfullmonitor') return id;
   if (id === 'moneten') {
     if ((getSettings().usedCodes || []).includes(id)) return 'used';
     addCoins(250);
