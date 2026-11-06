@@ -177,7 +177,7 @@ function codePage(el) {
     const code = redeem(text);
     if (code === 'resetall') { play('bump'); confirmReset(); return; }
     if (code === 'lab') { location.hash = '#/lab'; return; }
-    if (code === 'allfullmonitor') { play('chapter'); spanAllMonitors().then(({ screens, popup }) => say(popup ? `Prismara läuft jetzt über ${screens} Monitor${screens > 1 ? 'e' : ''}.` : 'Dein Browser hat das Fenster blockiert – Vollbild auf diesem Monitor.')); return; }
+    if (code === 'allfullmonitor') { play('chapter'); spanAllMonitors().then(({ screens, popup }) => say(popup ? `Prismara läuft jetzt über ${screens} Monitor${screens > 1 ? 'e' : ''}. Ab jetzt öffnet auch F11 diese Ansicht.` : 'Dein Browser hat das Fenster blockiert – Vollbild auf diesem Monitor. F11 versucht es erneut.')); return; }
     if (code === 'cinematicplayer') { play('chapter'); startCinema(); location.hash = '#/menu'; return; }
     if (code === 'function') { play('ui'); askPassword(); return; }
     if (code === 'used') { play('bump'); say('Diesen Code hast du schon eingelöst.'); return; }

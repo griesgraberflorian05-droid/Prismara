@@ -10,7 +10,7 @@ import { setFavicon } from './ui/logo.js';
 import { stopMusic } from './game/music.js';
 import { startUpdateCheck } from './ui/updater.js';
 import { applyFx } from './game/codes.js';
-import { applyCinema, cinemaOn, startCinema } from './game/cinematic.js';
+import { applyCinema, cinemaOn, startCinema, onF11 } from './game/cinematic.js';
 import { FX } from './game/fx.js';
 import { startSplash } from './ui/splash.js';
 
@@ -18,6 +18,7 @@ setFavicon();
 startUpdateCheck();
 applyFx();
 applyCinema();
+addEventListener('keydown', onF11);
 if (cinemaOn()) startCinema();
 startSplash();
 // F9: Regler für alle Effektwerte

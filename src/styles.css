@@ -1749,3 +1749,6 @@ body.cinema .view::after { content: ''; position: fixed; inset: 0; z-index: 9997
 #pilot.fly canvas { animation-duration: 0.4s; }
 #pilot.dip canvas { transform: translateY(22px) scale(0.92); transition: transform 0.18s; }
 @keyframes pilot-bob { 50% { translate: 0 -6px; rotate: -3deg; } }
+
+/* Cinematic Player: Kraft-Anzeige unten links ausblenden */
+body.cinema-player .ihud-bl { display: none !important; }

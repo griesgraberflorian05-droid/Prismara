@@ -9,6 +9,14 @@ import { isSolved } from './progress.js';
 import { PixelRenderer } from './pixelRender.js';
 
 export const cinemaOn = () => codeOn('cinematicplayer');
+export const spanOn = () => codeOn('allfullmonitor');
+/** F11 mit eingelöstem „all full monitor“: über alle Monitore statt normalem Vollbild. */
+export function onF11(e) {
+  if (e.key !== 'F11' || !spanOn()) return;
+  e.preventDefault();
+  if (spanWindow()) { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); return; } // im großen Fenster: normales Vollbild umschalten
+  spanAllMonitors();
+}
 const spanWindow = () => new URLSearchParams(location.search).has('span');
 
 /** Öffnet ein Fenster, das alle Bildschirme abdeckt (Chrome/Edge: mit Erlaubnis zur Fensterverwaltung). */
@@ -30,6 +38,7 @@ export async function spanAllMonitors() {
 /** Kino-Look im Über-alle-Monitore-Fenster oder während der Cinematic Player läuft. */
 export function applyCinema() {
   document.body.classList.toggle('cinema', spanWindow() || cinemaOn());
+  document.body.classList.toggle('cinema-player', cinemaOn()); // nur beim Selbstspielen: Kraft-Anzeige ausblenden
 }
 
 // ---------- Regie des Cinematic Players ----------
