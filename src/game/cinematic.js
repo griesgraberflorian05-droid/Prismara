@@ -58,7 +58,13 @@ const KEY = 'prismara.cinema.v1';
 const load = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || '{}'); } catch { return {}; } };
 const save = (d) => { try { sessionStorage.setItem(KEY, JSON.stringify(d)); } catch { /* blockiert */ } };
 const TOUR = ['#/menu/magie', '#/menu/forge', '#/menu/garderobe', '#/menu/shop', '#/menu/chapters', '#/menu/settings'];
-const firstOpen = () => Math.max(0, PUSH_LEVELS.findIndex((l) => !isSolved(l.id)));
+// Nächster Raum: der erste ungelöste; sind alle geschafft, geht es reihum wieder von vorn los
+const allDone = () => PUSH_LEVELS.every((l) => isSolved(l.id));
+function firstOpen() {
+  const i = PUSH_LEVELS.findIndex((l) => !isSolved(l.id));
+  if (i >= 0) return i;
+  const d = load(); d.loop = ((d.loop ?? -1) + 1) % PUSH_LEVELS.length; save(d); return d.loop;
+}
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------- Der fliegende Held: hält einen Gleiter über dem Kopf und drückt die Knöpfe selbst ----------
@@ -135,6 +141,7 @@ async function director() {
       const k = d.tourIdx || 0;
       if (!d.toured) { d.toured = true; d.tourIdx = k + 1; save(d); const page = TOUR[k % TOUR.length]; if (await press(`a[href="${page}"]:not(.locked)`) || await press(`a[href^="${page}"]:not(.locked)`)) { await wait(1500); continue; } }
       d.toured = false; save(d);
+      if (allDone()) { await leave(); location.hash = `#/adv/${firstOpen()}`; await wait(2000); continue; } // alles geschafft: von vorn
       const ok = await press('#play'); await leave();
       if (!ok) location.hash = `#/adv/${firstOpen()}`;
       await wait(2000); continue;
