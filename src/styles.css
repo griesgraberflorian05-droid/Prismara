@@ -1752,3 +1752,6 @@ body.cinema .view::after { content: ''; position: fixed; inset: 0; z-index: 9997
 
 /* Cinematic Player: Kraft-Anzeige unten links ausblenden */
 body.cinema-player .ihud-bl { display: none !important; }
+#pilot.warp { transition: none; }
+#pilot[hidden] { display: block !important; visibility: hidden; }
+#span-offer { position: fixed; z-index: 10001; left: 50%; top: 12%; transform: translateX(-50%); }

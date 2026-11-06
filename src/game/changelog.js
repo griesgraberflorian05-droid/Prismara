@@ -1,5 +1,6 @@
 // Update-Log im Spiel: neuestes Update zuerst. Bei jedem Hochladen oben einen Eintrag ergänzen.
 export const CHANGELOG = [
+  { v: '3.23.139', items: ['Cinematic Player: die Gleiter-Figur kommt nur, wenn der Held nicht zu sehen ist, und fliegt aus wechselnden Ecken ein', 'Im Menü läuft der Held erst aus dem Bild', 'F11-Vollbild bietet „Über alle Monitore“ an'] },
   { v: '3.23.138', items: ['Cinematic Player ohne Kraft-Anzeige', 'Mit „all full monitor“ öffnet F11 das Spiel über alle Monitore'] },
   { v: '3.23.137', items: ['Geheime Codes: Liste bleibt nach „Anwenden“ offen'] },
   { v: '3.23.136', items: ['Code „all full monitor“: Spiel über alle Monitore im Kino-Look', 'Code „cinematic player“: das Spiel spielt sich selbst, ESC beendet'] },

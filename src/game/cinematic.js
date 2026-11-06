@@ -7,16 +7,28 @@ import { getSettings, updateSettings } from '../settings.js';
 import { PUSH_LEVELS } from './pushLevels.js';
 import { isSolved } from './progress.js';
 import { PixelRenderer } from './pixelRender.js';
+import { heroLeave } from '../ui/titleArt.js';
 
 export const cinemaOn = () => codeOn('cinematicplayer');
 export const spanOn = () => codeOn('allfullmonitor');
 /** F11 mit eingelöstem „all full monitor“: über alle Monitore statt normalem Vollbild. */
+// Browser lassen F11 oft nicht abfangen. Darum zusätzlich: geht das Fenster ins Browser-Vollbild,
+// erscheint ein Knopf; sein Klick darf das Fenster über alle Monitore öffnen.
 export function onF11(e) {
-  if (e.key !== 'F11' || !spanOn()) return;
+  if (e.key !== 'F11' || !spanOn() || spanWindow()) return;
   e.preventDefault();
-  if (spanWindow()) { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); return; } // im großen Fenster: normales Vollbild umschalten
   spanAllMonitors();
 }
+function offerSpan() {
+  const full = innerHeight >= screen.height - 2 && innerWidth >= screen.width - 2;
+  let b = document.getElementById('span-offer');
+  if (!full || !spanOn() || spanWindow()) { b?.remove(); return; }
+  if (b) return;
+  b = document.createElement('button'); b.id = 'span-offer'; b.className = 'wbtn big'; b.textContent = '🖥 Über alle Monitore';
+  b.addEventListener('click', () => { b.remove(); spanAllMonitors(); });
+  document.body.append(b); setTimeout(() => b.remove(), 8000);
+}
+addEventListener('resize', offerSpan);
 const spanWindow = () => new URLSearchParams(location.search).has('span');
 
 /** Öffnet ein Fenster, das alle Bildschirme abdeckt (Chrome/Edge: mit Erlaubnis zur Fensterverwaltung). */
@@ -65,16 +77,32 @@ function makePilot() {
   document.body.append(el); return el;
 }
 function place() { if (pilot) pilot.style.transform = `translate(${px - 60}px, ${py - 120}px)`; }
+let shown = false;
+const corner = () => { const c = Math.floor(Math.random() * 4); return [c % 2 ? innerWidth + 140 : -140, c < 2 ? -160 : innerHeight + 160]; };
+/** Die Figur kommt aus einer zufälligen Ecke herein – nur wenn der Held sonst nirgends zu sehen ist. */
+async function enter() {
+  if (shown || !pilot) return;
+  const w = heroLeave(); if (w) await wait(w); // im Menü läuft der Held erst aus dem Bild
+  pilot.classList.add('warp'); [px, py] = corner(); place(); await wait(30);
+  pilot.classList.remove('warp'); pilot.hidden = false; shown = true;
+}
+/** … und fliegt danach in eine andere Ecke wieder hinaus. */
+async function leave() {
+  if (!shown || !pilot) return;
+  [px, py] = corner(); pilot.classList.add('fly'); place(); await wait(950);
+  pilot.hidden = true; pilot.classList.remove('fly'); shown = false;
+}
 /** Fliegt zum Element und drückt es. Liefert false, wenn es nichts zu drücken gibt. */
 async function press(sel) {
   const el = typeof sel === 'string' ? document.querySelector(sel) : sel;
   if (!el || !cinemaOn()) return false;
+  await enter();
   el.scrollIntoView?.({ block: 'center', behavior: 'smooth' }); await wait(350);
   const r = el.getBoundingClientRect(); px = r.left + r.width / 2; py = r.top + r.height / 2;
   pilot.classList.add('fly'); place(); await wait(950);
   pilot.classList.add('dip'); await wait(220); // runter, drücken, wieder hoch
   if (!cinemaOn()) return false;
-  el.click(); pilot.classList.remove('dip'); await wait(300); pilot.classList.remove('fly');
+  el.click(); setTimeout(() => { if (shown) heroLeave(true); }, 60); pilot.classList.remove('dip'); await wait(300); pilot.classList.remove('fly');
   return true;
 }
 const winVisible = () => { const w = document.querySelector('#win'); return w && !w.hidden; };
@@ -94,21 +122,25 @@ async function director() {
       if (winVisible()) { // Raum geschafft: zu „Nächster Raum“ fliegen; jeder dritte Raum mit Abstecher ins Menü
         await wait(1800); d.rooms = (d.rooms || 0) + 1; save(d);
         if (d.rooms % 3 === 0) { location.hash = '#/menu'; await wait(1500); continue; }
-        if (!(await press('#win-next'))) { await press('#win-boss'); await wait(600); if (location.hash.startsWith('#/arena')) location.hash = `#/adv/${firstOpen()}`; }
+        const ok = await press('#win-next'); await leave();
+        if (!ok) { await press('#win-boss'); await wait(600); if (location.hash.startsWith('#/arena')) location.hash = `#/adv/${firstOpen()}`; }
         await wait(2500); continue;
       }
-      await wait(700); continue; // der Raum spielt sich selbst
+      if (shown) await leave(); await wait(700); continue; // der Raum spielt sich selbst, die Figur ist nicht zu sehen
     }
-    if (h.startsWith('#/arena')) { await wait(2500); await press('#pause'); await wait(500); if (!(await press('#panel a[href^="#/menu"]'))) location.hash = `#/adv/${firstOpen()}`; await wait(1500); continue; }
+    if (h.startsWith('#/arena')) { await leave(); await wait(2500); await press('#pause'); await wait(500); if (!(await press('#panel a[href^="#/menu"]'))) location.hash = `#/adv/${firstOpen()}`; await wait(1500); continue; }
     if (h === '#/menu' || h === '#/' || h === '') { // Hauptmenü: eine Seite der Tour ansteuern oder „Spielen“
+      if (shown) heroLeave(true);
       await wait(1500);
       const k = d.tourIdx || 0;
       if (!d.toured) { d.toured = true; d.tourIdx = k + 1; save(d); const page = TOUR[k % TOUR.length]; if (await press(`a[href="${page}"]:not(.locked)`) || await press(`a[href^="${page}"]:not(.locked)`)) { await wait(1500); continue; } }
       d.toured = false; save(d);
-      if (!(await press('#play'))) location.hash = `#/adv/${firstOpen()}`;
+      const ok = await press('#play'); await leave();
+      if (!ok) location.hash = `#/adv/${firstOpen()}`;
       await wait(2000); continue;
     }
     // Unterseite: umsehen, etwas kaufen, zurück
+    if (shown) heroLeave(true);
     await wait(1800); await shopRound(); await wait(800);
     if (!(await press('.tm-head a.wbtn'))) location.hash = '#/menu';
     await wait(1500);
@@ -118,7 +150,7 @@ async function director() {
 function onEsc(e) { if (e.key === 'Escape' && cinemaOn()) { e.stopImmediatePropagation(); updateSettings({ fx: (getSettings().fx || []).filter((x) => x !== 'cinematicplayer') }); stopCinema(); } }
 export function startCinema() {
   applyCinema(); addEventListener('keydown', onEsc, true);
-  if (!pilot) { pilot = makePilot(); place(); }
+  if (!pilot) { pilot = makePilot(); pilot.hidden = true; shown = false; }
   if (!running) director();
 }
 export function stopCinema() { removeEventListener('keydown', onEsc, true); pilot?.remove(); pilot = null; applyCinema(); }

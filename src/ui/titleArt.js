@@ -324,6 +324,14 @@ for (const id of ['aurora', 'beach', 'night', 'castle', 'cherry', 'jungle', 'moo
 }
 const blank = document.createElement('canvas'); blank.width = W; blank.height = H;
 
+/** Cinematic Player: lässt den Helden des aktuellen Titelbilds hinauslaufen (instant: sofort weg). Liefert die Wartezeit in ms. */
+let activeRag = null;
+export function heroLeave(instant = false) {
+  if (!activeRag || activeRag.mode === 'gone') return 0;
+  if (instant) { activeRag.mode = 'gone'; return 0; }
+  if (activeRag.mode !== 'leave') activeRag.mode = 'leave';
+  return Math.ceil(((W + 30 - activeRag.x) / 110) * 1000) + 150; // genau so lange, bis er aus dem Bild ist
+}
 export function mountTitleArt(canvas, worldId = 'default') {
   let curId = worldId;
   let S = TITLE_STYLES[worldId] || TITLE_STYLES.default;
@@ -339,6 +347,7 @@ export function mountTitleArt(canvas, worldId = 'default') {
   // Held zum Herumwerfen: hängt am Zeiger und pendelt, fliegt, landet auf dem Gesicht, läuft zurück
   const home = { x: HERO.x - 4, y: HERO.y - 3 };
   const rag = { ...home, vx: 0, vy: 0, a: 0, va: 0, mode: 'sit', until: 0, px: 0, py: 0, last: 0 };
+  activeRag = rag;
   const toScene = (e) => {
     const r = canvas.getBoundingClientRect(), dpr = devicePixelRatio || 1, cw = canvas.width, ch = canvas.height, s = Math.max(1, Math.ceil(Math.max(cw / W, ch / H)));
     return [((e.clientX - r.left) * dpr - Math.round((cw - W * s) * 0.65)) / s, ((e.clientY - r.top) * dpr - (ch - H * s)) / s];
@@ -384,6 +393,9 @@ export function mountTitleArt(canvas, worldId = 'default') {
       if (fireOut) { rag.mode = 'tofire'; return; }
       const d = home.x - rag.x; rag.x += Math.sign(d) * 26 * dt; rag.y = groundY(Math.round(rag.x + 8)) - 13;
       if (Math.abs(d) < 2) { rag.mode = 'sit'; rag.x = home.x; rag.y = home.y; }
+    } else if (rag.mode === 'leave') { // Cinematic Player: der Held läuft rechts aus dem Bild, dann fliegt er mit dem Gleiter
+      rag.a = 0; rag.x += 110 * dt; rag.y = groundY(Math.min(W - 1, Math.round(rag.x + 8))) - 13 - (Math.floor(tms / 120) % 2);
+      if (rag.x > W + 24) rag.mode = 'gone';
     } else if (rag.mode === 'sit' && fireOut) { rag.mode = 'tofire';
     }
   }
@@ -598,9 +610,9 @@ export function mountTitleArt(canvas, worldId = 'default') {
     ctx.imageSmoothingEnabled = false;
     const ox = Math.round((cw - W * s) * 0.65), oy = ch - H * s;
     ctx.drawImage(buf, ox, oy, W * s, H * s);
-    ctx.save(); ctx.translate(ox + (rag.x + 8) * s, oy + (rag.y + 8) * s); ctx.rotate(rag.a);
+    if (rag.mode !== 'gone') { ctx.save(); ctx.translate(ox + (rag.x + 8) * s, oy + (rag.y + 8) * s); ctx.rotate(rag.a);
     ctx.drawImage(heroLayer, -16 * s, -16 * s, 32 * s, 32 * s);
-    ctx.restore();
+    ctx.restore(); }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
